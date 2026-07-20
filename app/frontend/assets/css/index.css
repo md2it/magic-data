@@ -313,6 +313,27 @@
     border-right: none;
 }
 
+.content-table__header-cell--sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.content-table__header-cell--sortable:hover {
+    background: #eaeef2;
+}
+
+.content-table__header-cell--sorted {
+    color: #0969da;
+}
+
+.content-table__sort-indicator {
+    display: inline-block;
+    width: 1em;
+    margin-left: 4px;
+    font-size: 0.75em;
+    color: #0969da;
+}
+
 .content-table__row:nth-child(even) {
     background: #f6f8fa;
 }

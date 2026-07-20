@@ -331,6 +331,23 @@
     }
 
     /**
+     * Orders two *present* (non-empty) cell values for a single column:
+     *  - two numbers compare numerically;
+     *  - two booleans order false < true;
+     *  - everything else (objects/arrays and mixed types) compares by its
+     *    displayed string form, numeric-aware and case-insensitive.
+     * Empty cells (undefined/null) are handled by the caller so they always
+     * fall to the end regardless of sort direction.
+     */
+    function compareNonEmpty(a, b) {
+        if (typeof a === "number" && typeof b === "number") return a - b;
+        if (typeof a === "boolean" && typeof b === "boolean") return (a ? 1 : 0) - (b ? 1 : 0);
+        const as = typeof a === "object" ? JSON.stringify(a) : String(a);
+        const bs = typeof b === "object" ? JSON.stringify(b) : String(b);
+        return as.localeCompare(bs, undefined, { numeric: true, sensitivity: "base" });
+    }
+
+    /**
      * Normalizes a top-level node into a plain object suitable for column
      * extraction. Real objects pass through as-is; anything else (primitive,
      * array, null) is wrapped into a single-column { value: ... } record so
@@ -392,6 +409,13 @@
         const rowObjects = topLevelNodes.map(toRowObject);
         const columns = collectColumns(rowObjects);
 
+        // View-local sort state. Default is no sort (rows in original JSON
+        // order). Clicking a header sorts it ascending; clicking the same
+        // header again flips to descending. Only one column is active at a
+        // time. State resets whenever the table is re-rendered (file/view
+        // switch), matching "no sort when the table first opens".
+        const sortState = { column: null, dir: "asc" };
+
         const wrapper = document.createElement("div");
         wrapper.className = "content-table__wrapper";
 
@@ -400,32 +424,102 @@
 
         const thead = document.createElement("thead");
         const headerRow = document.createElement("tr");
+        const headerCells = {};
         columns.forEach(function (col) {
             const th = document.createElement("th");
-            th.className = "content-table__header-cell";
-            th.textContent = col;
+            th.className = "content-table__header-cell content-table__header-cell--sortable";
+            th.setAttribute("role", "button");
+            th.setAttribute("tabindex", "0");
+            th.setAttribute("aria-sort", "none");
+
+            const label = document.createElement("span");
+            label.className = "content-table__header-label";
+            label.textContent = col;
+            th.appendChild(label);
+
+            const indicator = document.createElement("span");
+            indicator.className = "content-table__sort-indicator";
+            indicator.setAttribute("aria-hidden", "true");
+            th.appendChild(indicator);
+
+            function toggleSort() {
+                if (sortState.column === col) {
+                    sortState.dir = sortState.dir === "asc" ? "desc" : "asc";
+                } else {
+                    sortState.column = col;
+                    sortState.dir = "asc";
+                }
+                renderBody();
+                updateHeaders();
+            }
+
+            th.addEventListener("click", toggleSort);
+            th.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    toggleSort();
+                }
+            });
+
+            headerCells[col] = { th: th, indicator: indicator };
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
         const tbody = document.createElement("tbody");
-        rowObjects.forEach(function (rowObj) {
-            const tr = document.createElement("tr");
-            tr.className = "content-table__row";
-            columns.forEach(function (col) {
-                const td = document.createElement("td");
-                td.className = "content-table__cell";
-                const cellText = formatCellValue(rowObj[col]);
-                if (rowObj[col] !== undefined && typeof rowObj[col] === "object") {
-                    td.classList.add("content-table__cell--json");
-                }
-                td.textContent = cellText;
-                tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-        });
         table.appendChild(tbody);
+
+        function orderedRows() {
+            if (sortState.column === null) return rowObjects;
+            const column = sortState.column;
+            const factor = sortState.dir === "desc" ? -1 : 1;
+            // slice() keeps the original array intact; Array.sort is stable, so
+            // equal/empty rows retain their original relative order.
+            return rowObjects.slice().sort(function (rowA, rowB) {
+                const a = rowA[column];
+                const b = rowB[column];
+                const aEmpty = a === undefined || a === null;
+                const bEmpty = b === undefined || b === null;
+                if (aEmpty || bEmpty) return aEmpty === bEmpty ? 0 : (aEmpty ? 1 : -1);
+                return factor * compareNonEmpty(a, b);
+            });
+        }
+
+        function renderBody() {
+            tbody.innerHTML = "";
+            orderedRows().forEach(function (rowObj) {
+                const tr = document.createElement("tr");
+                tr.className = "content-table__row";
+                columns.forEach(function (col) {
+                    const td = document.createElement("td");
+                    td.className = "content-table__cell";
+                    const value = rowObj[col];
+                    if (value !== undefined && typeof value === "object") {
+                        td.classList.add("content-table__cell--json");
+                    }
+                    td.textContent = formatCellValue(value);
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateHeaders() {
+            columns.forEach(function (col) {
+                const cell = headerCells[col];
+                const active = sortState.column === col;
+                cell.th.classList.toggle("content-table__header-cell--sorted", active);
+                cell.th.setAttribute(
+                    "aria-sort",
+                    active ? (sortState.dir === "asc" ? "ascending" : "descending") : "none"
+                );
+                cell.indicator.textContent = active ? (sortState.dir === "asc" ? "▲" : "▼") : "";
+            });
+        }
+
+        renderBody();
+        updateHeaders();
 
         wrapper.appendChild(table);
         container.appendChild(wrapper);
