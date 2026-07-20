@@ -145,6 +145,11 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             self.send_bytes(STOPPED_PAGE, "text/plain; charset=utf-8")
             threading.Thread(target=self.server.shutdown).start()
             return
+        if path == "/restart":
+            self.send_bytes(b"Server restarting.", "text/plain; charset=utf-8")
+            self.server.restart_requested = True
+            threading.Thread(target=self.server.shutdown).start()
+            return
         if path == "/api/data-tree/create":
             self.handle_create_data_file(self.read_json_body())
             return
@@ -328,19 +333,30 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def end_headers(self) -> None:
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
     def log_message(self, format: str, *args) -> None:
         pass
 
 
 def main() -> None:
-    server = HTTPServer((HOST, PORT), ApplicationHandler)
     url = f"http://{HOST}:{PORT}"
-    print(f"Serving at {url}")
-    webbrowser.open(url)
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.server_close()
-        print("Server stopped.")
+    while True:
+        server = HTTPServer((HOST, PORT), ApplicationHandler)
+        server.restart_requested = False
+        print(f"Serving at {url}")
+        webbrowser.open(url)
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            server.server_close()
+
+        if not server.restart_requested:
+            print("Server stopped.")
+            break

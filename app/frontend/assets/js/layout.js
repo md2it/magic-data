@@ -17,6 +17,7 @@ function renderHeader() {
             <button type="button" class="magic-btn" data-provider="codex">✨ Check Codex</button>
             <button type="button" class="magic-btn" data-provider="claude">✨ Check Claude</button>
         </div>
+        <button id="restart-btn" type="button">Restart</button>
         <button id="stop-btn" type="button">Stop</button>
     `;
 
@@ -34,7 +35,17 @@ function renderHeader() {
         fetch("/stop", { method: "POST" }).then(function () {
             const status = document.getElementById("status");
             if (status) status.textContent = "Server stopped.";
+            setTimeout(function () {
+                window.location.reload();
+            }, 300);
         });
+    });
+
+    header.querySelector("#restart-btn").addEventListener("click", function (event) {
+        const button = event.currentTarget;
+        button.disabled = true;
+        button.textContent = "Restarting…";
+        fetch("/restart", { method: "POST" });
     });
 }
 
