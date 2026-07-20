@@ -12,6 +12,9 @@
 
     <div class="app-body">
         <aside class="app-body__sidebar">
+            <div class="sidebar-toolbar">
+                <button type="button" class="sidebar-toolbar__button" id="new-file">+ New file</button>
+            </div>
             <ul id="file-tree" class="tree-list tree-list--root"></ul>
         </aside>
         <main class="app-body__content">
@@ -23,8 +26,20 @@
                     <button type="button" class="view-switch__option" data-view="text" role="radio" aria-checked="false">Text</button>
                 </div>
                 <div class="content-toolbar__actions" id="content-toolbar-actions">
-                    <button type="button" class="content-toolbar__button" id="collapse-all">Collapse all</button>
-                    <button type="button" class="content-toolbar__button" id="expand-all">Expand all</button>
+                    <div class="content-toolbar__group" id="collapse-expand-group">
+                        <button type="button" class="content-toolbar__button" id="collapse-all">Collapse all</button>
+                        <button type="button" class="content-toolbar__button" id="expand-all">Expand all</button>
+                    </div>
+                    <div class="content-toolbar__download">
+                        <button type="button" class="content-toolbar__button" id="download-button" aria-haspopup="true" aria-expanded="false">Download ▾</button>
+                        <div class="content-toolbar__dropdown" id="download-dropdown" role="menu" hidden>
+                            <button type="button" class="content-toolbar__dropdown-item" data-format="json" role="menuitem">JSON</button>
+                            <button type="button" class="content-toolbar__dropdown-item" data-format="csv" role="menuitem">CSV</button>
+                            <button type="button" class="content-toolbar__dropdown-item" data-format="tsv" role="menuitem">TSV</button>
+                            <button type="button" class="content-toolbar__dropdown-item" data-format="pdf-text" role="menuitem">PDF Text</button>
+                            <button type="button" class="content-toolbar__dropdown-item" data-format="pdf-table" role="menuitem">PDF Table</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <pre id="file-content" class="file-content"></pre>

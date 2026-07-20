@@ -1,3 +1,22 @@
+.sidebar-toolbar {
+    margin-bottom: 8px;
+}
+
+.sidebar-toolbar__button {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background: #fff;
+    color: #1f2328;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.sidebar-toolbar__button:hover {
+    background: #f0f2f4;
+}
+
 .tree-list {
     list-style: none;
     margin: 0;
@@ -6,6 +25,12 @@
 
 .tree-list--root {
     padding: 0;
+    border-radius: 6px;
+}
+
+.tree-list--root.tree-list--drop-target {
+    outline: 2px dashed #218bff;
+    outline-offset: -2px;
 }
 
 .tree-list .tree-list {
@@ -21,6 +46,19 @@
     margin-bottom: 2px;
 }
 
+.tree-node__header {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border-radius: 6px;
+}
+
+.tree-node--dir.tree-node--drop-target > .tree-node__header {
+    background: #ddf4ff;
+    outline: 2px dashed #218bff;
+    outline-offset: -2px;
+}
+
 .tree-node__toggle,
 .tree-node__label {
     width: 100%;
@@ -30,12 +68,14 @@
     border-radius: 6px;
     background: transparent;
     color: #1f2328;
-    cursor: pointer;
+    cursor: grab;
     font-size: 0.9rem;
 }
 
 .tree-node__toggle {
     font-weight: 600;
+    flex: 1;
+    min-width: 0;
 }
 
 .tree-node__toggle:hover,
@@ -46,6 +86,40 @@
 .tree-node__label.active {
     background: #1f2328;
     color: #fff;
+}
+
+.tree-node__add {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    line-height: 1;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #57606a;
+    cursor: pointer;
+    font-size: 0.9rem;
+    opacity: 0;
+}
+
+.tree-node__header:hover .tree-node__add {
+    opacity: 1;
+}
+
+.tree-node__add:hover {
+    background: #f0f2f4;
+    color: #1f2328;
+}
+
+.tree-node__input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px 9px;
+    border: 1px solid #218bff;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
 }
 
 .content-toolbar {
