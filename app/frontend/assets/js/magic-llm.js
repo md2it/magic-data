@@ -74,6 +74,28 @@
     font: inherit;
 }
 .magic-llm-modal__ok:hover { background: #eaeef2; }
+.magic-llm-modal__ok--primary {
+    border-color: #1f6feb;
+    background: #1f6feb;
+    color: #fff;
+}
+.magic-llm-modal__ok--primary:hover { background: #1a5fd0; }
+.magic-llm-modal__footer--split { justify-content: flex-end; gap: 8px; }
+.magic-llm-form .magic-llm-modal__footer { padding: 4px 0 8px; }
+.magic-llm-form {
+    padding: 4px 20px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.magic-llm-field { display: flex; flex-direction: column; gap: 4px; }
+.magic-llm-field > span { font-size: 0.85rem; color: #57606a; }
+.magic-llm-field input {
+    padding: 8px 10px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    font: inherit;
+}
 @keyframes magic-llm-spin { to { transform: rotate(360deg); } }
 .magic-llm-spinner {
     display: inline-block;
@@ -141,6 +163,89 @@
         return response.json().catch(() => null);
     }
 
+    // A scenario may declare optional parameters as a { name: label } map.
+    // Returns the declared fields as [name, label] pairs, or [] when none.
+    function declaredParams(scenario) {
+        const params = scenario && scenario.params;
+        if (!params || typeof params !== "object") return [];
+        return Object.keys(params).map((name) => [name, String(params[name] || name)]);
+    }
+
+    // Show a small form for the declared optional parameters. Resolves with a
+    // { name: value } object, or null if the user cancelled.
+    function collectParams(title, fields) {
+        ensureStyles();
+        return new Promise(function (resolve) {
+            const backdrop = document.createElement("div");
+            backdrop.className = "magic-llm-modal-backdrop";
+            const modal = document.createElement("div");
+            modal.className = "magic-llm-modal";
+            modal.setAttribute("role", "dialog");
+            modal.setAttribute("aria-modal", "true");
+
+            const header = document.createElement("div");
+            header.className = "magic-llm-modal__header";
+            header.textContent = title;
+
+            const form = document.createElement("form");
+            form.className = "magic-llm-form";
+            const inputs = {};
+            fields.forEach(function (pair) {
+                const field = document.createElement("label");
+                field.className = "magic-llm-field";
+                const caption = document.createElement("span");
+                caption.textContent = pair[1];
+                const input = document.createElement("input");
+                input.type = "text";
+                input.name = pair[0];
+                inputs[pair[0]] = input;
+                field.append(caption, input);
+                form.appendChild(field);
+            });
+
+            const footer = document.createElement("div");
+            footer.className = "magic-llm-modal__footer magic-llm-modal__footer--split";
+            const cancel = document.createElement("button");
+            cancel.type = "button";
+            cancel.className = "magic-llm-modal__ok";
+            cancel.textContent = "Cancel";
+            const run = document.createElement("button");
+            run.type = "submit";
+            run.className = "magic-llm-modal__ok magic-llm-modal__ok--primary";
+            run.textContent = "Run";
+
+            function close(result) {
+                document.removeEventListener("keydown", onKeydown);
+                backdrop.remove();
+                resolve(result);
+            }
+            function onKeydown(event) {
+                if (event.key === "Escape") close(null);
+            }
+            cancel.addEventListener("click", function () { close(null); });
+            backdrop.addEventListener("click", function (event) {
+                if (event.target === backdrop) close(null);
+            });
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                const values = {};
+                Object.keys(inputs).forEach(function (name) {
+                    values[name] = inputs[name].value.trim();
+                });
+                close(values);
+            });
+            document.addEventListener("keydown", onKeydown);
+
+            footer.append(cancel, run);
+            form.appendChild(footer);
+            modal.append(header, form);
+            backdrop.appendChild(modal);
+            document.body.appendChild(backdrop);
+            const first = fields[0] && inputs[fields[0][0]];
+            if (first) first.focus();
+        });
+    }
+
     function setButtonLoading(button, label) {
         if (!button) return function () {};
         const original = button.innerHTML;
@@ -162,6 +267,23 @@
             options.loadingLabel ||
             (scenario && scenario.ui && scenario.ui.loadingLabel) ||
             "Running...";
+
+        // Optional parameters (Level 2): ask the user only when the scenario
+        // declares them and the caller did not already supply them.
+        let params = options.params || null;
+        if (!params && scenario) {
+            const fields = declaredParams(scenario);
+            if (fields.length > 0) {
+                params = await collectParams(title, fields);
+                if (params === null) return null; // cancelled
+            }
+        }
+
+        // The context carries call-site info (e.g. the current document) plus
+        // any collected optional parameters.
+        const context = Object.assign({}, options.context || {});
+        if (params) context.params = Object.assign({}, context.params, params);
+
         const restore = setButtonLoading(button, loadingLabel);
         try {
             const response = await fetch("/api/llm/run", {
@@ -171,7 +293,7 @@
                 body: JSON.stringify({
                     scenarioId: scenarioId,
                     provider: options.provider,
-                    context: options.context || {},
+                    context: context,
                     extra: options.extra || "",
                 }),
             });
