@@ -19,7 +19,6 @@ from llm_engine import (
     run_cascade,
 )
 from pages import render_page
-from ulid import new_ulid
 
 
 HOST = "localhost"
@@ -30,24 +29,6 @@ UI_DIR = (APP_DIR / "frontend").resolve()
 DATA_DIR = (APP_DIR.parent / "data").resolve()
 STOPPED_PAGE = b"Server stopped."
 VALID_NAME_RE = re.compile(r"^[^/\\]+$")
-
-
-def read_doc_id(file_path: Path) -> str | None:
-    """Reads the stable `id` a data document carries as its first key.
-
-    Best-effort: files that predate the id convention, or that aren't valid
-    JSON objects, simply have no id and are only reachable by their literal
-    path (see `resolve_data_route`).
-    """
-    try:
-        data = json.loads(file_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-        return None
-    if isinstance(data, dict):
-        doc_id = data.get("id")
-        if isinstance(doc_id, str) and doc_id:
-            return doc_id
-    return None
 
 
 def build_data_tree(dir_path: Path, rel_prefix: str = "") -> list:
@@ -70,7 +51,6 @@ def build_data_tree(dir_path: Path, rel_prefix: str = "") -> list:
                 "name": entry.name,
                 "type": "file",
                 "path": rel_path,
-                "id": read_doc_id(entry),
             })
 
     dirs.sort(key=lambda node: node["name"].lower())
@@ -78,50 +58,29 @@ def build_data_tree(dir_path: Path, rel_prefix: str = "") -> list:
     return dirs + files
 
 
-def build_id_index(dir_path: Path) -> dict:
-    """Flat map of `id -> relative path` for every data document that has one."""
-    index: dict[str, str] = {}
+def resolve_data_route(rel: str) -> tuple[str, str] | None:
+    """Resolves a `/data`-relative request path to `(kind, rel_path)`.
 
-    def walk(nodes: list) -> None:
-        for node in nodes:
-            if node["type"] == "dir":
-                walk(node["children"])
-            elif node.get("id"):
-                index[node["id"]] = node["path"]
-
-    walk(build_data_tree(dir_path))
-    return index
-
-
-def resolve_data_route(url_path: str) -> tuple[str, str] | None:
-    """Resolves a request path to `(kind, rel_path)`, `kind` in {"doc", "dir"}.
-
-    Only the last path segment is meaningful for documents: it is expected to
-    be `{id}` or `{id}-{slug}`, where everything before the first "-" is
-    looked up as a document id (the rest of the path, and the slug, are
-    purely decorative and never re-validated - so renaming/moving a document
-    never breaks a link built around its id). Falls back to a literal
-    directory or file path match for entries that don't carry an id yet
-    (e.g. added by hand outside the app). Returns None if nothing matches,
-    which the caller turns into a real 404 - this function is the single
-    place that decides whether a document/directory route exists.
+    `kind` is "dir" or "doc". Directories match their path literally; a
+    document is the same path with a `.json` suffix (the extension is
+    omitted from URLs, so `/data/language/english` maps to the file
+    `language/english.json`). `rel_path` is always the on-disk relative
+    path, so documents keep their `.json` suffix. Returns None when nothing
+    matches, which the caller turns into a real 404 - this function is the
+    single place that decides whether a document/directory route exists.
     """
-    rel = url_path.strip("/")
+    rel = rel.strip("/")
     if not rel:
         return ("dir", "")
-
-    last_segment = rel.rsplit("/", 1)[-1]
-    doc_id = last_segment.partition("-")[0]
-    id_index = build_id_index(DATA_DIR)
-    if doc_id in id_index:
-        return ("doc", id_index[doc_id])
 
     candidate = resolve_within_data_dir(rel)
     if candidate is not None and candidate.is_dir():
         rel_dir = "" if candidate == DATA_DIR else str(candidate.relative_to(DATA_DIR)).replace("\\", "/")
         return ("dir", rel_dir)
-    if candidate is not None and candidate.suffix == ".json" and candidate.is_file():
-        return ("doc", rel)
+
+    doc = resolve_within_data_dir(f"{rel}.json")
+    if doc is not None and doc.suffix == ".json" and doc.is_file():
+        return ("doc", f"{rel}.json")
 
     return None
 
@@ -163,12 +122,18 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             self.serve_data_app("dir", "")
             return
 
-        if not path.startswith("/assets/"):
-            if self.handle_page(path):
-                return
-            route = resolve_data_route(path)
+        # Data documents/directories live under a dedicated `/data` namespace
+        # so they can never collide with application pages or assets.
+        if path == "/data" or path.startswith("/data/"):
+            route = resolve_data_route(path[len("/data"):])
             if route is not None:
                 self.serve_data_app(*route)
+            else:
+                self.send_error(404)
+            return
+
+        if not path.startswith("/assets/"):
+            if self.handle_page(path):
                 return
 
         self.handle_frontend_file(path)
@@ -238,10 +203,9 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             self.send_error(409)
             return
 
-        doc_id = new_ulid()
-        file_path.write_text(json.dumps({"id": doc_id}, indent=2) + "\n", encoding="utf-8")
+        file_path.write_text("{}\n", encoding="utf-8")
         rel_path = str(file_path.relative_to(DATA_DIR)).replace("\\", "/")
-        self.send_json({"path": rel_path, "type": "file", "id": doc_id})
+        self.send_json({"path": rel_path, "type": "file"})
 
     def handle_move_data_entry(self, data: dict) -> None:
         source_rel = str(data.get("source", "")).strip("/")

@@ -82,7 +82,6 @@ function createFileNode(node) {
     button.textContent = displayName(node.name);
     button.title = node.name;
     button.dataset.path = node.path;
-    button.dataset.id = node.id || "";
     button.draggable = true;
     button.addEventListener("click", function () {
         selectFile(node.path, button, { push: true });
@@ -227,7 +226,6 @@ let fileTreeRoot;
 let currentTree = [];
 let currentMode = "doc";
 let currentFilePath = "";
-let currentDocId = "";
 let currentFileText = "";
 let currentDirPath = "";
 
@@ -255,40 +253,27 @@ function setActiveView(view) {
 // itself, it only mirrors that decision into pushState/replaceState so
 // the address bar and back/forward stay in sync with what's on screen.
 //
-// Document URLs carry the document's id as the last path segment
-// (optionally followed by "-{slug}" for readability); everything before
-// that is decorative directory context that is never re-validated, so
-// renaming/moving a document never breaks a link built around its id.
-// Documents without an id yet (created outside the app) fall back to
-// their literal path.
+// All data routes live under the `/data` namespace, keeping them clear of
+// application pages and assets. A document is addressed by its readable
+// path with the `.json` extension dropped (e.g. `/data/language/english`);
+// a directory by its path (`/data/city`, or `/data` for the root).
 // ------------------------------------------------------------------
 
-function slugify(name) {
-    return name
-        .replace(/\.[^./]+$/, "")
-        .toLowerCase()
-        .replace(/[^\p{L}\p{N}]+/gu, "-")
-        .replace(/^-+|-+$/g, "");
-}
-
-function buildDocUrl(path, id) {
+function buildDocUrl(path) {
     const parts = path.split("/");
-    if (id) {
-        const slug = slugify(parts[parts.length - 1]);
-        parts[parts.length - 1] = slug ? `${id}-${slug}` : id;
-    }
+    parts[parts.length - 1] = displayName(parts[parts.length - 1]);
     const view = currentView();
     const qs = view && view !== "json" ? `?view=${encodeURIComponent(view)}` : "";
-    return `/${parts.map(encodeURIComponent).join("/")}${qs}`;
+    return `/data/${parts.map(encodeURIComponent).join("/")}${qs}`;
 }
 
 function buildDirUrl(path) {
-    if (!path) return "/";
-    return `/${path.split("/").map(encodeURIComponent).join("/")}`;
+    if (!path) return "/data";
+    return `/data/${path.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 function updateUrl(push) {
-    const url = currentMode === "dir" ? buildDirUrl(currentDirPath) : buildDocUrl(currentFilePath, currentDocId);
+    const url = currentMode === "dir" ? buildDirUrl(currentDirPath) : buildDocUrl(currentFilePath);
     if (push) {
         window.history.pushState(null, "", url);
     } else {
@@ -345,7 +330,6 @@ async function selectFile(path, button, options) {
     });
 
     currentFilePath = path;
-    currentDocId = button.dataset.id || "";
     currentFileText = await loadFileContent(path);
     renderCurrentFile();
     if (!opts.silent) updateUrl(Boolean(opts.push));
@@ -424,10 +408,9 @@ async function refreshTree() {
     fileTreeRoot.innerHTML = "";
     renderTree(fileTreeRoot, currentTree);
 
-    if (currentMode === "doc" && currentDocId) {
-        const button = fileTreeRoot.querySelector(`.tree-node__label[data-id="${CSS.escape(currentDocId)}"]`);
+    if (currentMode === "doc" && currentFilePath) {
+        const button = findButton(currentFilePath);
         if (button) {
-            currentFilePath = button.dataset.path;
             expandAncestors(button);
             button.classList.add("active");
             updateUrl(false);
