@@ -84,7 +84,7 @@ function createFileNode(node) {
     button.dataset.path = node.path;
     button.draggable = true;
     button.addEventListener("click", function () {
-        selectFile(node.path, button);
+        selectFile(node.path, button, { push: true });
     });
     attachDragSource(button, node.path);
 
@@ -154,7 +154,7 @@ async function moveEntry(sourcePath, targetDir) {
     });
     if (response.ok) {
         const result = await response.json();
-        await refreshTree(result);
+        await refreshTree(result, sourcePath);
     } else if (response.status === 409) {
         showToast(`"${displayName(sourcePath.split("/").pop())}" already exists there`);
     }
@@ -217,10 +217,23 @@ function startCreateEntry(dirPath, childList, type) {
     });
 }
 
-async function refreshTree(result) {
+async function refreshTree(result, oldPath) {
     const tree = await loadFileTree();
     fileTreeRoot.innerHTML = "";
     renderTree(fileTreeRoot, tree);
+
+    if (oldPath && currentFilePath) {
+        const remapped = remapPath(currentFilePath, oldPath, result.path);
+        if (remapped !== currentFilePath) {
+            const button = findButton(remapped);
+            if (button) {
+                expandAncestors(button);
+                await selectFile(remapped, button, { push: false });
+            }
+            return;
+        }
+    }
+
     if (!result || !result.path) return;
 
     if (result.type === "dir") {
@@ -243,9 +256,50 @@ async function refreshTree(result) {
 let currentFileText = "";
 let currentFilePath = "";
 
+const VALID_VIEWS = ["json", "tree", "table", "text"];
+
 function currentView() {
     const active = document.querySelector("#view-switch .view-switch__option.active");
     return active ? active.dataset.view : "json";
+}
+
+function setActiveView(view) {
+    const switchEl = document.getElementById("view-switch");
+    switchEl.querySelectorAll(".view-switch__option").forEach(function (btn) {
+        const active = btn.dataset.view === view;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-checked", String(active));
+    });
+    updateToolbarActions();
+}
+
+function buildUrl(path, view) {
+    const params = new URLSearchParams();
+    if (path) params.set("path", path);
+    if (view) params.set("view", view);
+    const qs = params.toString();
+    return qs ? `?${qs}` : window.location.pathname;
+}
+
+function updateUrl(path, view, push) {
+    const url = buildUrl(path, view);
+    const state = { path: path, view: view };
+    if (push) {
+        window.history.pushState(state, "", url);
+    } else {
+        window.history.replaceState(state, "", url);
+    }
+}
+
+function parseUrlState() {
+    const params = new URLSearchParams(window.location.search);
+    const path = params.get("path") || "";
+    const view = params.get("view");
+    return { path: path, view: VALID_VIEWS.includes(view) ? view : null };
+}
+
+function findButton(path) {
+    return fileTreeRoot.querySelector(`.tree-node__label[data-path="${CSS.escape(path)}"]`);
 }
 
 function renderCurrentFile() {
@@ -253,7 +307,32 @@ function renderCurrentFile() {
     window.ContentView.render(currentView(), currentFileText, content);
 }
 
-async function selectFile(path, button) {
+function showNotFound(path) {
+    document.querySelectorAll(".tree-node__label").forEach(function (btn) {
+        btn.classList.remove("active");
+    });
+    currentFilePath = "";
+    currentFileText = "";
+
+    document.getElementById("content-toolbar-actions").hidden = true;
+
+    const content = document.getElementById("file-content");
+    content.className = "file-content";
+    delete content.dataset.currentView;
+    content.innerHTML = "";
+    const message = document.createElement("div");
+    message.className = "not-found";
+    message.textContent = `Document not found: ${path}`;
+    content.appendChild(message);
+}
+
+function hideNotFound() {
+    document.getElementById("content-toolbar-actions").hidden = false;
+}
+
+async function selectFile(path, button, options) {
+    const opts = options || {};
+    hideNotFound();
     document.querySelectorAll(".tree-node__label").forEach(function (btn) {
         btn.classList.toggle("active", btn === button);
     });
@@ -261,6 +340,39 @@ async function selectFile(path, button) {
     currentFilePath = path;
     currentFileText = await loadFileContent(path);
     renderCurrentFile();
+    if (!opts.silent) updateUrl(path, currentView(), Boolean(opts.push));
+}
+
+function remapPath(path, oldPath, newPath) {
+    if (path === oldPath) return newPath;
+    if (path.startsWith(`${oldPath}/`)) return newPath + path.slice(oldPath.length);
+    return path;
+}
+
+function applyUrlState(isInitial, tree) {
+    const state = parseUrlState();
+    if (state.view) setActiveView(state.view);
+
+    if (!state.path) {
+        hideNotFound();
+        if (isInitial) {
+            const firstPath = findFirstFilePath(tree);
+            if (firstPath) {
+                const button = findButton(firstPath);
+                expandAncestors(button);
+                selectFile(firstPath, button, { silent: false, push: false });
+            }
+        }
+        return;
+    }
+
+    const button = findButton(state.path);
+    if (!button) {
+        showNotFound(state.path);
+        return;
+    }
+    expandAncestors(button);
+    selectFile(state.path, button, { silent: true });
 }
 
 function expandAncestors(button) {
@@ -383,13 +495,9 @@ function initViewSwitch() {
     const switchEl = document.getElementById("view-switch");
     switchEl.querySelectorAll(".view-switch__option").forEach(function (option) {
         option.addEventListener("click", function () {
-            switchEl.querySelectorAll(".view-switch__option").forEach(function (btn) {
-                const active = btn === option;
-                btn.classList.toggle("active", active);
-                btn.setAttribute("aria-checked", String(active));
-            });
-            updateToolbarActions();
+            setActiveView(option.dataset.view);
             renderCurrentFile();
+            if (currentFilePath) updateUrl(currentFilePath, currentView(), false);
         });
     });
     updateToolbarActions();
@@ -420,12 +528,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const tree = await loadFileTree();
     renderTree(fileTreeRoot, tree);
 
-    const firstPath = findFirstFilePath(tree);
-    if (firstPath) {
-        const button = fileTreeRoot.querySelector(`.tree-node__label[data-path="${CSS.escape(firstPath)}"]`);
-        expandAncestors(button);
-        button.click();
-    }
+    initViewSwitch();
+    applyUrlState(true, tree);
+
+    window.addEventListener("popstate", function () {
+        applyUrlState(false, tree);
+    });
 
     document.getElementById("new-file").addEventListener("click", function () {
         startCreateEntry("", fileTreeRoot, "file");
@@ -441,6 +549,5 @@ document.addEventListener("DOMContentLoaded", async function () {
         window.ContentView.expandAll(document.getElementById("file-content"));
     });
 
-    initViewSwitch();
     initDownloadMenu();
 });
