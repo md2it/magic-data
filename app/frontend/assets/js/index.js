@@ -59,13 +59,25 @@ function renderTree(container, nodes) {
     });
 }
 
+let currentFileText = "";
+
+function currentView() {
+    const active = document.querySelector("#view-switch .view-switch__option.active");
+    return active ? active.dataset.view : "json";
+}
+
+function renderCurrentFile() {
+    const content = document.getElementById("file-content");
+    window.ContentView.render(currentView(), currentFileText, content);
+}
+
 async function selectFile(path, button) {
     document.querySelectorAll(".tree-node__label").forEach(function (btn) {
         btn.classList.toggle("active", btn === button);
     });
 
-    const content = document.getElementById("file-content");
-    content.textContent = await loadFileContent(path);
+    currentFileText = await loadFileContent(path);
+    renderCurrentFile();
 }
 
 function expandAncestors(button) {
@@ -87,13 +99,6 @@ function findFirstFilePath(nodes) {
     return null;
 }
 
-function setAllExpanded(expanded) {
-    document.querySelectorAll(".tree-node--dir").forEach(function (li) {
-        const toggle = li.querySelector(":scope > .tree-node__toggle");
-        setExpanded(li, toggle, li.dataset.name, expanded);
-    });
-}
-
 function initViewSwitch() {
     const switchEl = document.getElementById("view-switch");
     switchEl.querySelectorAll(".view-switch__option").forEach(function (option) {
@@ -103,6 +108,7 @@ function initViewSwitch() {
                 btn.classList.toggle("active", active);
                 btn.setAttribute("aria-checked", String(active));
             });
+            renderCurrentFile();
         });
     });
 }
@@ -120,10 +126,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     document.getElementById("collapse-all").addEventListener("click", function () {
-        setAllExpanded(false);
+        window.ContentView.collapseAll(document.getElementById("file-content"));
     });
     document.getElementById("expand-all").addEventListener("click", function () {
-        setAllExpanded(true);
+        window.ContentView.expandAll(document.getElementById("file-content"));
     });
 
     initViewSwitch();
