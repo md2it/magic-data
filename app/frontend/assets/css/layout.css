@@ -1,0 +1,30 @@
+
+.print-footer {
+    display: none;
+}
+
+@media print {
+    .app-header,
+    .app-body__sidebar,
+    .app-footer {
+        display: none !important;
+    }
+
+    .app-body {
+        display: block;
+    }
+
+    .app-body__content {
+        padding: 0;
+    }
+
+    .print-footer {
+        display: block;
+        margin-top: 24px;
+        padding-top: 8px;
+        border-top: 1px solid #d0d7de;
+        font-size: 0.8rem;
+        color: #57606a;
+        text-align: center;
+    }
+}
