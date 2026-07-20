@@ -24,6 +24,12 @@
  *       Expands every collapsible node currently rendered in `container`.
  *       No-op if the current view has nothing collapsible.
  *
+ *   - toDelimited(rawText, delimiter)
+ *       Converts `rawText` (raw file content) to a delimited-text string
+ *       (e.g. "," for CSV, "\t" for TSV) using the same row/column
+ *       extraction and cell formatting as the Table view, so downloads
+ *       match what is rendered on screen.
+ *
  * Extending with a new view (tree/table/text):
  *   Each view is implemented as an entry in the `views` object below, with
  *   the shape:
@@ -639,6 +645,41 @@
     }
 
     // ------------------------------------------------------------------
+    // Delimited text export (CSV/TSV) - reuses the exact same row/column
+    // extraction and cell formatting as the Table view, so the exported
+    // file matches what is rendered on screen.
+    // ------------------------------------------------------------------
+
+    function needsQuoting(value, delimiter) {
+        return value.indexOf(delimiter) !== -1 || value.indexOf('"') !== -1 ||
+            value.indexOf("\n") !== -1 || value.indexOf("\r") !== -1;
+    }
+
+    function delimitedEscape(value, delimiter) {
+        return needsQuoting(value, delimiter) ? `"${value.replace(/"/g, '""')}"` : value;
+    }
+
+    function toDelimited(rawText, delimiter) {
+        const parsedJson = parseJsonSafe(rawText);
+        if (parsedJson === undefined) return rawText;
+
+        const topLevelNodes = selectRowSource(parsedJson);
+        if (topLevelNodes === null) return delimitedEscape(formatCellValue(parsedJson), delimiter);
+        if (topLevelNodes.length === 0) return "";
+
+        const rowObjects = topLevelNodes.map(toRowObject);
+        const columns = collectColumns(rowObjects);
+
+        const lines = [columns.map(function (col) { return delimitedEscape(col, delimiter); }).join(delimiter)];
+        rowObjects.forEach(function (rowObj) {
+            lines.push(columns.map(function (col) {
+                return delimitedEscape(formatCellValue(rowObj[col]), delimiter);
+            }).join(delimiter));
+        });
+        return lines.join("\r\n");
+    }
+
+    // ------------------------------------------------------------------
     // View registry
     // ------------------------------------------------------------------
 
@@ -731,5 +772,6 @@
         render: render,
         collapseAll: collapseAll,
         expandAll: expandAll,
+        toDelimited: toDelimited,
     };
 })();

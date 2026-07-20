@@ -191,6 +191,7 @@ async function refreshTree(selectPath) {
 }
 
 let currentFileText = "";
+let currentFilePath = "";
 
 function currentView() {
     const active = document.querySelector("#view-switch .view-switch__option.active");
@@ -207,6 +208,7 @@ async function selectFile(path, button) {
         btn.classList.toggle("active", btn === button);
     });
 
+    currentFilePath = path;
     currentFileText = await loadFileContent(path);
     renderCurrentFile();
 }
@@ -233,8 +235,98 @@ function findFirstFilePath(nodes) {
 const VIEWS_WITH_COLLAPSE_CONTROLS = ["json", "tree"];
 
 function updateToolbarActions() {
-    const actions = document.getElementById("content-toolbar-actions");
-    actions.hidden = !VIEWS_WITH_COLLAPSE_CONTROLS.includes(currentView());
+    const group = document.getElementById("collapse-expand-group");
+    group.hidden = !VIEWS_WITH_COLLAPSE_CONTROLS.includes(currentView());
+}
+
+function baseFileName(path) {
+    const name = path.split("/").pop() || "file";
+    return name.replace(/\.[^./]+$/, "");
+}
+
+function triggerDownload(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
+function printAsView(viewName) {
+    const content = document.getElementById("file-content");
+    const originalView = currentView();
+    const originalTitle = document.title;
+
+    window.ContentView.render(viewName, currentFileText, content);
+    document.title = baseFileName(currentFilePath);
+
+    function restore() {
+        window.removeEventListener("afterprint", restore);
+        document.title = originalTitle;
+        window.ContentView.render(originalView, currentFileText, content);
+    }
+    window.addEventListener("afterprint", restore);
+    window.print();
+}
+
+function downloadAs(format) {
+    if (!currentFilePath) return;
+    const base = baseFileName(currentFilePath);
+    switch (format) {
+        case "json":
+            triggerDownload(`${base}.json`, currentFileText, "application/json");
+            break;
+        case "csv":
+            triggerDownload(`${base}.csv`, window.ContentView.toDelimited(currentFileText, ","), "text/csv");
+            break;
+        case "tsv":
+            triggerDownload(`${base}.tsv`, window.ContentView.toDelimited(currentFileText, "\t"), "text/tab-separated-values");
+            break;
+        case "pdf-text":
+            printAsView("text");
+            break;
+        case "pdf-table":
+            printAsView("table");
+            break;
+    }
+}
+
+function initDownloadMenu() {
+    const button = document.getElementById("download-button");
+    const dropdown = document.getElementById("download-dropdown");
+
+    function closeDropdown() {
+        dropdown.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+    }
+
+    button.addEventListener("click", function (event) {
+        event.stopPropagation();
+        const willOpen = dropdown.hidden;
+        dropdown.hidden = !willOpen;
+        button.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    dropdown.querySelectorAll("[data-format]").forEach(function (item) {
+        item.addEventListener("click", function () {
+            closeDropdown();
+            downloadAs(item.dataset.format);
+        });
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!dropdown.hidden && !dropdown.contains(event.target) && event.target !== button) {
+            closeDropdown();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !dropdown.hidden) closeDropdown();
+    });
 }
 
 function initViewSwitch() {
@@ -297,4 +389,5 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     initViewSwitch();
+    initDownloadMenu();
 });
