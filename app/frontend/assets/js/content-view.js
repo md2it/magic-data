@@ -343,17 +343,39 @@
         return { value: node };
     }
 
+    /**
+     * Picks the collection of top-level nodes to turn into table rows.
+     *
+     * The primary shape this app serves is the project data contract:
+     * a root object `{ schema, items }` where `items` is the array of record
+     * objects (see data/AGENTS.md). When that shape is present we tabulate
+     * `items` directly, so `schema` (metadata) is never mistaken for a row.
+     *
+     * Otherwise we degrade gracefully for arbitrary JSON:
+     *   - an array root         -> its elements are the rows
+     *   - any other object root  -> its values are the rows
+     *   - a primitive root       -> null (nothing tabular; caller falls back)
+     */
+    function selectRowSource(parsedJson) {
+        if (parsedJson !== null && typeof parsedJson === "object" && !Array.isArray(parsedJson)) {
+            if (Array.isArray(parsedJson.items)) {
+                return parsedJson.items;
+            }
+            return Object.values(parsedJson);
+        }
+        if (Array.isArray(parsedJson)) {
+            return parsedJson;
+        }
+        return null;
+    }
+
     function renderTable(parsedJson, container) {
         container.innerHTML = "";
         container.classList.remove("json-view", "tree-view");
         container.classList.add("content-table-view");
 
-        let topLevelNodes;
-        if (Array.isArray(parsedJson)) {
-            topLevelNodes = parsedJson;
-        } else if (parsedJson !== null && typeof parsedJson === "object") {
-            topLevelNodes = Object.values(parsedJson);
-        } else {
+        const topLevelNodes = selectRowSource(parsedJson);
+        if (topLevelNodes === null) {
             // Root is a primitive - nothing tabular to show, fall back to text.
             renderPlainText(JSON.stringify(parsedJson), container);
             return;
