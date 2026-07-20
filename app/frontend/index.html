@@ -15,6 +15,37 @@
             <ul id="file-tree" class="tree-list tree-list--root"></ul>
         </aside>
         <main class="app-body__content">
+            <div class="content-toolbar">
+                <div class="view-switch" id="view-switch" role="radiogroup" aria-label="View">
+                    <button type="button" class="view-switch__option active" data-view="json" role="radio" aria-checked="true">JSON</button>
+                    <button type="button" class="view-switch__option" data-view="tree" role="radio" aria-checked="false">Tree</button>
+                    <button type="button" class="view-switch__option" data-view="table" role="radio" aria-checked="false">Table</button>
+                    <button type="button" class="view-switch__option" data-view="text" role="radio" aria-checked="false">Text</button>
+                </div>
+                <button type="button" class="content-toolbar__button" id="collapse-all">Collapse all</button>
+                <button type="button" class="content-toolbar__button" id="expand-all">Expand all</button>
+                <div class="settings-dropdown" id="settings-dropdown">
+                    <button type="button" class="content-toolbar__button settings-dropdown__toggle" id="settings-toggle" aria-haspopup="true" aria-expanded="false">Settings ▾</button>
+                    <div class="settings-dropdown__menu" id="settings-menu" hidden>
+                        <label class="settings-dropdown__item">
+                            <span>Show schema</span>
+                            <input type="checkbox" class="switch" id="show-schema-toggle">
+                        </label>
+                        <label class="settings-dropdown__item">
+                            <span>Test toggle 1</span>
+                            <input type="checkbox" class="switch" id="test-toggle-1">
+                        </label>
+                        <label class="settings-dropdown__item">
+                            <span>Test toggle 2</span>
+                            <input type="checkbox" class="switch" id="test-toggle-2">
+                        </label>
+                        <label class="settings-dropdown__item">
+                            <span>Test toggle 3</span>
+                            <input type="checkbox" class="switch" id="test-toggle-3">
+                        </label>
+                    </div>
+                </div>
+            </div>
             <pre id="file-content" class="file-content"></pre>
             <div id="print-footer" class="print-footer"></div>
         </main>

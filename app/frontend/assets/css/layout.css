@@ -97,7 +97,8 @@ body {
 @media print {
     .app-header,
     .app-body__sidebar,
-    .app-footer {
+    .app-footer,
+    .content-toolbar {
         display: none !important;
     }
 

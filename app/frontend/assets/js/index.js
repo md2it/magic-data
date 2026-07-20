@@ -87,6 +87,48 @@ function findFirstFilePath(nodes) {
     return null;
 }
 
+function setAllExpanded(expanded) {
+    document.querySelectorAll(".tree-node--dir").forEach(function (li) {
+        const toggle = li.querySelector(":scope > .tree-node__toggle");
+        setExpanded(li, toggle, li.dataset.name, expanded);
+    });
+}
+
+function initViewSwitch() {
+    const switchEl = document.getElementById("view-switch");
+    switchEl.querySelectorAll(".view-switch__option").forEach(function (option) {
+        option.addEventListener("click", function () {
+            switchEl.querySelectorAll(".view-switch__option").forEach(function (btn) {
+                const active = btn === option;
+                btn.classList.toggle("active", active);
+                btn.setAttribute("aria-checked", String(active));
+            });
+        });
+    });
+}
+
+function initSettingsDropdown() {
+    const dropdown = document.getElementById("settings-dropdown");
+    const toggle = document.getElementById("settings-toggle");
+    const menu = document.getElementById("settings-menu");
+
+    function setOpen(open) {
+        menu.hidden = !open;
+        toggle.setAttribute("aria-expanded", String(open));
+    }
+
+    toggle.addEventListener("click", function (event) {
+        event.stopPropagation();
+        setOpen(menu.hidden);
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!dropdown.contains(event.target)) {
+            setOpen(false);
+        }
+    });
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
     const tree = await loadFileTree();
     const root = document.getElementById("file-tree");
@@ -98,4 +140,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         expandAncestors(button);
         button.click();
     }
+
+    document.getElementById("collapse-all").addEventListener("click", function () {
+        setAllExpanded(false);
+    });
+    document.getElementById("expand-all").addEventListener("click", function () {
+        setAllExpanded(true);
+    });
+
+    initViewSwitch();
+    initSettingsDropdown();
 });
