@@ -50,6 +50,9 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         if path == "/help":
             self.handle_static_page("help")
             return
+        if path == "/settings":
+            self.handle_frontend_file("/settings.html")
+            return
 
         self.handle_frontend_file(path)
 

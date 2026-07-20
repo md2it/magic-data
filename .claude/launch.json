@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "magic-data",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["app/run.py"],
+      "port": 57214
+    }
+  ]
+}

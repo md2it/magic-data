@@ -107,28 +107,6 @@ function initViewSwitch() {
     });
 }
 
-function initSettingsDropdown() {
-    const dropdown = document.getElementById("settings-dropdown");
-    const toggle = document.getElementById("settings-toggle");
-    const menu = document.getElementById("settings-menu");
-
-    function setOpen(open) {
-        menu.hidden = !open;
-        toggle.setAttribute("aria-expanded", String(open));
-    }
-
-    toggle.addEventListener("click", function (event) {
-        event.stopPropagation();
-        setOpen(menu.hidden);
-    });
-
-    document.addEventListener("click", function (event) {
-        if (!dropdown.contains(event.target)) {
-            setOpen(false);
-        }
-    });
-}
-
 document.addEventListener("DOMContentLoaded", async function () {
     const tree = await loadFileTree();
     const root = document.getElementById("file-tree");
@@ -149,5 +127,4 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     initViewSwitch();
-    initSettingsDropdown();
 });

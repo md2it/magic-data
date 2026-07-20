@@ -10,6 +10,7 @@ function renderHeader() {
         <p class="app-header__title">${PROJECT_NAME}</p>
         <nav class="app-header__nav" aria-label="Main navigation">
             <a href="/">Data</a>
+            <a href="/settings">Settings</a>
             <a href="/help">Help</a>
         </nav>
         <button id="stop-btn" type="button">Stop</button>
