@@ -99,6 +99,13 @@ function findFirstFilePath(nodes) {
     return null;
 }
 
+const VIEWS_WITH_COLLAPSE_CONTROLS = ["json", "tree"];
+
+function updateToolbarActions() {
+    const actions = document.getElementById("content-toolbar-actions");
+    actions.hidden = !VIEWS_WITH_COLLAPSE_CONTROLS.includes(currentView());
+}
+
 function initViewSwitch() {
     const switchEl = document.getElementById("view-switch");
     switchEl.querySelectorAll(".view-switch__option").forEach(function (option) {
@@ -108,9 +115,11 @@ function initViewSwitch() {
                 btn.classList.toggle("active", active);
                 btn.setAttribute("aria-checked", String(active));
             });
+            updateToolbarActions();
             renderCurrentFile();
         });
     });
+    updateToolbarActions();
 }
 
 document.addEventListener("DOMContentLoaded", async function () {

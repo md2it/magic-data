@@ -51,10 +51,16 @@
 .content-toolbar {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
     padding-bottom: 12px;
     margin-bottom: 12px;
     border-bottom: 1px solid #d0d7de;
+}
+
+.content-toolbar__actions {
+    display: flex;
+    gap: 8px;
 }
 
 .content-toolbar__button {
