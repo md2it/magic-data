@@ -4,8 +4,10 @@
 # (app/llm-scenarios/*.yaml) and per-call overrides from the UI take
 # precedence over the values here.
 
-# Provider used when a scenario does not name one and the UI does not override.
-default_provider: codex
+# Selector used when a scenario does not name one and the UI does not override.
+# May be a cascade name (auto / codex / claude), a profile name, or a bare
+# provider (codex / claude).
+default_provider: auto
 
 # Hard limit for a single CLI run, in seconds.
 timeout_seconds: 600
@@ -18,3 +20,47 @@ codex_network_access: true
 # Claude CLI settings.
 claude_bin: claude
 claude_permission_mode: bypassPermissions
+
+# Profiles: a named combination of provider + optional model + optional effort
+# (reasoning level). Model and effort are optional; when omitted the CLI's own
+# default is used.
+profiles:
+  claude-sonnet-low:
+    provider: claude
+    model: sonnet
+    effort: low
+  claude-default-low:
+    provider: claude
+    effort: low
+  codex-terra-low:
+    provider: codex
+    model: gpt-5.6-terra
+    effort: low
+  codex-56-low:
+    provider: codex
+    model: gpt-5.6
+    effort: low
+  codex-default-low:
+    provider: codex
+    effort: low
+
+# Cascades: ordered lists of profiles tried until one succeeds. Any failure of
+# a step (missing CLI, no connection, non-zero exit, timeout, limits) moves on
+# to the next step. Each provider also degrades from a specific model down to
+# its default, so a deprecated model never breaks the cascade.
+cascades:
+  # Cross-provider default: the whole Claude chain, then the whole Codex chain.
+  auto:
+    - claude-sonnet-low
+    - claude-default-low
+    - codex-terra-low
+    - codex-56-low
+    - codex-default-low
+  # Single-provider chains (used when a button pins a provider).
+  claude:
+    - claude-sonnet-low
+    - claude-default-low
+  codex:
+    - codex-terra-low
+    - codex-56-low
+    - codex-default-low

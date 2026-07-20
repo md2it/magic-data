@@ -13,14 +13,18 @@ from llm_engine.yaml_min import parse_yaml
 
 CONFIG_PATH = (Path(__file__).resolve().parent / "config.yaml").resolve()
 
+# Built-in fallbacks so the engine still works if config.yaml is missing or
+# partial. The shipped config.yaml provides the full profile/cascade set.
 DEFAULTS: dict[str, Any] = {
-    "default_provider": "codex",
+    "default_provider": "auto",
     "timeout_seconds": 600,
     "codex_bin": "codex",
     "codex_sandbox": "workspace-write",
     "codex_network_access": True,
     "claude_bin": "claude",
     "claude_permission_mode": "bypassPermissions",
+    "profiles": {},
+    "cascades": {},
 }
 
 

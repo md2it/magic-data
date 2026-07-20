@@ -6,7 +6,13 @@ provider (Codex or Claude). See ``app/llm-scenarios/*.yaml`` for scenarios and
 """
 
 from llm_engine.config import load_config
-from llm_engine.providers import SUPPORTED_PROVIDERS, ProviderError, run_provider
+from llm_engine.providers import (
+    SUPPORTED_PROVIDERS,
+    ProviderError,
+    resolve_steps,
+    run_cascade,
+    run_provider,
+)
 from llm_engine.scenarios import load_scenario, render_prompt
 
 __all__ = [
@@ -14,6 +20,8 @@ __all__ = [
     "load_scenario",
     "render_prompt",
     "run_provider",
+    "resolve_steps",
+    "run_cascade",
     "ProviderError",
     "SUPPORTED_PROVIDERS",
 ]

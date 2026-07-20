@@ -60,8 +60,9 @@ review, copy, and adjust without touching application logic.
 At the moment of the click, an action can be tailored for that single
 invocation. Several kinds of customization are possible:
 
-- **Choose the agent.** The same action can be run through a different local
-  agent than its default.
+- **Pin an agent (optional).** By default an action does not choose an agent at
+  all — selection is automatic (see below). A button may still pin a specific
+  agent when that is deliberately wanted.
 - **Call-site context (automatic).** The interface passes in where the action
   was launched from, without the user doing anything. For example, an action
   triggered from inside a document supplies that document's location and name,
@@ -88,16 +89,36 @@ ever launched: a missing required input is treated as an error, not guessed.
 Optional values that were not supplied simply resolve to empty. Each run also
 gets its own session marker so repeated runs stay independent.
 
-## Agents are interchangeable
+## Choosing an agent automatically
 
-The system talks to more than one local AI CLI. Any supported agent can run any
-action, which is why the same task can be sent to one agent or another. Support
-for a new agent means teaching the system how to invoke that CLI; the actions
-themselves do not change.
+The user should not have to think about which agent runs an action. By default,
+selection is automatic and resilient.
 
-To use magic buttons at all, the corresponding CLI must be installed on the
-machine. If it is missing, the action fails with a clear message instead of
-doing anything unexpected.
+Selection is described declaratively as an ordered list of options — a
+*cascade*. Each option is an agent together with, optionally, a specific model
+and effort level. When an action runs, the engine tries the first option; if it
+fails for any reason — the CLI is missing, there is no connection, a model is
+unavailable or deprecated, a limit is hit, the run errors or times out — the
+engine moves on to the next option. The first option that succeeds provides the
+result; the user simply gets an answer.
+
+Two ideas keep this robust:
+
+- **Degrade from specific to general.** Within one agent, the cascade goes from a
+  precise model down to that agent's default. A renamed or retired model just
+  falls through to the next option instead of breaking the action.
+- **Then fall back across agents.** The automatic cascade tries one agent's whole
+  chain, then the next agent's. Only if every option fails does the user see an
+  error, and then it explains what was tried.
+
+The set of options lives in configuration, so cascades can be reordered, or new
+agents and models added, without touching application logic. A button may still
+pin a single agent or a single option when that is intended; pinning simply uses
+a shorter cascade.
+
+At least one of the configured CLIs must be installed for magic buttons to work.
+If none is available, the action fails with a clear message rather than doing
+anything unexpected.
 
 ## How to add a new magic action
 
