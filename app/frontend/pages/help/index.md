@@ -38,6 +38,8 @@ Magic buttons let you invoke an AI agent from the interface:
 - **Create a new document** — the agent helps configure its schema.
 - **Fill a document** — the agent searches for data on the web and fills the document.
 
+See [How magic buttons work](/help/magic-buttons) for the principles and flow behind them.
+
 To use Magic buttons, install a CLI for Codex or Claude. A CLI is a program that runs from the command line and lets Magic-data invoke the corresponding agent on your computer.
 
 - [Install Codex CLI](https://developers.openai.com/codex/cli/)
