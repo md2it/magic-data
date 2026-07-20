@@ -1,0 +1,20 @@
+# Magic-data LLM engine — global configuration (level 1).
+#
+# These are the defaults for every LLM call. Individual scenarios
+# (app/llm-scenarios/*.yaml) and per-call overrides from the UI take
+# precedence over the values here.
+
+# Provider used when a scenario does not name one and the UI does not override.
+default_provider: codex
+
+# Hard limit for a single CLI run, in seconds.
+timeout_seconds: 600
+
+# Codex CLI settings.
+codex_bin: codex
+codex_sandbox: workspace-write
+codex_network_access: true
+
+# Claude CLI settings.
+claude_bin: claude
+claude_permission_mode: bypassPermissions

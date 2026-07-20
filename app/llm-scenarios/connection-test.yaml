@@ -1,0 +1,22 @@
+id: connection-test
+ui:
+  label: Connection test
+  loadingLabel: Checking...
+provider: codex
+prompt: |
+  # Connection Test
+
+  You are running a connection test for the local Magic-data LLM engine.
+
+  Return one short plain-text message for the user confirming that the
+  connection works.
+
+  Rules:
+  - Output only the message.
+  - Do not use Markdown.
+  - Work independently. Do not create, call, delegate to, or coordinate with subagents.
+  - Do not inspect or change files.
+  - Do not run shell commands.
+  - The message may be different for each new session.
+
+  Session id: {{runtime.session_id}}

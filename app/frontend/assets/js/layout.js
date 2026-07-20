@@ -13,8 +13,22 @@ function renderHeader() {
             <a href="/settings">Settings</a>
             <a href="/help">Help</a>
         </nav>
+        <div class="app-header__magic">
+            <button type="button" class="magic-btn" data-provider="codex">✨ Check Codex</button>
+            <button type="button" class="magic-btn" data-provider="claude">✨ Check Claude</button>
+        </div>
         <button id="stop-btn" type="button">Stop</button>
     `;
+
+    header.querySelectorAll(".magic-btn").forEach(function (button) {
+        button.addEventListener("click", function () {
+            if (!window.magicLlm) return;
+            window.magicLlm.runScenario("connection-test", {
+                provider: button.getAttribute("data-provider"),
+                button: button,
+            });
+        });
+    });
 
     header.querySelector("#stop-btn").addEventListener("click", function () {
         fetch("/stop", { method: "POST" }).then(function () {

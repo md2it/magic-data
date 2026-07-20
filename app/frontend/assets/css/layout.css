@@ -57,6 +57,29 @@ body {
     background: #e04a4a;
 }
 
+.app-header__magic {
+    display: flex;
+    gap: 8px;
+    margin-right: 16px;
+}
+
+.app-header .magic-btn {
+    border: 1px solid #3d4450;
+    background: #2b313a;
+    color: #fff;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.app-header .magic-btn:hover {
+    background: #3a424d;
+}
+
+.app-header .magic-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
 .app-body {
     flex: 1;
     display: flex;

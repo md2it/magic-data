@@ -10,6 +10,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+from llm import (
+    ProviderError,
+    SUPPORTED_PROVIDERS,
+    load_config,
+    load_scenario,
+    render_prompt,
+    run_provider,
+)
 from pages import render_page
 
 
@@ -72,6 +80,9 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         if path.startswith("/api/data-files/"):
             self.handle_get_data_file(path[len("/api/data-files/"):])
             return
+        if path.startswith("/api/llm-scenarios/"):
+            self.handle_get_scenario(path[len("/api/llm-scenarios/"):])
+            return
         if not path.startswith("/assets/") and self.handle_page(path):
             return
 
@@ -89,6 +100,9 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/data-tree/move":
             self.handle_move_data_entry(self.read_json_body())
+            return
+        if path == "/api/llm/run":
+            self.handle_llm_run(self.read_json_body())
             return
 
         self.send_error(404)
@@ -171,6 +185,42 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         rel_path = str(new_path.relative_to(DATA_DIR)).replace("\\", "/")
         self.send_json({"path": rel_path, "type": entry_type})
 
+    def handle_get_scenario(self, scenario_id: str) -> None:
+        scenario = load_scenario(scenario_id.strip("/"))
+        if scenario is None:
+            self.send_json_error(404, "Scenario not found")
+            return
+        self.send_json(scenario)
+
+    def handle_llm_run(self, data: dict) -> None:
+        scenario_id = str(data.get("scenarioId", "")).strip()
+        scenario = load_scenario(scenario_id)
+        if scenario is None:
+            self.send_json_error(404, "Scenario not found")
+            return
+
+        config = load_config()
+        provider = data.get("provider") or scenario.get("provider") or config.get("default_provider")
+        if provider not in SUPPORTED_PROVIDERS:
+            self.send_json_error(400, f"Unsupported provider: {provider}")
+            return
+
+        context = data.get("context") if isinstance(data.get("context"), dict) else {}
+        extra = data.get("extra") if isinstance(data.get("extra"), str) else ""
+        try:
+            prompt = render_prompt(scenario, context, extra)
+        except ValueError as error:
+            self.send_json_error(400, str(error))
+            return
+
+        try:
+            text = run_provider(provider, prompt, config, str(APP_DIR.parent))
+        except ProviderError as error:
+            self.send_json_error(500, str(error))
+            return
+
+        self.send_json({"text": text, "provider": provider, "scenarioId": scenario_id})
+
     def handle_page(self, path: str) -> bool:
         body = render_page(path)
         if body is None:
@@ -199,6 +249,14 @@ class ApplicationHandler(BaseHTTPRequestHandler):
 
     def send_json(self, data: object) -> None:
         self.send_bytes(json.dumps(data).encode("utf-8"), "application/json; charset=utf-8")
+
+    def send_json_error(self, status: int, message: str) -> None:
+        body = json.dumps({"error": message}).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def send_bytes(self, body: bytes, content_type: str) -> None:
         self.send_response(200)
