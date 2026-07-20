@@ -5,9 +5,9 @@ provider (Codex or Claude). See ``app/llm-scenarios/*.yaml`` for scenarios and
 ``config.yaml`` for global defaults.
 """
 
-from llm.config import load_config
-from llm.providers import SUPPORTED_PROVIDERS, ProviderError, run_provider
-from llm.scenarios import load_scenario, render_prompt
+from llm_engine.config import load_config
+from llm_engine.providers import SUPPORTED_PROVIDERS, ProviderError, run_provider
+from llm_engine.scenarios import load_scenario, render_prompt
 
 __all__ = [
     "load_config",

@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from llm.yaml_min import parse_yaml
+from llm_engine.yaml_min import parse_yaml
 
 CONFIG_PATH = (Path(__file__).resolve().parent / "config.yaml").resolve()
 

@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from llm import (
+from llm_engine import (
     ProviderError,
     SUPPORTED_PROVIDERS,
     load_config,
