@@ -116,6 +116,23 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         if name is None:
             self.send_error(400)
             return
+
+        if data.get("type") == "dir":
+            self.create_directory(dir_path, name)
+        else:
+            self.create_file(dir_path, name)
+
+    def create_directory(self, dir_path: Path, name: str) -> None:
+        new_dir = dir_path / name
+        if DATA_DIR not in new_dir.parents or new_dir.exists():
+            self.send_error(409)
+            return
+
+        new_dir.mkdir()
+        rel_path = str(new_dir.relative_to(DATA_DIR)).replace("\\", "/")
+        self.send_json({"path": rel_path, "type": "dir"})
+
+    def create_file(self, dir_path: Path, name: str) -> None:
         if name.lower().endswith(".json"):
             name = sanitize_name(name[: -len(".json")])
             if name is None:
@@ -129,7 +146,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
 
         file_path.write_text("{}\n", encoding="utf-8")
         rel_path = str(file_path.relative_to(DATA_DIR)).replace("\\", "/")
-        self.send_json({"path": rel_path})
+        self.send_json({"path": rel_path, "type": "file"})
 
     def handle_move_data_entry(self, data: dict) -> None:
         source_rel = str(data.get("source", "")).strip("/")
@@ -146,9 +163,10 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             self.send_error(400)
             return
 
+        entry_type = "dir" if source_path.is_dir() else "file"
         new_path = target_dir / source_path.name
         if new_path == source_path:
-            self.send_json({"path": source_rel})
+            self.send_json({"path": source_rel, "type": entry_type})
             return
         if new_path.exists():
             self.send_error(409)
@@ -156,7 +174,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
 
         shutil.move(str(source_path), str(new_path))
         rel_path = str(new_path.relative_to(DATA_DIR)).replace("\\", "/")
-        self.send_json({"path": rel_path})
+        self.send_json({"path": rel_path, "type": entry_type})
 
     def handle_static_page(self, slug: str) -> None:
         body = render_markdown_page(slug)

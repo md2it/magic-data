@@ -31,19 +31,31 @@ function createDirNode(node) {
     });
     attachDragSource(toggle, node.path);
 
-    const addButton = document.createElement("button");
-    addButton.type = "button";
-    addButton.className = "tree-node__add";
-    addButton.title = "New file";
-    addButton.textContent = "+";
-    addButton.addEventListener("click", function (event) {
+    const addFileButton = document.createElement("button");
+    addFileButton.type = "button";
+    addFileButton.className = "tree-node__add";
+    addFileButton.title = "New file";
+    addFileButton.textContent = "+";
+    addFileButton.addEventListener("click", function (event) {
         event.stopPropagation();
         setExpanded(li, toggle, node.name, true);
-        startCreateFile(node.path, childList);
+        startCreateEntry(node.path, childList, "file");
+    });
+
+    const addFolderButton = document.createElement("button");
+    addFolderButton.type = "button";
+    addFolderButton.className = "tree-node__add";
+    addFolderButton.title = "New folder";
+    addFolderButton.textContent = "📁";
+    addFolderButton.addEventListener("click", function (event) {
+        event.stopPropagation();
+        setExpanded(li, toggle, node.name, true);
+        startCreateEntry(node.path, childList, "dir");
     });
 
     header.appendChild(toggle);
-    header.appendChild(addButton);
+    header.appendChild(addFileButton);
+    header.appendChild(addFolderButton);
     attachDropTarget(li, node.path);
 
     li.appendChild(header);
@@ -56,6 +68,10 @@ function setExpanded(li, toggle, name, expanded) {
     toggle.textContent = `${expanded ? "▾" : "▸"} ${name}`;
 }
 
+function displayName(name) {
+    return name.replace(/\.json$/i, "");
+}
+
 function createFileNode(node) {
     const li = document.createElement("li");
     li.className = "tree-node tree-node--file";
@@ -63,7 +79,8 @@ function createFileNode(node) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "tree-node__label";
-    button.textContent = node.name;
+    button.textContent = displayName(node.name);
+    button.title = node.name;
     button.dataset.path = node.path;
     button.draggable = true;
     button.addEventListener("click", function () {
@@ -110,6 +127,24 @@ function attachDropTarget(li, dirPath) {
     });
 }
 
+let toastTimer = null;
+
+function showToast(message) {
+    let toast = document.getElementById("sidebar-toast");
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "sidebar-toast";
+        toast.className = "sidebar-toast";
+        document.querySelector(".app-body__sidebar").appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add("sidebar-toast--visible");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+        toast.classList.remove("sidebar-toast--visible");
+    }, 2500);
+}
+
 async function moveEntry(sourcePath, targetDir) {
     if (!sourcePath) return;
     const response = await fetch("/api/data-tree/move", {
@@ -119,17 +154,19 @@ async function moveEntry(sourcePath, targetDir) {
     });
     if (response.ok) {
         const result = await response.json();
-        await refreshTree(result.path);
+        await refreshTree(result);
+    } else if (response.status === 409) {
+        showToast(`"${displayName(sourcePath.split("/").pop())}" already exists there`);
     }
 }
 
-function startCreateFile(dirPath, childList) {
+function startCreateEntry(dirPath, childList, type) {
     const li = document.createElement("li");
     li.className = "tree-node tree-node--new";
     const input = document.createElement("input");
     input.type = "text";
     input.className = "tree-node__input";
-    input.placeholder = "name.json";
+    input.placeholder = type === "dir" ? "folder name" : "name";
     li.appendChild(input);
     childList.insertBefore(li, childList.firstChild);
     input.focus();
@@ -149,17 +186,20 @@ function startCreateFile(dirPath, childList) {
             cancel();
             return;
         }
-        done = true;
         const response = await fetch("/api/data-tree/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ dir: dirPath, name: name }),
+            body: JSON.stringify({ dir: dirPath, name: name, type: type }),
         });
         if (response.ok) {
+            done = true;
             const result = await response.json();
-            await refreshTree(result.path);
+            await refreshTree(result);
+        } else if (response.status === 409) {
+            showToast(`"${name}" already exists there`);
+            input.select();
         } else {
-            li.remove();
+            cancel();
         }
     }
 
@@ -177,16 +217,26 @@ function startCreateFile(dirPath, childList) {
     });
 }
 
-async function refreshTree(selectPath) {
+async function refreshTree(result) {
     const tree = await loadFileTree();
     fileTreeRoot.innerHTML = "";
     renderTree(fileTreeRoot, tree);
-    if (selectPath) {
-        const button = fileTreeRoot.querySelector(`.tree-node__label[data-path="${CSS.escape(selectPath)}"]`);
-        if (button) {
-            expandAncestors(button);
-            button.click();
+    if (!result || !result.path) return;
+
+    if (result.type === "dir") {
+        const dirLi = fileTreeRoot.querySelector(`.tree-node--dir[data-path="${CSS.escape(result.path)}"]`);
+        if (dirLi) {
+            expandAncestors(dirLi);
+            const toggle = dirLi.querySelector(":scope > .tree-node__header > .tree-node__toggle");
+            setExpanded(dirLi, toggle, dirLi.dataset.name, true);
         }
+        return;
+    }
+
+    const button = fileTreeRoot.querySelector(`.tree-node__label[data-path="${CSS.escape(result.path)}"]`);
+    if (button) {
+        expandAncestors(button);
+        button.click();
     }
 }
 
@@ -378,7 +428,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     document.getElementById("new-file").addEventListener("click", function () {
-        startCreateFile("", fileTreeRoot);
+        startCreateEntry("", fileTreeRoot, "file");
+    });
+    document.getElementById("new-folder").addEventListener("click", function () {
+        startCreateEntry("", fileTreeRoot, "dir");
     });
 
     document.getElementById("collapse-all").addEventListener("click", function () {
