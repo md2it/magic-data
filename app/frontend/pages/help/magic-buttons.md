@@ -58,24 +58,35 @@ review, copy, and adjust without touching application logic.
 ### Level 2 — per-call customization
 
 At the moment of the click, an action can be tailored for that single
-invocation. Three kinds of customization are possible:
+invocation. Several kinds of customization are possible:
 
 - **Choose the agent.** The same action can be run through a different local
   agent than its default.
-- **Provide context.** The interface passes in what the action is operating on,
-  so the prompt can be about the right data.
-- **Add extra instructions.** Free-form text can be appended for this one run,
+- **Call-site context (automatic).** The interface passes in where the action
+  was launched from, without the user doing anything. For example, an action
+  triggered from inside a document supplies that document's location and name,
+  so the prompt can be about exactly the data the user is looking at.
+- **Optional parameters (only for some actions).** An action may declare a few
+  optional fields. When it does, a small form appears before the run so the user
+  can adjust the request; when it does not, there is no form and the click runs
+  immediately. Left empty, the fields fall back to sensible defaults, so the
+  form is a convenience, never an obstacle.
+- **Extra instructions.** Free-form text can be appended for this one run,
   without changing the shared definition.
 
 Level 2 always layers on top of Level 1: the declarative definition provides the
-defaults and the shape, and the call fills in or overrides the specifics.
+defaults and the shape, and the call fills in or overrides the specifics. The
+automatic call-site context and the optional parameters both become part of the
+context that the prompt is built from.
 
 ## Prompt assembly
 
 The prompt template contains placeholders that are filled from the provided
-context. If a required piece of context is missing, the run is stopped before an
-agent is ever launched — a missing input is treated as an error, not guessed.
-Each run also gets its own session marker so repeated runs stay independent.
+context — which includes the call-site information and any optional parameters.
+If a required piece of context is missing, the run is stopped before an agent is
+ever launched: a missing required input is treated as an error, not guessed.
+Optional values that were not supplied simply resolve to empty. Each run also
+gets its own session marker so repeated runs stay independent.
 
 ## Agents are interchangeable
 
