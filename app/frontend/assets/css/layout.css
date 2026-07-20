@@ -113,6 +113,26 @@ body {
     color: #57606a;
 }
 
+/*
+ * The printable column is wrapped in a real <table> so the footer can live in
+ * a <tfoot>: when printing, the browser repeats the <tfoot> at the bottom of
+ * every page AND reserves its height in the flow, so page content never runs
+ * underneath it — no manual padding/margin guessing. (Only a real <tfoot>
+ * repeats reliably in Chrome; CSS display: table-footer-group does not.)
+ *
+ * On screen the table wrappers are collapsed with display: contents so
+ * #file-content lays out exactly as it would as a direct child of the column.
+ */
+.print-doc,
+.print-doc > tbody,
+.print-doc > tbody > tr,
+.print-doc > tbody > tr > td,
+.print-doc > tfoot,
+.print-doc > tfoot > tr,
+.print-doc > tfoot > tr > td {
+    display: contents;
+}
+
 .print-footer {
     display: none;
 }
@@ -133,13 +153,41 @@ body {
         padding: 0;
     }
 
+    /* Restore real table semantics for print so the <tfoot> repeats per page. */
+    .print-doc {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    .print-doc > tbody {
+        display: table-row-group;
+    }
+
+    .print-doc > tfoot {
+        display: table-footer-group;
+    }
+
+    .print-doc > tbody > tr,
+    .print-doc > tfoot > tr {
+        display: table-row;
+    }
+
+    .print-doc > tbody > tr > td,
+    .print-doc > tfoot > tr > td {
+        display: table-cell;
+    }
+
     .print-footer {
         display: block;
-        margin-top: 24px;
         padding-top: 8px;
         border-top: 1px solid #d0d7de;
         font-size: 0.8rem;
         color: #57606a;
         text-align: center;
+    }
+
+    .print-footer a {
+        color: #57606a;
     }
 }
