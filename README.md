@@ -37,7 +37,19 @@ Through the web interface, the user can:
 
 ## Static pages
 
-Help and other static pages are stored as Markdown files in `app/content/pages`. The Python backend converts them to HTML for each request; rendered pages are available through stable URLs such as `/help`.
+Pages are stored in `app/frontend/pages`. HTML pages are inserted into the shared layout as-is; Markdown pages are converted to HTML first and receive the standard Markdown stylesheet. The shared layout is stored in `app/frontend/layout/page.html` and adds the standard header and footer to every page.
+
+The file layout determines page URLs: `pages/index.html` is available at `/`, `pages/help/index.md` at `/help`, and `pages/help/magic-buttons.md` at `/help/magic-buttons`. Pages can define a title and additional CSS or JavaScript files in their front matter.
+
+```text
+---
+title: Example · Magic-data
+styles:
+  - /assets/css/example.css
+scripts:
+  - /assets/js/example.js
+---
+```
 
 ## License
 

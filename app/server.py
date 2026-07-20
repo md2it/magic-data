@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from pages import render_markdown_page
+from pages import render_page
 
 
 HOST = "localhost"
@@ -18,7 +18,6 @@ PORT = 57214
 
 APP_DIR = Path(__file__).parent.resolve()
 UI_DIR = (APP_DIR / "frontend").resolve()
-INDEX_FILE = UI_DIR / "index.html"
 DATA_DIR = (APP_DIR.parent / "data").resolve()
 STOPPED_PAGE = b"Server stopped."
 VALID_NAME_RE = re.compile(r"^[^/\\]+$")
@@ -73,11 +72,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         if path.startswith("/api/data-files/"):
             self.handle_get_data_file(path[len("/api/data-files/"):])
             return
-        if path == "/help":
-            self.handle_static_page("help")
-            return
-        if path == "/settings":
-            self.handle_frontend_file("/settings.html")
+        if not path.startswith("/assets/") and self.handle_page(path):
             return
 
         self.handle_frontend_file(path)
@@ -176,15 +171,15 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         rel_path = str(new_path.relative_to(DATA_DIR)).replace("\\", "/")
         self.send_json({"path": rel_path, "type": entry_type})
 
-    def handle_static_page(self, slug: str) -> None:
-        body = render_markdown_page(slug)
+    def handle_page(self, path: str) -> bool:
+        body = render_page(path)
         if body is None:
-            self.send_error(404)
-            return
+            return False
         self.send_bytes(body, "text/html; charset=utf-8")
+        return True
 
     def handle_frontend_file(self, path: str) -> None:
-        file_path = INDEX_FILE if path == "/" else (UI_DIR / path.lstrip("/")).resolve()
+        file_path = (UI_DIR / path.lstrip("/")).resolve()
         if UI_DIR not in file_path.parents and file_path != UI_DIR:
             self.send_error(403)
             return
