@@ -520,7 +520,10 @@
                     "aria-sort",
                     active ? (sortState.dir === "asc" ? "ascending" : "descending") : "none"
                 );
-                cell.indicator.textContent = active ? (sortState.dir === "asc" ? "▲" : "▼") : "";
+                // Active column shows its real direction; every other column
+                // shows a faint two-way chevron hinting that it is sortable.
+                cell.indicator.classList.toggle("content-table__sort-indicator--hint", !active);
+                cell.indicator.textContent = active ? (sortState.dir === "asc" ? "▲" : "▼") : "⇅";
             });
         }
 

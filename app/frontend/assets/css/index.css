@@ -458,6 +458,17 @@
     color: #0969da;
 }
 
+/* Phantom two-way chevron: hints that the column is sortable without
+   competing with the active column's real ▲/▼ direction. */
+.content-table__sort-indicator--hint {
+    color: #afb8c1;
+    opacity: 0.5;
+}
+
+.content-table__header-cell--sortable:hover .content-table__sort-indicator--hint {
+    opacity: 0.9;
+}
+
 .content-table__row:nth-child(even) {
     background: #f6f8fa;
 }
