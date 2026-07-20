@@ -82,6 +82,7 @@ function createFileNode(node) {
     button.textContent = displayName(node.name);
     button.title = node.name;
     button.dataset.path = node.path;
+    button.dataset.id = node.id || "";
     button.draggable = true;
     button.addEventListener("click", function () {
         selectFile(node.path, button, { push: true });
@@ -153,8 +154,7 @@ async function moveEntry(sourcePath, targetDir) {
         body: JSON.stringify({ source: sourcePath, targetDir: targetDir }),
     });
     if (response.ok) {
-        const result = await response.json();
-        await refreshTree(result, sourcePath);
+        await refreshTree();
     } else if (response.status === 409) {
         showToast(`"${displayName(sourcePath.split("/").pop())}" already exists there`);
     }
@@ -194,7 +194,7 @@ function startCreateEntry(dirPath, childList, type) {
         if (response.ok) {
             done = true;
             const result = await response.json();
-            await refreshTree(result);
+            await selectNewEntry(result);
         } else if (response.status === 409) {
             showToast(`"${name}" already exists there`);
             input.select();
@@ -217,44 +217,19 @@ function startCreateEntry(dirPath, childList, type) {
     });
 }
 
-async function refreshTree(result, oldPath) {
-    const tree = await loadFileTree();
-    fileTreeRoot.innerHTML = "";
-    renderTree(fileTreeRoot, tree);
+// ------------------------------------------------------------------
+// Application state. `currentMode` tracks whether the main pane shows
+// a document ("doc") or a directory listing ("dir"); the id/path pairs
+// below only apply to the matching mode.
+// ------------------------------------------------------------------
 
-    if (oldPath && currentFilePath) {
-        const remapped = remapPath(currentFilePath, oldPath, result.path);
-        if (remapped !== currentFilePath) {
-            const button = findButton(remapped);
-            if (button) {
-                expandAncestors(button);
-                await selectFile(remapped, button, { push: false });
-            }
-            return;
-        }
-    }
-
-    if (!result || !result.path) return;
-
-    if (result.type === "dir") {
-        const dirLi = fileTreeRoot.querySelector(`.tree-node--dir[data-path="${CSS.escape(result.path)}"]`);
-        if (dirLi) {
-            expandAncestors(dirLi);
-            const toggle = dirLi.querySelector(":scope > .tree-node__header > .tree-node__toggle");
-            setExpanded(dirLi, toggle, dirLi.dataset.name, true);
-        }
-        return;
-    }
-
-    const button = fileTreeRoot.querySelector(`.tree-node__label[data-path="${CSS.escape(result.path)}"]`);
-    if (button) {
-        expandAncestors(button);
-        button.click();
-    }
-}
-
-let currentFileText = "";
+let fileTreeRoot;
+let currentTree = [];
+let currentMode = "doc";
 let currentFilePath = "";
+let currentDocId = "";
+let currentFileText = "";
+let currentDirPath = "";
 
 const VALID_VIEWS = ["json", "tree", "table", "text"];
 
@@ -273,33 +248,67 @@ function setActiveView(view) {
     updateToolbarActions();
 }
 
-function buildUrl(path, view) {
-    const params = new URLSearchParams();
-    if (path) params.set("path", path);
-    if (view) params.set("view", view);
-    const qs = params.toString();
-    return qs ? `?${qs}` : window.location.pathname;
+// ------------------------------------------------------------------
+// URL building. Which document/directory is open is decided entirely by
+// the server (it injects window.__INITIAL_STATE__ on every real
+// navigation, see pages.py/server.py) - the client never decides 404
+// itself, it only mirrors that decision into pushState/replaceState so
+// the address bar and back/forward stay in sync with what's on screen.
+//
+// Document URLs carry the document's id as the last path segment
+// (optionally followed by "-{slug}" for readability); everything before
+// that is decorative directory context that is never re-validated, so
+// renaming/moving a document never breaks a link built around its id.
+// Documents without an id yet (created outside the app) fall back to
+// their literal path.
+// ------------------------------------------------------------------
+
+function slugify(name) {
+    return name
+        .replace(/\.[^./]+$/, "")
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, "-")
+        .replace(/^-+|-+$/g, "");
 }
 
-function updateUrl(path, view, push) {
-    const url = buildUrl(path, view);
-    const state = { path: path, view: view };
-    if (push) {
-        window.history.pushState(state, "", url);
-    } else {
-        window.history.replaceState(state, "", url);
+function buildDocUrl(path, id) {
+    const parts = path.split("/");
+    if (id) {
+        const slug = slugify(parts[parts.length - 1]);
+        parts[parts.length - 1] = slug ? `${id}-${slug}` : id;
     }
+    const view = currentView();
+    const qs = view && view !== "json" ? `?view=${encodeURIComponent(view)}` : "";
+    return `/${parts.map(encodeURIComponent).join("/")}${qs}`;
 }
 
-function parseUrlState() {
-    const params = new URLSearchParams(window.location.search);
-    const path = params.get("path") || "";
-    const view = params.get("view");
-    return { path: path, view: VALID_VIEWS.includes(view) ? view : null };
+function buildDirUrl(path) {
+    if (!path) return "/";
+    return `/${path.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+function updateUrl(push) {
+    const url = currentMode === "dir" ? buildDirUrl(currentDirPath) : buildDocUrl(currentFilePath, currentDocId);
+    if (push) {
+        window.history.pushState(null, "", url);
+    } else {
+        window.history.replaceState(null, "", url);
+    }
 }
 
 function findButton(path) {
     return fileTreeRoot.querySelector(`.tree-node__label[data-path="${CSS.escape(path)}"]`);
+}
+
+function findDirNode(nodes, path) {
+    if (path === "") return { path: "", children: nodes };
+    for (const node of nodes) {
+        if (node.type !== "dir") continue;
+        if (node.path === path) return node;
+        const found = findDirNode(node.children, path);
+        if (found) return found;
+    }
+    return null;
 }
 
 function renderCurrentFile() {
@@ -307,76 +316,13 @@ function renderCurrentFile() {
     window.ContentView.render(currentView(), currentFileText, content);
 }
 
-function showNotFound(path) {
-    document.querySelectorAll(".tree-node__label").forEach(function (btn) {
-        btn.classList.remove("active");
-    });
-    currentFilePath = "";
-    currentFileText = "";
-
-    document.getElementById("content-toolbar-actions").hidden = true;
-
-    const content = document.getElementById("file-content");
-    content.className = "file-content";
-    delete content.dataset.currentView;
-    content.innerHTML = "";
-    const message = document.createElement("div");
-    message.className = "not-found";
-    message.textContent = `Document not found: ${path}`;
-    content.appendChild(message);
-}
-
-function hideNotFound() {
+function showDocChrome() {
+    document.getElementById("view-switch").hidden = false;
     document.getElementById("content-toolbar-actions").hidden = false;
 }
 
-async function selectFile(path, button, options) {
-    const opts = options || {};
-    hideNotFound();
-    document.querySelectorAll(".tree-node__label").forEach(function (btn) {
-        btn.classList.toggle("active", btn === button);
-    });
-
-    currentFilePath = path;
-    currentFileText = await loadFileContent(path);
-    renderCurrentFile();
-    if (!opts.silent) updateUrl(path, currentView(), Boolean(opts.push));
-}
-
-function remapPath(path, oldPath, newPath) {
-    if (path === oldPath) return newPath;
-    if (path.startsWith(`${oldPath}/`)) return newPath + path.slice(oldPath.length);
-    return path;
-}
-
-function applyUrlState(isInitial, tree) {
-    const state = parseUrlState();
-    if (state.view) setActiveView(state.view);
-
-    if (!state.path) {
-        hideNotFound();
-        if (isInitial) {
-            const firstPath = findFirstFilePath(tree);
-            if (firstPath) {
-                const button = findButton(firstPath);
-                expandAncestors(button);
-                selectFile(firstPath, button, { silent: false, push: false });
-            }
-        }
-        return;
-    }
-
-    const button = findButton(state.path);
-    if (!button) {
-        showNotFound(state.path);
-        return;
-    }
-    expandAncestors(button);
-    selectFile(state.path, button, { silent: true });
-}
-
-function expandAncestors(button) {
-    let dirLi = button.closest(".tree-list").closest(".tree-node--dir");
+function expandAncestors(el) {
+    let dirLi = el.closest(".tree-list").closest(".tree-node--dir");
     while (dirLi) {
         const toggle = dirLi.querySelector(":scope > .tree-node__header > .tree-node__toggle");
         setExpanded(dirLi, toggle, dirLi.dataset.name, true);
@@ -384,14 +330,145 @@ function expandAncestors(button) {
     }
 }
 
-function findFirstFilePath(nodes) {
-    const queue = [...nodes];
-    while (queue.length > 0) {
-        const node = queue.shift();
-        if (node.type === "file") return node.path;
-        if (node.type === "dir") queue.push(...node.children);
+function expandDirAndAncestors(dirLi) {
+    const toggle = dirLi.querySelector(":scope > .tree-node__header > .tree-node__toggle");
+    setExpanded(dirLi, toggle, dirLi.dataset.name, true);
+    expandAncestors(toggle);
+}
+
+async function selectFile(path, button, options) {
+    const opts = options || {};
+    currentMode = "doc";
+    showDocChrome();
+    document.querySelectorAll(".tree-node__label").forEach(function (btn) {
+        btn.classList.toggle("active", btn === button);
+    });
+
+    currentFilePath = path;
+    currentDocId = button.dataset.id || "";
+    currentFileText = await loadFileContent(path);
+    renderCurrentFile();
+    if (!opts.silent) updateUrl(Boolean(opts.push));
+}
+
+function renderDirectoryListing(path) {
+    currentMode = "dir";
+    currentDirPath = path;
+
+    document.querySelectorAll(".tree-node__label").forEach(function (btn) {
+        btn.classList.remove("active");
+    });
+    document.getElementById("view-switch").hidden = true;
+    document.getElementById("content-toolbar-actions").hidden = true;
+
+    const node = findDirNode(currentTree, path);
+    const children = node ? node.children : [];
+
+    const content = document.getElementById("file-content");
+    content.className = "file-content directory-listing";
+    delete content.dataset.currentView;
+    content.innerHTML = "";
+
+    const heading = document.createElement("div");
+    heading.className = "directory-listing__path";
+    heading.textContent = path ? `/${path}` : "/";
+    content.appendChild(heading);
+
+    const list = document.createElement("ul");
+    list.className = "directory-listing__list";
+
+    if (children.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "directory-listing__empty";
+        empty.textContent = "(empty)";
+        list.appendChild(empty);
     }
-    return null;
+
+    children.forEach(function (child) {
+        const li = document.createElement("li");
+        li.className = "directory-listing__item";
+        const link = document.createElement("button");
+        link.type = "button";
+        link.className = "directory-listing__link";
+        link.textContent = child.type === "dir" ? `📁 ${child.name}` : displayName(child.name);
+        link.addEventListener("click", function () {
+            if (child.type === "dir") {
+                navigateToDir(child.path);
+            } else {
+                navigateToDoc(child.path);
+            }
+        });
+        li.appendChild(link);
+        list.appendChild(li);
+    });
+
+    content.appendChild(list);
+}
+
+function navigateToDir(path) {
+    const dirLi = path ? fileTreeRoot.querySelector(`.tree-node--dir[data-path="${CSS.escape(path)}"]`) : null;
+    if (dirLi) expandDirAndAncestors(dirLi);
+    renderDirectoryListing(path);
+    updateUrl(true);
+}
+
+function navigateToDoc(path) {
+    const button = findButton(path);
+    if (!button) return;
+    expandAncestors(button);
+    selectFile(path, button, { push: true });
+}
+
+async function refreshTree() {
+    currentTree = await loadFileTree();
+    fileTreeRoot.innerHTML = "";
+    renderTree(fileTreeRoot, currentTree);
+
+    if (currentMode === "doc" && currentDocId) {
+        const button = fileTreeRoot.querySelector(`.tree-node__label[data-id="${CSS.escape(currentDocId)}"]`);
+        if (button) {
+            currentFilePath = button.dataset.path;
+            expandAncestors(button);
+            button.classList.add("active");
+            updateUrl(false);
+        }
+    } else if (currentMode === "dir") {
+        renderDirectoryListing(currentDirPath);
+    }
+}
+
+async function selectNewEntry(result) {
+    await refreshTree();
+    if (!result || !result.path) return;
+
+    if (result.type === "dir") {
+        navigateToDir(result.path);
+        return;
+    }
+
+    navigateToDoc(result.path);
+}
+
+function applyInitialState() {
+    const state = window.__INITIAL_STATE__ || { kind: "dir", path: "" };
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get("view");
+    setActiveView(VALID_VIEWS.includes(view) ? view : "json");
+
+    if (state.kind === "dir") {
+        if (state.path) {
+            const dirLi = fileTreeRoot.querySelector(`.tree-node--dir[data-path="${CSS.escape(state.path)}"]`);
+            if (dirLi) expandDirAndAncestors(dirLi);
+        }
+        renderDirectoryListing(state.path);
+        return;
+    }
+
+    const button = findButton(state.path);
+    if (button) {
+        expandAncestors(button);
+        selectFile(state.path, button, { silent: true });
+    }
 }
 
 const VIEWS_WITH_COLLAPSE_CONTROLS = ["json", "tree"];
@@ -495,15 +572,14 @@ function initViewSwitch() {
     const switchEl = document.getElementById("view-switch");
     switchEl.querySelectorAll(".view-switch__option").forEach(function (option) {
         option.addEventListener("click", function () {
+            if (currentMode !== "doc") return;
             setActiveView(option.dataset.view);
             renderCurrentFile();
-            if (currentFilePath) updateUrl(currentFilePath, currentView(), false);
+            updateUrl(false);
         });
     });
     updateToolbarActions();
 }
-
-let fileTreeRoot;
 
 document.addEventListener("DOMContentLoaded", async function () {
     fileTreeRoot = document.getElementById("file-tree");
@@ -525,14 +601,17 @@ document.addEventListener("DOMContentLoaded", async function () {
         await moveEntry(sourcePath, "");
     });
 
-    const tree = await loadFileTree();
-    renderTree(fileTreeRoot, tree);
+    currentTree = await loadFileTree();
+    renderTree(fileTreeRoot, currentTree);
 
     initViewSwitch();
-    applyUrlState(true, tree);
+    applyInitialState();
 
+    // Route resolution (doc vs directory vs 404) is decided by the server
+    // for every real navigation - back/forward needs a real navigation too,
+    // so it stays authoritative instead of re-deciding on the client.
     window.addEventListener("popstate", function () {
-        applyUrlState(false, tree);
+        window.location.reload();
     });
 
     document.getElementById("new-file").addEventListener("click", function () {

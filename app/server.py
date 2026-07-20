@@ -12,13 +12,14 @@ from urllib.parse import unquote, urlsplit
 
 from llm_engine import (
     ProviderError,
-    SUPPORTED_PROVIDERS,
     load_config,
     load_scenario,
     render_prompt,
-    run_provider,
+    resolve_steps,
+    run_cascade,
 )
 from pages import render_page
+from ulid import new_ulid
 
 
 HOST = "localhost"
@@ -29,6 +30,24 @@ UI_DIR = (APP_DIR / "frontend").resolve()
 DATA_DIR = (APP_DIR.parent / "data").resolve()
 STOPPED_PAGE = b"Server stopped."
 VALID_NAME_RE = re.compile(r"^[^/\\]+$")
+
+
+def read_doc_id(file_path: Path) -> str | None:
+    """Reads the stable `id` a data document carries as its first key.
+
+    Best-effort: files that predate the id convention, or that aren't valid
+    JSON objects, simply have no id and are only reachable by their literal
+    path (see `resolve_data_route`).
+    """
+    try:
+        data = json.loads(file_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if isinstance(data, dict):
+        doc_id = data.get("id")
+        if isinstance(doc_id, str) and doc_id:
+            return doc_id
+    return None
 
 
 def build_data_tree(dir_path: Path, rel_prefix: str = "") -> list:
@@ -47,11 +66,64 @@ def build_data_tree(dir_path: Path, rel_prefix: str = "") -> list:
                 "children": build_data_tree(entry, rel_path + "/"),
             })
         elif entry.is_file() and entry.suffix == ".json":
-            files.append({"name": entry.name, "type": "file", "path": rel_path})
+            files.append({
+                "name": entry.name,
+                "type": "file",
+                "path": rel_path,
+                "id": read_doc_id(entry),
+            })
 
     dirs.sort(key=lambda node: node["name"].lower())
     files.sort(key=lambda node: node["name"].lower())
     return dirs + files
+
+
+def build_id_index(dir_path: Path) -> dict:
+    """Flat map of `id -> relative path` for every data document that has one."""
+    index: dict[str, str] = {}
+
+    def walk(nodes: list) -> None:
+        for node in nodes:
+            if node["type"] == "dir":
+                walk(node["children"])
+            elif node.get("id"):
+                index[node["id"]] = node["path"]
+
+    walk(build_data_tree(dir_path))
+    return index
+
+
+def resolve_data_route(url_path: str) -> tuple[str, str] | None:
+    """Resolves a request path to `(kind, rel_path)`, `kind` in {"doc", "dir"}.
+
+    Only the last path segment is meaningful for documents: it is expected to
+    be `{id}` or `{id}-{slug}`, where everything before the first "-" is
+    looked up as a document id (the rest of the path, and the slug, are
+    purely decorative and never re-validated - so renaming/moving a document
+    never breaks a link built around its id). Falls back to a literal
+    directory or file path match for entries that don't carry an id yet
+    (e.g. added by hand outside the app). Returns None if nothing matches,
+    which the caller turns into a real 404 - this function is the single
+    place that decides whether a document/directory route exists.
+    """
+    rel = url_path.strip("/")
+    if not rel:
+        return ("dir", "")
+
+    last_segment = rel.rsplit("/", 1)[-1]
+    doc_id = last_segment.partition("-")[0]
+    id_index = build_id_index(DATA_DIR)
+    if doc_id in id_index:
+        return ("doc", id_index[doc_id])
+
+    candidate = resolve_within_data_dir(rel)
+    if candidate is not None and candidate.is_dir():
+        rel_dir = "" if candidate == DATA_DIR else str(candidate.relative_to(DATA_DIR)).replace("\\", "/")
+        return ("dir", rel_dir)
+    if candidate is not None and candidate.suffix == ".json" and candidate.is_file():
+        return ("doc", rel)
+
+    return None
 
 
 def sanitize_name(raw: str) -> str | None:
@@ -83,8 +155,21 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         if path.startswith("/api/llm-scenarios/"):
             self.handle_get_scenario(path[len("/api/llm-scenarios/"):])
             return
-        if not path.startswith("/assets/") and self.handle_page(path):
+        if path.startswith("/api/"):
+            self.send_error(404)
             return
+
+        if path == "/":
+            self.serve_data_app("dir", "")
+            return
+
+        if not path.startswith("/assets/"):
+            if self.handle_page(path):
+                return
+            route = resolve_data_route(path)
+            if route is not None:
+                self.serve_data_app(*route)
+                return
 
         self.handle_frontend_file(path)
 
@@ -153,9 +238,10 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             self.send_error(409)
             return
 
-        file_path.write_text("{}\n", encoding="utf-8")
+        doc_id = new_ulid()
+        file_path.write_text(json.dumps({"id": doc_id}, indent=2) + "\n", encoding="utf-8")
         rel_path = str(file_path.relative_to(DATA_DIR)).replace("\\", "/")
-        self.send_json({"path": rel_path, "type": "file"})
+        self.send_json({"path": rel_path, "type": "file", "id": doc_id})
 
     def handle_move_data_entry(self, data: dict) -> None:
         source_rel = str(data.get("source", "")).strip("/")
@@ -200,9 +286,10 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             return
 
         config = load_config()
-        provider = data.get("provider") or scenario.get("provider") or config.get("default_provider")
-        if provider not in SUPPORTED_PROVIDERS:
-            self.send_json_error(400, f"Unsupported provider: {provider}")
+        selector = data.get("provider") or scenario.get("provider") or config.get("default_provider")
+        steps = resolve_steps(selector, config)
+        if not steps:
+            self.send_json_error(400, f"Unknown provider selector: {selector}")
             return
 
         context = data.get("context") if isinstance(data.get("context"), dict) else {}
@@ -214,12 +301,17 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            text = run_provider(provider, prompt, config, str(APP_DIR.parent))
+            result = run_cascade(steps, prompt, config, str(APP_DIR.parent))
         except ProviderError as error:
             self.send_json_error(500, str(error))
             return
 
-        self.send_json({"text": text, "provider": provider, "scenarioId": scenario_id})
+        self.send_json({
+            "text": result["text"],
+            "provider": result["provider"],
+            "profile": result.get("profile"),
+            "scenarioId": scenario_id,
+        })
 
     def handle_page(self, path: str) -> bool:
         body = render_page(path)
@@ -227,6 +319,13 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             return False
         self.send_bytes(body, "text/html; charset=utf-8")
         return True
+
+    def serve_data_app(self, kind: str, rel_path: str) -> None:
+        body = render_page("/", initial_state={"kind": kind, "path": rel_path})
+        if body is None:
+            self.send_error(404)
+            return
+        self.send_bytes(body, "text/html; charset=utf-8")
 
     def handle_frontend_file(self, path: str) -> None:
         file_path = (UI_DIR / path.lstrip("/")).resolve()

@@ -161,6 +161,10 @@
     gap: 8px;
 }
 
+.content-toolbar__actions[hidden] {
+    display: none;
+}
+
 .content-toolbar__button {
     padding: 6px 14px;
     border: 1px solid #d0d7de;
@@ -221,6 +225,10 @@
 
 .view-switch {
     display: flex;
+}
+
+.view-switch[hidden] {
+    display: none;
 }
 
 .view-switch__option {
@@ -521,11 +529,50 @@
     padding: 12px;
 }
 
-.not-found {
+/* ------------------------------------------------------------------ */
+/* Directory listing view                                              */
+/* ------------------------------------------------------------------ */
+
+.file-content.directory-listing {
+    white-space: normal;
+}
+
+.directory-listing__path {
+    color: #57606a;
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+}
+
+.directory-listing__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.directory-listing__item {
+    border-bottom: 1px solid #eaeef2;
+}
+
+.directory-listing__link {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    color: #24292f;
+}
+
+.directory-listing__link:hover {
+    background: #f6f8fa;
+}
+
+.directory-listing__empty {
     color: #8c959f;
     font-style: italic;
-    padding: 12px;
-    white-space: normal;
+    padding: 8px 4px;
 }
 
 /* ------------------------------------------------------------------ */

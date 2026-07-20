@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from html import escape
 from pathlib import Path
 from typing import Optional
@@ -12,8 +13,14 @@ PAGES_DIR = (FRONTEND_DIR / "pages").resolve()
 LAYOUT_PATH = FRONTEND_DIR / "layout" / "page.html"
 
 
-def render_page(url_path: str) -> Optional[bytes]:
-    """Render an application-owned HTML or Markdown page in the shared layout."""
+def render_page(url_path: str, initial_state: Optional[dict] = None) -> Optional[bytes]:
+    """Render an application-owned HTML or Markdown page in the shared layout.
+
+    `initial_state`, when given, is serialized and injected as
+    `window.__INITIAL_STATE__` so the page's own scripts can pick up
+    server-resolved routing state (e.g. which document/directory to show)
+    without re-deriving it - and without deciding not-found on the client.
+    """
     page_path = find_page(url_path)
     if page_path is None:
         return None
@@ -30,13 +37,20 @@ def render_page(url_path: str) -> Optional[bytes]:
     script_paths = scripts if isinstance(scripts, list) else []
     page_head = "\n".join(stylesheet_tag(path) for path in style_paths)
     page_scripts = "\n".join(script_tag(path) for path in script_paths)
+    initial_state_html = "" if initial_state is None else initial_state_tag(initial_state)
 
     document = LAYOUT_PATH.read_text(encoding="utf-8")
     document = document.replace("{{ title }}", escape(title))
     document = document.replace("{{ page_head }}", page_head)
+    document = document.replace("{{ initial_state }}", initial_state_html)
     document = document.replace("{{ content }}", content)
     document = document.replace("{{ page_scripts }}", page_scripts)
     return document.encode("utf-8")
+
+
+def initial_state_tag(initial_state: dict) -> str:
+    payload = json.dumps(initial_state).replace("</", "<\\/")
+    return f"    <script>window.__INITIAL_STATE__ = {payload};</script>"
 
 
 def find_page(url_path: str) -> Optional[Path]:
