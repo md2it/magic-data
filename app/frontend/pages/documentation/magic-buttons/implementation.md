@@ -23,8 +23,8 @@ The agent works locally and can access the project when the action requires it; 
 
 Reusable behavior is described in configuration, not in code. There are two kinds:
 
-- **Per-action configuration.** Each action has its own definition: the prompt template, a human-readable label, which agent it uses by default, and which pieces of context it requires or accepts.
-- **Global defaults.** Shared settings that apply to every action, such as the default agent, time limits, and how each CLI is invoked.
+- **Per-action configuration.** Each action has its own definition: the prompt template, a human-readable label, which agent or cascade it selects by default, and which pieces of context it requires or accepts.
+- **Global defaults.** Shared settings that apply to every action, such as the default selection (a single agent or a cascade), time limits, and how each CLI is invoked.
 
 Because this level is declarative and version-controlled, actions are easy to review, copy, and adjust without changing application logic.
 

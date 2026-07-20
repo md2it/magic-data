@@ -1,3 +1,29 @@
+.settings-magic {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.settings-magic .magic-btn {
+    padding: 6px 14px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background: #f6f8fa;
+    color: #1f2328;
+    cursor: pointer;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.settings-magic .magic-btn:hover {
+    background: #eaeef2;
+}
+
+.settings-magic .magic-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
 .settings-list {
     display: flex;
     flex-direction: column;
