@@ -1,10 +1,11 @@
 .sidebar-toolbar {
     display: flex;
-    flex-wrap: wrap;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    justify-content: center;
     gap: 8px;
-    width: fit-content;
-    max-width: 100%;
-    margin-inline: auto;
+    width: 100%;
+    padding-inline: 16px;
     margin-bottom: 8px;
 }
 
@@ -34,9 +35,43 @@
 }
 
 .sidebar-collapse {
-    margin-top: auto;
-    margin-inline: auto;
-    flex: none;
+    position: fixed;
+    /* Keep clear of the persistent status control in the viewport corner. */
+    bottom: 48px;
+    left: 0;
+    z-index: 6;
+    width: var(--sidebar-width);
+    min-height: 40px;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid #d0d7de;
+    border-left: 0;
+    border-radius: 0;
+    background: #fff;
+    color: #0969da;
+    box-shadow: 0 -4px 12px rgba(31, 35, 40, 0.08);
+    transition: width 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-body__sidebar--collapsed .sidebar-collapse {
+    width: var(--sidebar-collapsed-width);
+}
+
+.app-body__sidebar--collapsed.app-body__sidebar--hover-expand:hover .sidebar-collapse,
+.app-body__sidebar--collapsed.app-body__sidebar--hover-expand:focus-within .sidebar-collapse {
+    width: var(--sidebar-width);
+}
+
+.sidebar-collapse:hover {
+    background: #ddf4ff;
+    border-color: #54aeff;
+    color: #0550ae;
+    box-shadow: 0 -4px 12px rgba(9, 105, 218, 0.16);
+}
+
+.sidebar-collapse:focus-visible {
+    outline: 2px solid #0969da;
+    outline-offset: 2px;
 }
 
 .sidebar-toast {
@@ -71,7 +106,7 @@
     flex: 1;
     min-height: 0;
     overflow: auto;
-    padding: 0;
+    padding: 0 0 88px;
     border-radius: 6px;
 }
 
@@ -108,9 +143,12 @@
 
 .tree-node__toggle,
 .tree-node__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
     text-align: left;
-    padding: 6px 10px;
+    padding: 6px 8px;
     border: none;
     border-radius: 6px;
     background: transparent;
@@ -125,6 +163,19 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+.tree-node__label {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.tree-node__toggle .icon,
+.tree-node__label .icon {
+    align-self: center;
+    vertical-align: middle;
 }
 
 .tree-node__toggle:hover,

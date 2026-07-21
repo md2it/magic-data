@@ -24,7 +24,7 @@ function createDirNode(node) {
     const toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "tree-node__toggle";
-    window.AppIcons.setLabel(toggle, "chevron-right", node.name);
+    window.AppIcons.setLabel(toggle, "folder", node.name);
     toggle.draggable = true;
     toggle.addEventListener("click", function () {
         setExpanded(li, toggle, node.name, !li.classList.contains("tree-node--expanded"));
@@ -59,10 +59,25 @@ function createDirNode(node) {
         startCreateEntry(node.path, childList, "dir");
     });
 
+    const addStructuredFileButton = document.createElement("button");
+    addStructuredFileButton.type = "button";
+    addStructuredFileButton.className = "tree-node__add";
+    addStructuredFileButton.setAttribute("aria-label", "New file using Magic AI");
+    addStructuredFileButton.dataset.tooltip = "New file using Magic AI";
+    addStructuredFileButton.innerHTML =
+        window.AppIcons.markup("file-plus", "icon--sm") +
+        window.AppIcons.markup("sparkles", "icon--sm");
+    addStructuredFileButton.addEventListener("click", async function (event) {
+        event.stopPropagation();
+        const data = await createStructuredFile(addStructuredFileButton, node.path);
+        if (data) await refreshTree();
+    });
+
     const actions = document.createElement("div");
     actions.className = "tree-node__actions";
     actions.appendChild(addFileButton);
     actions.appendChild(addFolderButton);
+    actions.appendChild(addStructuredFileButton);
 
     header.appendChild(toggle);
     header.appendChild(actions);
@@ -75,7 +90,7 @@ function createDirNode(node) {
 
 function setExpanded(li, toggle, name, expanded) {
     li.classList.toggle("tree-node--expanded", expanded);
-    window.AppIcons.setLabel(toggle, expanded ? "chevron-down" : "chevron-right", name);
+    window.AppIcons.setLabel(toggle, expanded ? "folder-open" : "folder", name);
 }
 
 function displayName(name) {
@@ -89,7 +104,7 @@ function createFileNode(node) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "tree-node__label";
-    button.textContent = displayName(node.name);
+    window.AppIcons.setLabel(button, "file", displayName(node.name));
     button.dataset.path = node.path;
     button.dataset.id = node.id || "";
     button.draggable = true;
@@ -689,7 +704,7 @@ function initMagicButtons() {
         structuredButton.setAttribute("aria-label", "New file using Magic AI");
         structuredButton.dataset.tooltip = "New file using Magic AI";
         structuredButton.addEventListener("click", async function () {
-            const data = await window.magicLlm.runScenario("create-structured-file", { button: structuredButton });
+            const data = await createStructuredFile(structuredButton, "");
             if (data) await refreshTree();
         });
         sidebarToolbar.appendChild(structuredButton);
@@ -731,6 +746,19 @@ function initMagicButtons() {
     }
 }
 
+function dataDirectoryPath(directoryPath) {
+    return directoryPath ? `data/${directoryPath}/` : "data/";
+}
+
+function createStructuredFile(button, directoryPath) {
+    const targetDirectory = dataDirectoryPath(directoryPath);
+    return window.magicLlm.runScenario("create-structured-file", {
+        button: button,
+        context: { targetDirectory: targetDirectory },
+        selectedDirectory: targetDirectory,
+    });
+}
+
 function initSidebarCollapse() {
     const sidebar = document.getElementById("app-sidebar");
     const toggle = document.getElementById("sidebar-collapse");
@@ -745,39 +773,36 @@ function initSidebarCollapse() {
         }
     }
 
-    function setCollapsed(collapsed) {
-        sidebar.classList.toggle("app-body__sidebar--collapsed", collapsed);
-        // Stay visually collapsed until pointer/focus leaves after a Collapse click.
-        sidebar.classList.toggle(HOVER_EXPAND, false);
-        toggle.setAttribute("aria-expanded", String(!collapsed));
-        const label = collapsed ? "Expand sidebar" : "Collapse sidebar";
+    let collapsed = false;
+
+    function setCollapsed(shouldCollapse) {
+        collapsed = shouldCollapse;
+        sidebar.classList.toggle("app-body__sidebar--collapsed", shouldCollapse);
+        sidebar.classList.remove(HOVER_EXPAND);
+        toggle.setAttribute("aria-expanded", String(!shouldCollapse));
+        const label = shouldCollapse ? "Expand sidebar" : "Collapse sidebar";
         toggle.setAttribute("aria-label", label);
         toggle.dataset.tooltip = label;
-        window.AppIcons.setLabel(toggle, collapsed ? "chevron-right" : "chevron-left");
+        window.AppIcons.setLabel(toggle, shouldCollapse ? "chevron-right" : "chevron-left");
         try {
-            localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+            localStorage.setItem(STORAGE_KEY, shouldCollapse ? "1" : "0");
         } catch (e) {
             /* storage unavailable — keep session-only state */
         }
     }
 
-    let collapsed = false;
     try {
         collapsed = localStorage.getItem(STORAGE_KEY) === "1";
     } catch (e) {
         collapsed = false;
     }
     setCollapsed(collapsed);
-    if (collapsed) armHoverExpand();
-
     toggle.addEventListener("click", function () {
-        setCollapsed(!sidebar.classList.contains("app-body__sidebar--collapsed"));
+        setCollapsed(!collapsed);
     });
 
-    sidebar.addEventListener("mouseleave", armHoverExpand);
-    sidebar.addEventListener("focusout", function (event) {
-        if (!sidebar.contains(event.relatedTarget)) armHoverExpand();
-    });
+    sidebar.addEventListener("mouseenter", armHoverExpand);
+    sidebar.addEventListener("focusin", armHoverExpand);
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
