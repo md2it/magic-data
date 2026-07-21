@@ -90,7 +90,6 @@ function createFileNode(node) {
     button.type = "button";
     button.className = "tree-node__label";
     button.textContent = displayName(node.name);
-    button.dataset.tooltip = node.name;
     button.dataset.path = node.path;
     button.dataset.id = node.id || "";
     button.draggable = true;
