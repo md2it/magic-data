@@ -78,3 +78,13 @@
 .switch:checked::before {
     left: 16px;
 }
+
+.settings-select {
+    font: inherit;
+    padding: 4px 8px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background: #fff;
+    color: inherit;
+    cursor: pointer;
+}
