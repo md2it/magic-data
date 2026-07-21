@@ -34,8 +34,8 @@ function createDirNode(node) {
     const addFileButton = document.createElement("button");
     addFileButton.type = "button";
     addFileButton.className = "tree-node__add";
-    addFileButton.setAttribute("aria-label", "New file");
-    addFileButton.dataset.tooltip = "New file";
+    addFileButton.setAttribute("aria-label", "New file manually");
+    addFileButton.dataset.tooltip = "New file manually";
     addFileButton.innerHTML =
         window.AppIcons.markup("file-plus", "icon--sm") +
         window.AppIcons.markup("pointer", "icon--sm");
@@ -48,8 +48,8 @@ function createDirNode(node) {
     const addFolderButton = document.createElement("button");
     addFolderButton.type = "button";
     addFolderButton.className = "tree-node__add";
-    addFolderButton.setAttribute("aria-label", "New folder");
-    addFolderButton.dataset.tooltip = "New folder";
+    addFolderButton.setAttribute("aria-label", "New folder manually");
+    addFolderButton.dataset.tooltip = "New folder manually";
     addFolderButton.innerHTML =
         window.AppIcons.markup("folder-plus", "icon--sm") +
         window.AppIcons.markup("pointer", "icon--sm");
@@ -687,8 +687,8 @@ function initMagicButtons() {
         structuredButton.type = "button";
         structuredButton.className = "sidebar-toolbar__button sidebar-toolbar__button--icon";
         structuredButton.innerHTML = window.AppIcons.markup("file-plus") + window.AppIcons.markup("sparkles");
-        structuredButton.setAttribute("aria-label", "Create a structured file");
-        structuredButton.dataset.tooltip = "Create a structured file";
+        structuredButton.setAttribute("aria-label", "New file using Magic AI");
+        structuredButton.dataset.tooltip = "New file using Magic AI";
         structuredButton.addEventListener("click", async function () {
             const data = await window.magicLlm.runScenario("create-structured-file", { button: structuredButton });
             if (data) await refreshTree();
