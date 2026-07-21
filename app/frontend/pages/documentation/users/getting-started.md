@@ -2,7 +2,7 @@
 title: Getting started · Magic-data
 ---
 
-> [Documentation](../documentation) / Getting started
+> [documentation](/documentation) / [users](/documentation/users) / [getting-started](/documentation/users/getting-started)
 
 # Getting started
 

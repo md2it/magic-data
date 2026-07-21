@@ -2,11 +2,11 @@
 title: UI visual style · Magic-data
 ---
 
-> [Documentation](/documentation) / [UI](/documentation/ui) / Visual style
+> [documentation](/documentation) / [developers](/documentation/developers) / [ui](/documentation/developers/ui) / [visual-style](/documentation/developers/ui/visual-style)
 
 # UI visual style
 
-This document defines the product's visual direction. All implementation must comply with [UI technical standards](technical-standards).
+Follow [technical-standards](/documentation/developers/ui/technical-standards).
 
 ## Principle
 

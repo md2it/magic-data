@@ -2,11 +2,11 @@
 title: UI technical standards · Magic-data
 ---
 
-> [Documentation](/documentation) / [UI](/documentation/ui) / Technical standards
+> [documentation](/documentation) / [developers](/documentation/developers) / [ui](/documentation/developers/ui) / [technical-standards](/documentation/developers/ui/technical-standards)
 
 # UI technical standards
 
-These rules define the implementation boundaries for every UI change. The visual decisions are defined separately in [Visual style](visual-style).
+These rules define the implementation boundaries for every UI change. Visual decisions are in [visual-style](visual-style).
 
 ## Component ownership
 

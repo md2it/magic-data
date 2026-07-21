@@ -2,15 +2,15 @@
 title: Working with data · Magic-data
 ---
 
-> [Documentation](../documentation) / Working with data
+> [documentation](/documentation) / [users](/documentation/users) / [working-with-data](/documentation/users/working-with-data)
 
 # Working with data
 
-Data is stored in JSON files. LLM agents work with these JSON files, and you can view and manually manage the data and agents through the web interface.
+Data is stored in JSON files. Manage data and agents through the web interface.
 
 The interface runs locally at `localhost`. It does not require a separate server or an external database.
 
-Through the interface, you can:
+You can:
 
 - browse the list of available datasets;
 - open a dataset as a table or a tree;
@@ -19,4 +19,4 @@ Through the interface, you can:
 - filter data by attributes available in a specific JSON file;
 - manually manage the data.
 
-To use AI-assisted actions, see [Magic buttons](magic-buttons).
+To use AI-assisted actions, see [magic-buttons](/documentation/users/magic-buttons).
