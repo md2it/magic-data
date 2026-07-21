@@ -80,9 +80,25 @@ body {
     background: #0550ae;
 }
 
+@media (max-width: 720px) {
+    .app-header {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .app-header__nav,
+    .app-header__actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+}
+
 .app-body {
     flex: 1;
     display: flex;
+    min-width: 0;
     min-height: 0;
     position: relative;
 }
@@ -131,6 +147,8 @@ body {
 
 .app-body__content {
     flex: 1;
+    min-width: 0;
+    max-width: 100%;
     padding: 24px;
 }
 
