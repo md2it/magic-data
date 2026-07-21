@@ -98,16 +98,22 @@ body {
     width: var(--sidebar-collapsed-width);
 }
 
-.app-body__sidebar--collapsed:hover,
-.app-body__sidebar--collapsed:focus-within {
+/*
+ * Hover/focus preview is armed only after the pointer/focus leaves once.
+ * Otherwise a click on Collapse would instantly re-expand via :hover.
+ */
+.app-body__sidebar--collapsed.app-body__sidebar--hover-expand:hover,
+.app-body__sidebar--collapsed.app-body__sidebar--hover-expand:focus-within {
     width: var(--sidebar-width);
     margin-right: calc(var(--sidebar-collapsed-width) - var(--sidebar-width));
     z-index: 5;
     box-shadow: 4px 0 16px rgba(31, 35, 40, 0.12);
 }
 
-.app-body__sidebar--collapsed:not(:hover):not(:focus-within) > .sidebar-toolbar,
-.app-body__sidebar--collapsed:not(:hover):not(:focus-within) > .tree-list {
+.app-body__sidebar--collapsed:not(.app-body__sidebar--hover-expand) > .sidebar-toolbar,
+.app-body__sidebar--collapsed:not(.app-body__sidebar--hover-expand) > .tree-list,
+.app-body__sidebar--collapsed.app-body__sidebar--hover-expand:not(:hover):not(:focus-within) > .sidebar-toolbar,
+.app-body__sidebar--collapsed.app-body__sidebar--hover-expand:not(:hover):not(:focus-within) > .tree-list {
     visibility: hidden;
 }
 

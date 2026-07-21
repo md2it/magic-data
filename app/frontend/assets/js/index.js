@@ -734,9 +734,18 @@ function initSidebarCollapse() {
     if (!sidebar || !toggle) return;
 
     const STORAGE_KEY = "magicdata.sidebarCollapsed";
+    const HOVER_EXPAND = "app-body__sidebar--hover-expand";
+
+    function armHoverExpand() {
+        if (sidebar.classList.contains("app-body__sidebar--collapsed")) {
+            sidebar.classList.add(HOVER_EXPAND);
+        }
+    }
 
     function setCollapsed(collapsed) {
         sidebar.classList.toggle("app-body__sidebar--collapsed", collapsed);
+        // Stay visually collapsed until pointer/focus leaves after a Collapse click.
+        sidebar.classList.toggle(HOVER_EXPAND, false);
         toggle.setAttribute("aria-expanded", String(!collapsed));
         const label = collapsed ? "Expand sidebar" : "Collapse sidebar";
         toggle.setAttribute("aria-label", label);
@@ -756,9 +765,15 @@ function initSidebarCollapse() {
         collapsed = false;
     }
     setCollapsed(collapsed);
+    if (collapsed) armHoverExpand();
 
     toggle.addEventListener("click", function () {
         setCollapsed(!sidebar.classList.contains("app-body__sidebar--collapsed"));
+    });
+
+    sidebar.addEventListener("mouseleave", armHoverExpand);
+    sidebar.addEventListener("focusout", function (event) {
+        if (!sidebar.contains(event.relatedTarget)) armHoverExpand();
     });
 }
 
