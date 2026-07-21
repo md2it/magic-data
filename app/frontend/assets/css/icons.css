@@ -1,0 +1,57 @@
+/*
+ * Single, unified style for every icon in the product.
+ *
+ * Icons are never inlined per page. Reference a symbol from the one sprite
+ * (/assets/images/icons.svg) and let this file own size, color, and stroke:
+ *
+ *   <svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#sparkles"></use></svg>
+ *
+ * See /documentation/developers/ui/imagery for the rules that govern icon usage.
+ */
+
+.icon {
+    display: inline-block;
+    width: 1.25em;
+    height: 1.25em;
+    /* Optically center the icon on the text baseline it sits next to. */
+    vertical-align: -0.15em;
+    flex-shrink: 0;
+    /* Theme-proof: the icon inherits the surrounding text color. */
+    color: currentColor;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.icon--sm {
+    width: 1em;
+    height: 1em;
+}
+
+.icon--lg {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+/*
+ * Icon combinations. A single object drawn from two icons — a subject and a
+ * modifier badge in its corner (e.g. "file-plus-corner" + "sparkles" for
+ * "add a file with AI"). The modifier sits over the lower-right corner of the
+ * subject. See /documentation/developers/ui/imagery.
+ */
+.icon-combo {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+}
+
+.icon-combo > .icon-combo__badge {
+    position: absolute;
+    right: -0.15em;
+    bottom: -0.15em;
+    width: 0.7em;
+    height: 0.7em;
+    vertical-align: baseline;
+}

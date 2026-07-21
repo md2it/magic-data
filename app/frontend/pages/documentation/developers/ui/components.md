@@ -61,7 +61,7 @@ Schema-defining portions are de-emphasized rather than hidden (see the
 ## Tooltips
 
 Tooltips explain a control — most importantly an icon-only one (see
-[imagery](imagery). Every tooltip in the
+[imagery](imagery)). Every tooltip in the
 product shares one style so it reads as the same object everywhere:
 
 - **Tail** — a small pointer (tail) connects the tooltip to the element it
