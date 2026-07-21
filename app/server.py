@@ -417,20 +417,20 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         pass
 
 
-def main() -> None:
+def main() -> bool:
+    """Run one server instance and return whether a full restart was requested."""
     url = f"http://{HOST}:{PORT}"
-    while True:
-        server = ThreadingHTTPServer((HOST, PORT), ApplicationHandler)
-        server.restart_requested = False
-        print(f"Serving at {url}")
-        webbrowser.open(url)
-        try:
-            server.serve_forever()
-        except KeyboardInterrupt:
-            pass
-        finally:
-            server.server_close()
+    server = ThreadingHTTPServer((HOST, PORT), ApplicationHandler)
+    server.restart_requested = False
+    print(f"Serving at {url}")
+    webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
 
-        if not server.restart_requested:
-            print("Server stopped.")
-            break
+    if not server.restart_requested:
+        print("Server stopped.")
+    return server.restart_requested

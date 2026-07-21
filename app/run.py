@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
+import os
 import socket
+import sys
+from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -28,7 +31,8 @@ def restart_running_server() -> bool:
 
 def start() -> None:
     if not is_port_in_use():
-        main()
+        if main():
+            restart_process()
         return
 
     print(f"Port {PORT} is already in use.")
@@ -46,6 +50,13 @@ def start() -> None:
         print("Magic-data server restart requested.")
     else:
         print(f"Port {PORT} is occupied by another service or an incompatible Magic-data server.")
+
+
+def restart_process() -> None:
+    """Replace this process so Python reloads the complete application."""
+    script_path = Path(__file__).resolve()
+    print("Restarting Magic-data process.")
+    os.execv(sys.executable, [sys.executable, str(script_path)])
 
 
 if __name__ == "__main__":

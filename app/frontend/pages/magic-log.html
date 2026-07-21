@@ -8,10 +8,17 @@ scripts:
     <main class="magic-log-page">
         <h1>Magic log</h1>
         <p>All AI-agent runs across current and previous application sessions.</p>
-        <p class="magic-log-counts" aria-label="Magic log counters" data-log-counts></p>
+        <div class="magic-log-tools">
+            <div class="magic-log-counts" aria-label="Magic log counters" data-log-counts></div>
+            <div class="magic-log-connection" aria-label="LLM connection">
+                <span>LLM connection</span>
+                <button type="button" class="magic-btn" data-provider="codex"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#sparkles"></use></svg> Check Codex</button>
+                <button type="button" class="magic-btn" data-provider="claude"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#sparkles"></use></svg> Check Claude</button>
+            </div>
+        </div>
         <h2>Log <span class="magic-log-total" data-log-total></span></h2>
         <table class="magic-log-table">
-            <thead><tr><th>Status</th><th>Run</th><th>Started</th><th>Provider</th><th>Session</th></tr></thead>
+            <thead><tr><th>Status</th><th>Run</th><th>Started</th><th>Provider</th><th>Session</th><th aria-label="Details"></th></tr></thead>
             <tbody data-log-list></tbody>
         </table>
         <button class="magic-log-more" type="button" data-load-more hidden>Load more</button>
