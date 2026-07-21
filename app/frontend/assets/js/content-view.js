@@ -102,6 +102,37 @@
         return btn;
     }
 
+    function onFillColumnClick(event, key, btn) {
+        event.stopPropagation();               // must not trigger the header sort
+        const ctx = window.MagicData.currentContext();
+        window.magicLlm.runScenario("fill-column", {
+            context: Object.assign({}, ctx, { column: { key: key } }),
+            button: btn
+        }).then(function (data) { if (data) window.MagicData.reloadDocument(); });
+    }
+
+    /**
+     * Builds a ✨ fill button that fills the missing values of a single column
+     * (the `key` field) across every item. Lives in the Table column header,
+     * next to the row-fill buttons, so it must not trigger header sorting.
+     */
+    function createColumnFillButton(key) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "magic-inline-btn content-table__col-fill";
+        btn.title = "Fill this column";
+        btn.textContent = "✨";
+        btn.addEventListener("click", function (event) {
+            onFillColumnClick(event, key, btn);
+        });
+        // Keep keyboard activation on the button from bubbling to the th's
+        // Enter/Space sort handler.
+        btn.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") event.stopPropagation();
+        });
+        return btn;
+    }
+
     /**
      * True when a node reached at `path` (array of keys/indices from the root)
      * with the given `value` is a fillable top-level item: exactly
@@ -540,6 +571,8 @@
             indicator.className = "content-table__sort-indicator";
             indicator.setAttribute("aria-hidden", "true");
             th.appendChild(indicator);
+
+            if (hasItems) th.appendChild(createColumnFillButton(col));
 
             function toggleSort() {
                 if (sortState.column === col) {

@@ -98,6 +98,33 @@
     font: inherit;
 }
 .magic-llm-field textarea { resize: vertical; min-height: 76px; }
+.magic-llm-prompt {
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background: #f6f8fa;
+}
+.magic-llm-prompt__summary {
+    padding: 7px 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #57606a;
+    user-select: none;
+    list-style-position: inside;
+}
+.magic-llm-prompt__summary:hover { color: #1f2328; }
+.magic-llm-prompt__text {
+    margin: 0;
+    padding: 10px;
+    border-top: 1px solid #d0d7de;
+    max-height: 220px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #24292f;
+}
 .magic-llm-field--toggle {
     flex-direction: row;
     align-items: center;
@@ -335,6 +362,7 @@
             ? document.createElement("textarea")
             : document.createElement("input");
         if (field.type !== "textarea") input.type = "text";
+        else input.rows = 7; // taller by default; still user-resizable (CSS resize: vertical)
         if (field.placeholder) input.placeholder = field.placeholder;
         if (field.default != null) input.value = String(field.default);
         input.name = field.name;
@@ -343,9 +371,27 @@
         return wrap;
     }
 
+    // Collapsible, read-only view of the scenario's base prompt. Collapsed by
+    // default so the modal stays focused on the fields the user fills in, but
+    // available for anyone who wants to see exactly what will be run. The raw
+    // template (with its {{placeholders}}) is shown — that IS the base prompt.
+    function buildPromptDisclosure(promptText) {
+        const details = document.createElement("details");
+        details.className = "magic-llm-prompt";
+        const summary = document.createElement("summary");
+        summary.className = "magic-llm-prompt__summary";
+        summary.textContent = "Base prompt";
+        const pre = document.createElement("pre");
+        pre.className = "magic-llm-prompt__text";
+        pre.textContent = String(promptText).trim();
+        details.append(summary, pre);
+        return details;
+    }
+
     // Show a small form for the declared optional parameters. Resolves with a
-    // { name: value } object, or null if the user cancelled.
-    function collectParams(title, fields) {
+    // { name: value } object, or null if the user cancelled. When a base prompt
+    // is given, a collapsed disclosure of it is shown above the fields.
+    function collectParams(title, fields, promptText) {
         ensureStyles();
         return new Promise(function (resolve) {
             const backdrop = document.createElement("div");
@@ -361,6 +407,9 @@
 
             const form = document.createElement("form");
             form.className = "magic-llm-form";
+            if (promptText && String(promptText).trim()) {
+                form.appendChild(buildPromptDisclosure(promptText));
+            }
             const controls = {};
             fields.forEach(function (field) {
                 form.appendChild(buildField(field, controls));
@@ -651,7 +700,7 @@
         if (!params && scenario) {
             const fields = declaredParams(scenario);
             if (fields.length > 0) {
-                params = await collectParams(title, fields);
+                params = await collectParams(title, fields, scenario.prompt);
                 if (params === null) return null; // cancelled
             }
         }

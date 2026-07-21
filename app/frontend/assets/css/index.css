@@ -513,6 +513,11 @@
     opacity: 0.9;
 }
 
+.content-table__col-fill {
+    margin-left: 6px;
+    vertical-align: baseline;
+}
+
 .content-table__row:nth-child(even) {
     background: #f6f8fa;
 }

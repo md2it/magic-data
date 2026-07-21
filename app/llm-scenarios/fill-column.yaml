@@ -1,0 +1,31 @@
+id: fill-column
+ui:
+  label: Fill this column
+  loadingLabel: Filling column...
+prompt: |
+  # Fill one column
+
+  Follow the rules in data/AGENTS.md.
+
+  The document is the JSON database file at: data/{{document.path}}
+  Its root has `schema` (a JSON Schema for a single item) and `items` (an array of objects).
+
+  Task: for EVERY item in `items`, fill in the MISSING value of a SINGLE key —
+  the key named `{{column.key}}`. Do not touch any other key on any item.
+
+  Rules:
+  - Only fill `{{column.key}}` where it is missing or empty; do not rephrase or
+    overwrite values that are already present and correct.
+  - Make sure `{{column.key}}` exists in `schema`; add its description to
+    `schema` first if it does not.
+  - A key with no value is better than an inaccurate value. Accuracy comes first.
+  - Cite sources when the schema calls for it.
+
+  Work ITERATIVELY and save continuously: fill `{{column.key}}` for one item and
+  write it to the file immediately, then move to the next item. Never gather all
+  data first and write only at the end — partial progress must survive a timeout.
+
+  Edit the file directly. When done, reply with a one-line summary of what you
+  filled.
+
+  Session id: {{runtime.session_id}}
