@@ -59,9 +59,13 @@ function createDirNode(node) {
         startCreateEntry(node.path, childList, "dir");
     });
 
+    const actions = document.createElement("div");
+    actions.className = "tree-node__actions";
+    actions.appendChild(addFileButton);
+    actions.appendChild(addFolderButton);
+
     header.appendChild(toggle);
-    header.appendChild(addFileButton);
-    header.appendChild(addFolderButton);
+    header.appendChild(actions);
     attachDropTarget(li, node.path);
 
     li.appendChild(header);

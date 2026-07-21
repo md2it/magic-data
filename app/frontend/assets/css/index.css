@@ -137,10 +137,25 @@
     color: #fff;
 }
 
-.tree-node__add {
+.tree-node__actions {
     position: absolute;
     top: 50%;
+    right: 2px;
     z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    opacity: 0;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.tree-node__header:hover .tree-node__actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tree-node__add {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -156,22 +171,6 @@
     color: #57606a;
     cursor: pointer;
     font-size: 0.9rem;
-    opacity: 0;
-    transform: translateY(-50%);
-    pointer-events: none;
-}
-
-.tree-node__header > .tree-node__add:nth-of-type(2) {
-    right: 24px;
-}
-
-.tree-node__header > .tree-node__add:nth-of-type(3) {
-    right: 2px;
-}
-
-.tree-node__header:hover .tree-node__add {
-    opacity: 1;
-    pointer-events: auto;
 }
 
 .tree-node__add:hover {
