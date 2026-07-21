@@ -120,6 +120,11 @@
     display: none;
 }
 
+/* In the compact sidebar, align every tree level with the left edge. */
+.app-body__sidebar--collapsed:not(:hover):not(:focus-within) .tree-list .tree-list {
+    padding-left: 0;
+}
+
 .tree-node--dir.tree-node--expanded > .tree-list {
     display: block;
 }
