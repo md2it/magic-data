@@ -90,6 +90,8 @@
 }
 .magic-llm-field { display: flex; flex-direction: column; gap: 4px; }
 .magic-llm-field > span { font-size: 0.85rem; color: #57606a; }
+.magic-llm-context { margin: 0; font-size: 0.85rem; color: #57606a; }
+.magic-llm-context strong { color: #1f2328; }
 .magic-llm-field input[type="text"],
 .magic-llm-field textarea {
     padding: 8px 10px;
@@ -416,7 +418,7 @@
     // Show a small form for the declared optional parameters. Resolves with a
     // { name: value } object, or null if the user cancelled. When a base prompt
     // is given, a collapsed disclosure of it is shown above the fields.
-    function collectParams(title, fields, promptText) {
+    function collectParams(title, fields, promptText, selectedDirectory) {
         ensureStyles();
         return new Promise(function (resolve) {
             const backdrop = document.createElement("div");
@@ -434,6 +436,14 @@
             form.className = "magic-llm-form";
             if (promptText && String(promptText).trim()) {
                 form.appendChild(buildPromptDisclosure(promptText));
+            }
+            if (selectedDirectory) {
+                const context = document.createElement("p");
+                context.className = "magic-llm-context";
+                const label = document.createElement("strong");
+                label.textContent = "Selected directory: ";
+                context.append(label, String(selectedDirectory));
+                form.appendChild(context);
             }
             const controls = {};
             fields.forEach(function (field) {
@@ -750,7 +760,7 @@
         if (!params && scenario) {
             const fields = declaredParams(scenario);
             if (fields.length > 0) {
-                params = await collectParams(title, fields, scenario.prompt);
+                params = await collectParams(title, fields, scenario.prompt, options.selectedDirectory);
                 if (params === null) return null; // cancelled
             }
         }

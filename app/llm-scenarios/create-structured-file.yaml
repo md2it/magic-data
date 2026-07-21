@@ -1,4 +1,7 @@
 id: create-structured-file
+context:
+  required:
+    - targetDirectory
 ui:
   label: Create structured file
   loadingLabel: Creating...
@@ -20,7 +23,7 @@ prompt: |
   {{params.structure}}
 
   Where and how:
-  - Create the file at data/{{params.name}}.json (turn the requested name into a
+  - Create the file in {{targetDirectory}} at {{targetDirectory}}{{params.name}}.json (turn the requested name into a
     safe file name: lowercase, words separated by hyphens, `.json` extension).
     If a file with that name already exists, pick a close, non-colliding name.
   - The root must be an object with exactly two keys:
