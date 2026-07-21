@@ -128,11 +128,12 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/":
-            self.serve_data_app("dir", "")
+            self.send_redirect("/data")
             return
 
         # Data documents/directories live under a dedicated `/data` namespace
         # so they can never collide with application pages or assets.
+        # The data app page itself is `pages/data/index.html` (path `/data`).
         if path == "/data" or path.startswith("/data/"):
             route = resolve_data_route(path[len("/data"):])
             if route is not None:
@@ -318,11 +319,16 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         return True
 
     def serve_data_app(self, kind: str, rel_path: str) -> None:
-        body = render_page("/", initial_state={"kind": kind, "path": rel_path})
+        body = render_page("/data", initial_state={"kind": kind, "path": rel_path})
         if body is None:
             self.send_error(404)
             return
         self.send_bytes(body, "text/html; charset=utf-8")
+
+    def send_redirect(self, location: str) -> None:
+        self.send_response(302)
+        self.send_header("Location", location)
+        self.end_headers()
 
     def handle_frontend_file(self, path: str) -> None:
         file_path = (UI_DIR / path.lstrip("/")).resolve()
