@@ -94,9 +94,9 @@
 }
 
 .tree-node__header {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 2px;
     border-radius: 6px;
 }
 
@@ -121,11 +121,10 @@
 
 .tree-node__toggle {
     font-weight: 600;
-    flex: 1;
     min-width: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .tree-node__toggle:hover,
@@ -139,7 +138,9 @@
 }
 
 .tree-node__add {
-    flex: none;
+    position: absolute;
+    top: 50%;
+    z-index: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -151,19 +152,30 @@
     line-height: 1;
     border: none;
     border-radius: 6px;
-    background: transparent;
+    background: #f0f2f4;
     color: #57606a;
     cursor: pointer;
     font-size: 0.9rem;
     opacity: 0;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.tree-node__header > .tree-node__add:nth-of-type(2) {
+    right: 24px;
+}
+
+.tree-node__header > .tree-node__add:nth-of-type(3) {
+    right: 2px;
 }
 
 .tree-node__header:hover .tree-node__add {
     opacity: 1;
+    pointer-events: auto;
 }
 
 .tree-node__add:hover {
-    background: #f0f2f4;
+    background: #e6e8eb;
     color: #1f2328;
 }
 

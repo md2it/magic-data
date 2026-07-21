@@ -80,7 +80,7 @@ body {
 }
 
 .app-body__sidebar {
-    --sidebar-width: 220px;
+    --sidebar-width: 260px;
     --sidebar-collapsed-width: 40px;
     width: var(--sidebar-width);
     flex-shrink: 0;
