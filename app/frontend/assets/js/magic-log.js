@@ -1,10 +1,76 @@
 (function () {
-    const PAGE_SIZE = 50; let offset = 0; let total = 0; let loading = false;
-    function counter(kind, value) { const label = { running: "In progress", success: "Successful", failed: "Unsuccessful" }[kind]; return `<div class="magic-log-counter magic-log-counter--${kind}"><span class="magic-log-counter__value">${value}</span><span class="magic-log-counter__label">${label}</span></div>`; }
+    const PAGE_SIZE = 50;
+    let offset = 0;
+    let total = 0;
+    let loading = false;
+
+    function counter(scope, kind, value) {
+        const label = { running: "in progress", success: "successful", failed: "unsuccessful" }[kind];
+        return `<span class="magic-log-count magic-log-count--${kind}">${scope} ${label}: ${value}</span>`;
+    }
+
     function formatDate(value) { return value ? new Date(value).toLocaleString() : "—"; }
     function statusLabel(status) { return { running: "In progress", done: "Successful", failed: "Unsuccessful", cancelled: "Stopped" }[status] || status; }
-    function appendRuns(runs) { const list = document.querySelector("[data-log-list]"); if (!list) return; runs.forEach(function (run) { const entry = document.createElement("article"); entry.className = "magic-log-entry"; const dot = document.createElement("span"); dot.className = `magic-log-entry__dot magic-log-entry__dot--${run.status}`; const content = document.createElement("div"); const title = document.createElement("div"); title.className = "magic-log-entry__title"; title.textContent = run.label || run.scenarioId || "Magic run"; const meta = document.createElement("div"); meta.className = "magic-log-entry__meta"; const provider = run.profile || run.provider || run.selector; meta.textContent = [statusLabel(run.status), formatDate(run.startedAt), provider, run.contextLabel].filter(Boolean).join(" · "); content.append(title, meta); const scope = document.createElement("span"); scope.className = "magic-log-entry__scope"; scope.textContent = run.scope === "archived" ? "Archived" : "Current"; entry.append(dot, content, scope); list.appendChild(entry); }); }
-    function renderCounts(counts) { ["current", "archived"].forEach(function (scope) { const element = document.querySelector(`[data-scope="${scope}"]`); if (!element) return; const values = counts[scope] || {}; element.innerHTML = counter("running", values.running || 0) + counter("success", values.success || 0) + counter("failed", values.failed || 0); }); }
-    async function load(reset) { if (loading) return; loading = true; const list = document.querySelector("[data-log-list]"); if (reset) { offset = 0; list.innerHTML = ""; } try { const response = await fetch(`/api/magic-log?offset=${offset}&limit=${PAGE_SIZE}`, { cache: "no-store" }); if (!response.ok) throw new Error(); const data = await response.json(); total = data.total || 0; renderCounts(data.counts || {}); appendRuns(data.runs || []); offset += (data.runs || []).length; if (offset === 0) list.innerHTML = '<div class="magic-log-empty">No Magic runs yet.</div>'; document.querySelector("[data-log-total]").textContent = `${total} total`; document.querySelector("[data-load-more]").hidden = offset >= total; } catch (error) { list.innerHTML = '<div class="magic-log-empty">Magic log is unavailable.</div>'; } finally { loading = false; } }
-    document.addEventListener("DOMContentLoaded", function () { document.querySelector("[data-load-more]").addEventListener("click", function () { load(false); }); window.addEventListener("magic-log-updated", function () { load(true); }); load(true); });
+
+    function appendRuns(runs) {
+        const list = document.querySelector("[data-log-list]");
+        runs.forEach(function (run) {
+            const row = document.createElement("tr");
+            const status = document.createElement("td");
+            status.className = `magic-log-status magic-log-status--${run.status}`;
+            status.textContent = statusLabel(run.status);
+            const title = document.createElement("td");
+            title.textContent = run.label || run.scenarioId || "Magic run";
+            const started = document.createElement("td");
+            started.textContent = formatDate(run.startedAt);
+            const provider = document.createElement("td");
+            provider.textContent = run.profile || run.provider || run.selector || "—";
+            const scope = document.createElement("td");
+            scope.textContent = run.scope === "archived" ? "Archived" : "Current";
+            row.append(status, title, started, provider, scope);
+            list.appendChild(row);
+        });
+    }
+
+    function renderCounts(counts) {
+        const element = document.querySelector("[data-log-counts]");
+        const fragments = [];
+        ["current", "archived"].forEach(function (scope) {
+            const values = counts[scope] || {};
+            const label = scope === "current" ? "Current" : "Archived";
+            ["running", "success", "failed"].forEach(function (kind) {
+                fragments.push(counter(label, kind, values[kind] || 0));
+            });
+        });
+        element.innerHTML = fragments.join("");
+    }
+
+    async function load(reset) {
+        if (loading) return;
+        loading = true;
+        const list = document.querySelector("[data-log-list]");
+        if (reset) { offset = 0; list.innerHTML = ""; }
+        try {
+            const response = await fetch(`/api/magic-log?offset=${offset}&limit=${PAGE_SIZE}`, { cache: "no-store" });
+            if (!response.ok) throw new Error();
+            const data = await response.json();
+            total = data.total || 0;
+            renderCounts(data.counts || {});
+            appendRuns(data.runs || []);
+            offset += (data.runs || []).length;
+            if (offset === 0) list.innerHTML = '<tr><td class="magic-log-empty" colspan="5">No Magic runs yet.</td></tr>';
+            document.querySelector("[data-log-total]").textContent = `${total} total`;
+            document.querySelector("[data-load-more]").hidden = offset >= total;
+        } catch (error) {
+            list.innerHTML = '<tr><td class="magic-log-empty" colspan="5">Magic log is unavailable.</td></tr>';
+        } finally {
+            loading = false;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelector("[data-load-more]").addEventListener("click", function () { load(false); });
+        window.addEventListener("magic-log-updated", function () { load(true); });
+        load(true);
+    });
 })();
