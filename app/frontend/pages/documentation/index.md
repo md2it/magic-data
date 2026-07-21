@@ -12,6 +12,9 @@ This section describes how to install and use Magic-data.
 
 - [Getting started](documentation/getting-started)
 - [Working with data](documentation/working-with-data)
+- [UI](documentation/ui)
+  - [Technical standards](documentation/ui/technical-standards)
+  - [Visual style](documentation/ui/visual-style)
 - [Magic buttons](documentation/magic-buttons)
   - [Technical implementation](documentation/magic-buttons/implementation)
   - [Agent selection and fallback](documentation/magic-buttons/agent-selection)
