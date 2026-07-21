@@ -8,5 +8,6 @@ data/_archive/*
 
 .venv/
 .user/
+.claude/
 __pycache__/
 *.py[cod]
