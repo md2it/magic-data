@@ -7,12 +7,13 @@ scripts:
   - /assets/js/index.js
 ---
     <div class="app-body">
-        <aside class="app-body__sidebar">
+        <aside class="app-body__sidebar" id="app-sidebar">
             <div class="sidebar-toolbar">
                 <button type="button" class="sidebar-toolbar__button sidebar-toolbar__button--icon" id="new-file" aria-label="New file" data-tooltip="New file"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#file-plus"></use></svg><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#pointer"></use></svg></button>
                 <button type="button" class="sidebar-toolbar__button sidebar-toolbar__button--icon" id="new-folder" aria-label="New folder" data-tooltip="New folder"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#folder-plus"></use></svg><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#pointer"></use></svg></button>
             </div>
             <ul id="file-tree" class="tree-list tree-list--root"></ul>
+            <button type="button" class="sidebar-toolbar__button sidebar-toolbar__button--icon sidebar-collapse" id="sidebar-collapse" aria-expanded="true" aria-controls="app-sidebar" aria-label="Collapse sidebar" data-tooltip="Collapse sidebar"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#chevron-left"></use></svg></button>
         </aside>
         <main class="app-body__content">
             <div class="content-toolbar">

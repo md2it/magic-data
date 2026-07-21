@@ -706,6 +706,40 @@ function initMagicButtons() {
     }
 }
 
+function initSidebarCollapse() {
+    const sidebar = document.getElementById("app-sidebar");
+    const toggle = document.getElementById("sidebar-collapse");
+    if (!sidebar || !toggle) return;
+
+    const STORAGE_KEY = "magicdata.sidebarCollapsed";
+
+    function setCollapsed(collapsed) {
+        sidebar.classList.toggle("app-body__sidebar--collapsed", collapsed);
+        toggle.setAttribute("aria-expanded", String(!collapsed));
+        const label = collapsed ? "Expand sidebar" : "Collapse sidebar";
+        toggle.setAttribute("aria-label", label);
+        toggle.dataset.tooltip = label;
+        window.AppIcons.setLabel(toggle, collapsed ? "chevron-right" : "chevron-left");
+        try {
+            localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+        } catch (e) {
+            /* storage unavailable — keep session-only state */
+        }
+    }
+
+    let collapsed = false;
+    try {
+        collapsed = localStorage.getItem(STORAGE_KEY) === "1";
+    } catch (e) {
+        collapsed = false;
+    }
+    setCollapsed(collapsed);
+
+    toggle.addEventListener("click", function () {
+        setCollapsed(!sidebar.classList.contains("app-body__sidebar--collapsed"));
+    });
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
     fileTreeRoot = document.getElementById("file-tree");
 
@@ -731,6 +765,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     initViewSwitch();
     applyInitialState();
+    initSidebarCollapse();
 
     // Route resolution (doc vs directory vs 404) is decided by the server
     // for every real navigation - back/forward needs a real navigation too,

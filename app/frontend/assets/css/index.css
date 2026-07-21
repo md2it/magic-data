@@ -1,6 +1,10 @@
 .sidebar-toolbar {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
     margin-bottom: 8px;
 }
 
@@ -22,11 +26,17 @@
 /* Icon-only add controls (new file/folder/structured): compact, not stretched. */
 .sidebar-toolbar__button--icon {
     flex: 0 0 auto;
-    padding: 6px 12px;
+    padding: 4px;
 }
 
 .sidebar-toolbar__button:hover {
     background: #f0f2f4;
+}
+
+.sidebar-collapse {
+    margin-top: auto;
+    margin-inline: auto;
+    flex: none;
 }
 
 .sidebar-toast {
@@ -58,6 +68,9 @@
 }
 
 .tree-list--root {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
     padding: 0;
     border-radius: 6px;
 }
