@@ -22,7 +22,12 @@
     color: #fff;
     font-size: 0.78rem;
     line-height: 1.35;
-    box-shadow: 0 4px 14px rgba(31, 35, 40, 0.28);
+    /* Thin white outline that follows the bubble + tail silhouette. */
+    filter:
+        drop-shadow(1px 0 0 #fff)
+        drop-shadow(-1px 0 0 #fff)
+        drop-shadow(0 1px 0 #fff)
+        drop-shadow(0 -1px 0 #fff);
     pointer-events: none;
     visibility: hidden;
     opacity: 0;
