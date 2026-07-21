@@ -348,6 +348,18 @@
 }
 
 /* ---------------------------------------------------------------- */
+/* Schema: technical metadata, de-emphasized across every view.      */
+/* One opacity fade keeps its own syntax colors while reading as     */
+/* secondary. In JSON/Tree it also starts collapsed (see JS).        */
+/* ---------------------------------------------------------------- */
+
+.json-node--schema,
+.content-tree-node--schema,
+.content-text__schema {
+    opacity: 0.55;
+}
+
+/* ---------------------------------------------------------------- */
 /* Tree view                                                         */
 /* ---------------------------------------------------------------- */
 

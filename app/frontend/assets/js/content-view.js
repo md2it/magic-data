@@ -112,6 +112,16 @@
             typeof path[1] === "number" && isPlainObject(value);
     }
 
+    /**
+     * True when a node reached at `path` is the top-level `schema` node of the
+     * project data contract (`{ schema, items }`). The schema is technical
+     * metadata, not primary content, so views de-emphasize it (muted, and
+     * collapsed by default where collapsing exists).
+     */
+    function isSchemaPath(path) {
+        return path.length === 1 && path[0] === "schema";
+    }
+
     function summarizeCollapsed(value) {
         if (Array.isArray(value)) {
             return `[...] ${value.length} item${value.length === 1 ? "" : "s"}`;
@@ -129,6 +139,7 @@
         path = path || [];
         const row = document.createElement("div");
         row.className = "json-node";
+        if (isSchemaPath(path)) row.classList.add("json-node--schema");
 
         if (isCollapsible(value)) {
             row.classList.add("json-node--collapsible");
@@ -185,6 +196,8 @@
             toggle.addEventListener("click", function () {
                 setNodeExpanded(row, !row.classList.contains("json-node--collapsed") ? false : true);
             });
+
+            if (isSchemaPath(path)) setNodeExpanded(row, false);
 
             return row;
         }
@@ -262,6 +275,7 @@
         path = path || [];
         const li = document.createElement("li");
         li.className = "content-tree-node";
+        if (isSchemaPath(path)) li.classList.add("content-tree-node--schema");
 
         const line = document.createElement("div");
         line.className = "content-tree-node__line";
@@ -311,6 +325,8 @@
             toggle.addEventListener("click", function () {
                 setTreeNodeExpanded(li, li.classList.contains("content-tree-node--collapsed"));
             });
+
+            if (isSchemaPath(path)) setTreeNodeExpanded(li, false);
 
             return li;
         }
@@ -723,7 +739,19 @@
             if (Array.isArray(parsedJson)) {
                 renderTextNode(null, parsedJson, container, 1);
             } else {
-                renderObjectChildren(parsedJson, container, 1);
+                // Root object: render children directly, but wrap the technical
+                // `schema` block in a muted section (the Text view has no
+                // collapsing, so de-emphasis is the only cue available here).
+                Object.entries(parsedJson).forEach(function ([childKey, childValue]) {
+                    if (isSchemaPath([childKey])) {
+                        const section = document.createElement("section");
+                        section.className = "content-text__schema";
+                        renderTextNode(childKey, childValue, section, 1);
+                        container.appendChild(section);
+                    } else {
+                        renderTextNode(childKey, childValue, container, 1);
+                    }
+                });
             }
         } else {
             appendParagraph(container, parsedJson);
