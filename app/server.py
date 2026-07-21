@@ -6,18 +6,17 @@ import re
 import shutil
 import threading
 import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from llm_engine import (
-    ProviderError,
     load_config,
     load_scenario,
     render_prompt,
     resolve_steps,
-    run_cascade,
 )
+from llm_engine.run_registry import LlmRunRegistry
 from pages import render_page
 
 
@@ -29,6 +28,10 @@ UI_DIR = (APP_DIR / "frontend").resolve()
 DATA_DIR = (APP_DIR.parent / "data").resolve()
 STOPPED_PAGE = b"Server stopped."
 VALID_NAME_RE = re.compile(r"^[^/\\]+$")
+
+# Single source of truth for asynchronous LLM runs, shared across all requests
+# and browser tabs.
+RUN_REGISTRY = LlmRunRegistry()
 
 
 def build_data_tree(dir_path: Path, rel_prefix: str = "") -> list:
@@ -114,6 +117,12 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         if path.startswith("/api/llm-scenarios/"):
             self.handle_get_scenario(path[len("/api/llm-scenarios/"):])
             return
+        if path == "/api/llm/runs":
+            self.send_json({"runs": [record.to_dict() for record in RUN_REGISTRY.list_runs()]})
+            return
+        if path.startswith("/api/llm/runs/"):
+            self.handle_get_run(path[len("/api/llm/runs/"):])
+            return
         if path.startswith("/api/"):
             self.send_error(404)
             return
@@ -158,6 +167,14 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/llm/run":
             self.handle_llm_run(self.read_json_body())
+            return
+        if path.startswith("/api/llm/runs/") and path.endswith("/cancel"):
+            run_id = path[len("/api/llm/runs/"):-len("/cancel")].strip("/")
+            record = RUN_REGISTRY.cancel(run_id)
+            if record is None:
+                self.send_json_error(404, "Run not found")
+                return
+            self.send_json({"run": record.to_dict()})
             return
 
         self.send_error(404)
@@ -269,18 +286,29 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             self.send_json_error(400, str(error))
             return
 
-        try:
-            result = run_cascade(steps, prompt, config, str(APP_DIR.parent))
-        except ProviderError as error:
-            self.send_json_error(500, str(error))
-            return
+        ui = scenario.get("ui") if isinstance(scenario.get("ui"), dict) else {}
+        label = ui.get("label") if isinstance(ui.get("label"), str) else scenario_id
+        document = context.get("document") if isinstance(context.get("document"), dict) else {}
+        context_label = document.get("name") if isinstance(document.get("name"), str) else ""
 
-        self.send_json({
-            "text": result["text"],
-            "provider": result["provider"],
-            "profile": result.get("profile"),
-            "scenarioId": scenario_id,
-        })
+        record = RUN_REGISTRY.start(
+            scenario_id=scenario_id,
+            label=label,
+            selector=str(selector),
+            steps=steps,
+            prompt=prompt,
+            config=config,
+            cwd=str(APP_DIR.parent),
+            context_label=context_label,
+        )
+        self.send_json_status(202, {"run": record.to_dict()})
+
+    def handle_get_run(self, run_id: str) -> None:
+        record = RUN_REGISTRY.get(run_id.strip("/"))
+        if record is None:
+            self.send_json_error(404, "Run not found")
+            return
+        self.send_json({"run": record.to_dict()})
 
     def handle_page(self, path: str) -> bool:
         body = render_page(path)
@@ -318,6 +346,14 @@ class ApplicationHandler(BaseHTTPRequestHandler):
     def send_json(self, data: object) -> None:
         self.send_bytes(json.dumps(data).encode("utf-8"), "application/json; charset=utf-8")
 
+    def send_json_status(self, status: int, data: object) -> None:
+        body = json.dumps(data).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def send_json_error(self, status: int, message: str) -> None:
         body = json.dumps({"error": message}).encode("utf-8")
         self.send_response(status)
@@ -346,7 +382,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
 def main() -> None:
     url = f"http://{HOST}:{PORT}"
     while True:
-        server = HTTPServer((HOST, PORT), ApplicationHandler)
+        server = ThreadingHTTPServer((HOST, PORT), ApplicationHandler)
         server.restart_requested = False
         print(f"Serving at {url}")
         webbrowser.open(url)
