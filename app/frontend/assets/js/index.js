@@ -24,7 +24,7 @@ function createDirNode(node) {
     const toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "tree-node__toggle";
-    toggle.textContent = `▸ ${node.name}`;
+    window.AppIcons.setLabel(toggle, "chevron-right", node.name);
     toggle.draggable = true;
     toggle.addEventListener("click", function () {
         setExpanded(li, toggle, node.name, !li.classList.contains("tree-node--expanded"));
@@ -34,7 +34,8 @@ function createDirNode(node) {
     const addFileButton = document.createElement("button");
     addFileButton.type = "button";
     addFileButton.className = "tree-node__add";
-    addFileButton.title = "New file";
+    addFileButton.setAttribute("aria-label", "New file");
+    addFileButton.dataset.tooltip = "New file";
     addFileButton.textContent = "+";
     addFileButton.addEventListener("click", function (event) {
         event.stopPropagation();
@@ -45,7 +46,8 @@ function createDirNode(node) {
     const addFolderButton = document.createElement("button");
     addFolderButton.type = "button";
     addFolderButton.className = "tree-node__add";
-    addFolderButton.title = "New folder";
+    addFolderButton.setAttribute("aria-label", "New folder");
+    addFolderButton.dataset.tooltip = "New folder";
     addFolderButton.textContent = "📁";
     addFolderButton.addEventListener("click", function (event) {
         event.stopPropagation();
@@ -65,7 +67,7 @@ function createDirNode(node) {
 
 function setExpanded(li, toggle, name, expanded) {
     li.classList.toggle("tree-node--expanded", expanded);
-    toggle.textContent = `${expanded ? "▾" : "▸"} ${name}`;
+    window.AppIcons.setLabel(toggle, expanded ? "chevron-down" : "chevron-right", name);
 }
 
 function displayName(name) {
@@ -80,7 +82,7 @@ function createFileNode(node) {
     button.type = "button";
     button.className = "tree-node__label";
     button.textContent = displayName(node.name);
-    button.title = node.name;
+    button.dataset.tooltip = node.name;
     button.dataset.path = node.path;
     button.dataset.id = node.id || "";
     button.draggable = true;
@@ -528,10 +530,12 @@ function initDownloadMenu() {
         dropdown.hidden = true;
         button.setAttribute("aria-expanded", "false");
     }
+    toolbarMenuClosers.push(closeDropdown);
 
     button.addEventListener("click", function (event) {
         event.stopPropagation();
         const willOpen = dropdown.hidden;
+        if (willOpen) closeOtherMenus(closeDropdown);
         dropdown.hidden = !willOpen;
         button.setAttribute("aria-expanded", String(willOpen));
     });
@@ -586,14 +590,79 @@ window.MagicData = {
     }
 };
 
+// Toolbar menus are mutually exclusive: opening one closes any other. Each menu
+// registers its close function; because triggers stop propagation, an outside
+// click alone cannot close a sibling menu.
+const toolbarMenuClosers = [];
+
+function closeOtherMenus(keep) {
+    toolbarMenuClosers.forEach(function (close) {
+        if (close !== keep) close();
+    });
+}
+
+// Builds a toolbar dropdown menu: an icon trigger with a caret, plus a panel
+// with an uppercase header. The caller appends items to `.dropdown` and may
+// call `.close()`. Open/close, outside-click, and Escape are wired here.
+function buildDropdownMenu(config) {
+    const root = document.createElement("div");
+    root.className = "content-toolbar__menu";
+
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "content-toolbar__button content-toolbar__button--menu";
+    trigger.id = config.id + "-button";
+    trigger.setAttribute("aria-haspopup", "menu");
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.setAttribute("aria-label", config.triggerLabel);
+    trigger.dataset.tooltip = config.triggerLabel;
+    trigger.innerHTML = window.AppIcons.markup(config.triggerIcon) +
+        window.AppIcons.markup("chevron-down", "icon--sm content-toolbar__caret");
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "content-toolbar__dropdown";
+    dropdown.id = config.id + "-dropdown";
+    dropdown.setAttribute("role", "menu");
+    dropdown.hidden = true;
+
+    const header = document.createElement("p");
+    header.className = "content-toolbar__dropdown-header";
+    header.textContent = config.header;
+    dropdown.appendChild(header);
+
+    function close() {
+        dropdown.hidden = true;
+        trigger.setAttribute("aria-expanded", "false");
+    }
+
+    trigger.addEventListener("click", function (event) {
+        event.stopPropagation();
+        const willOpen = dropdown.hidden;
+        if (willOpen) closeOtherMenus(close);
+        dropdown.hidden = !willOpen;
+        trigger.setAttribute("aria-expanded", String(willOpen));
+    });
+    document.addEventListener("click", function (event) {
+        if (!dropdown.hidden && !dropdown.contains(event.target) && !trigger.contains(event.target)) close();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !dropdown.hidden) close();
+    });
+
+    toolbarMenuClosers.push(close);
+    root.append(trigger, dropdown);
+    return { root: root, dropdown: dropdown, trigger: trigger, close: close };
+}
+
 function initMagicButtons() {
     const sidebarToolbar = document.querySelector(".sidebar-toolbar");
     if (sidebarToolbar) {
         const structuredButton = document.createElement("button");
         structuredButton.type = "button";
-        structuredButton.className = "sidebar-toolbar__button";
-        structuredButton.textContent = "✨ Structured";
-        structuredButton.title = "Create a file with a structure";
+        structuredButton.className = "sidebar-toolbar__button sidebar-toolbar__button--icon";
+        structuredButton.innerHTML = window.AppIcons.markup("file-plus") + window.AppIcons.markup("sparkles");
+        structuredButton.setAttribute("aria-label", "Create a structured file");
+        structuredButton.dataset.tooltip = "Create a structured file";
         structuredButton.addEventListener("click", async function () {
             const data = await window.magicLlm.runScenario("create-structured-file", { button: structuredButton });
             if (data) await refreshTree();
@@ -603,31 +672,37 @@ function initMagicButtons() {
 
     const toolbarActions = document.getElementById("content-toolbar-actions");
     if (toolbarActions) {
-        const group = document.createElement("div");
-        group.className = "content-toolbar__group";
-
         const docScenarios = [
-            { label: "✨ Fix structure", scenario: "fix-structure" },
-            { label: "✨ Fill all", scenario: "fill-all" },
-            { label: "✨ Custom", scenario: "custom-edit" }
+            { label: "Fix structure", scenario: "fix-structure" },
+            { label: "Fill all", scenario: "fill-all" },
+            { label: "Custom", scenario: "custom-edit" }
         ];
+
+        const menu = buildDropdownMenu({
+            id: "magic",
+            triggerLabel: "Magic buttons",
+            triggerIcon: "sparkles",
+            header: "Magic buttons",
+        });
 
         docScenarios.forEach(function (item) {
             const button = document.createElement("button");
             button.type = "button";
-            button.className = "content-toolbar__button";
-            button.textContent = item.label;
+            button.className = "content-toolbar__dropdown-item";
+            button.setAttribute("role", "menuitem");
+            window.AppIcons.setLabel(button, "sparkles", item.label);
             button.addEventListener("click", async function () {
+                menu.close();
                 const data = await window.magicLlm.runScenario(item.scenario, {
                     context: window.MagicData.currentContext(),
                     button: button
                 });
                 if (data) await window.MagicData.reloadDocument();
             });
-            group.appendChild(button);
+            menu.dropdown.appendChild(button);
         });
 
-        toolbarActions.insertBefore(group, toolbarActions.firstChild);
+        toolbarActions.insertBefore(menu.root, toolbarActions.firstChild);
     }
 }
 
