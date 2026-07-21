@@ -140,9 +140,14 @@
 
 .tree-node__add {
     flex: none;
-    width: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    width: auto;
+    min-width: 20px;
     height: 20px;
-    padding: 0;
+    padding: 0 2px;
     line-height: 1;
     border: none;
     border-radius: 6px;
@@ -567,7 +572,7 @@
 }
 
 /* Phantom two-way chevron: hints that the column is sortable without
-   competing with the active column's real ▲/▼ direction. */
+   competing with the active column's real sort direction. */
 .content-table__sort-indicator--hint {
     color: #afb8c1;
     opacity: 0.5;
@@ -635,7 +640,9 @@
 }
 
 .directory-listing__link {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
     width: 100%;
     text-align: left;
     padding: 8px 4px;

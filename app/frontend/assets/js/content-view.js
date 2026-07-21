@@ -87,7 +87,7 @@
     }
 
     /**
-     * Builds a ✨ fill button wired to onFillClick for the item at the given
+     * Builds a sparkles fill button wired to onFillClick for the item at the given
      * 0-based original index in the top-level `items` array.
      */
     function createFillButton(index) {
@@ -113,7 +113,7 @@
     }
 
     /**
-     * Builds a ✨ fill button that fills the missing values of a single column
+     * Builds a sparkles fill button that fills the missing values of a single column
      * (the `key` field) across every item. Lives in the Table column header,
      * next to the row-fill buttons, so it must not trigger header sorting.
      */

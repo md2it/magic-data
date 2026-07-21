@@ -36,7 +36,9 @@ function createDirNode(node) {
     addFileButton.className = "tree-node__add";
     addFileButton.setAttribute("aria-label", "New file");
     addFileButton.dataset.tooltip = "New file";
-    addFileButton.textContent = "+";
+    addFileButton.innerHTML =
+        window.AppIcons.markup("file-plus", "icon--sm") +
+        window.AppIcons.markup("pointer", "icon--sm");
     addFileButton.addEventListener("click", function (event) {
         event.stopPropagation();
         setExpanded(li, toggle, node.name, true);
@@ -48,7 +50,9 @@ function createDirNode(node) {
     addFolderButton.className = "tree-node__add";
     addFolderButton.setAttribute("aria-label", "New folder");
     addFolderButton.dataset.tooltip = "New folder";
-    addFolderButton.textContent = "📁";
+    addFolderButton.innerHTML =
+        window.AppIcons.markup("folder-plus", "icon--sm") +
+        window.AppIcons.markup("pointer", "icon--sm");
     addFolderButton.addEventListener("click", function (event) {
         event.stopPropagation();
         setExpanded(li, toggle, node.name, true);
@@ -379,7 +383,11 @@ function renderDirectoryListing(path) {
         const link = document.createElement("button");
         link.type = "button";
         link.className = "directory-listing__link";
-        link.textContent = child.type === "dir" ? `📁 ${child.name}` : displayName(child.name);
+        if (child.type === "dir") {
+            window.AppIcons.setLabel(link, "folder", child.name);
+        } else {
+            window.AppIcons.setLabel(link, "file", displayName(child.name));
+        }
         link.addEventListener("click", function () {
             if (child.type === "dir") {
                 navigateToDir(child.path);

@@ -648,9 +648,9 @@
             });
             pill.innerHTML = "";
             pill.append(
-                counter("running", "⟳", running),
-                counter("done", "✓", done),
-                counter("failed", "✗", failed)
+                counter("running", running),
+                counter("done", done),
+                counter("failed", failed)
             );
 
             if (!open) { panel.innerHTML = ""; return; }
@@ -683,7 +683,7 @@
             return header;
         }
 
-        function counter(kind, glyph, value) {
+        function counter(kind, value) {
             const span = document.createElement("span");
             span.className = `magic-runs__count magic-runs__count--${kind}` + (value ? "" : " magic-runs__count--muted");
             span.textContent = `${value}`;
@@ -722,10 +722,13 @@
                         : (isError ? (run.error || "The run failed.") : (run.text || "Empty response."));
                     showModal(run.label || run.scenarioId, text, isError);
                 }));
-                row.appendChild(rowButton("×", "dismiss", function () {
+                const dismiss = rowButton("", "dismiss", function () {
                     dismissed.add(run.id);
                     render();
-                }));
+                });
+                dismiss.setAttribute("aria-label", "Dismiss");
+                dismiss.innerHTML = window.AppIcons.markup("x", "icon--sm");
+                row.appendChild(dismiss);
             }
             return row;
         }
