@@ -12,6 +12,11 @@
 
     function formatDate(value) { return value ? new Date(value).toLocaleString() : "—"; }
     function statusLabel(status) { return { running: "In progress", done: "Successful", failed: "Unsuccessful", cancelled: "Stopped" }[status] || status; }
+    function documentUrl(path) {
+        const parts = path.split("/");
+        parts[parts.length - 1] = parts[parts.length - 1].replace(/\.json$/i, "");
+        return `/data/${parts.map(encodeURIComponent).join("/")}`;
+    }
 
     function detailItem(label, value) {
         const term = document.createElement("dt");
@@ -27,6 +32,7 @@
         [
             ["Scenario", run.scenarioId],
             ["Provider", run.profile || run.provider || run.selector],
+            ["Document", run.documentPath],
             ["Started", formatDate(run.startedAt)],
             ["Finished", formatDate(run.finishedAt)],
             ["Session", run.scope === "archived" ? "Archived" : "Current"],
@@ -58,6 +64,15 @@
             started.textContent = formatDate(run.startedAt);
             const provider = document.createElement("td");
             provider.textContent = run.profile || run.provider || run.selector || "—";
+            const documentCell = document.createElement("td");
+            if (run.documentPath) {
+                const link = document.createElement("a");
+                link.href = documentUrl(run.documentPath);
+                link.textContent = run.documentPath;
+                documentCell.appendChild(link);
+            } else {
+                documentCell.textContent = "—";
+            }
             const scope = document.createElement("td");
             scope.textContent = run.scope === "archived" ? "Archived" : "Current";
             const action = document.createElement("td");
@@ -72,7 +87,7 @@
             if (run.scope === "archived") detailsRow.classList.add("magic-log-entry--archived");
             detailsRow.hidden = true;
             const detailsCell = document.createElement("td");
-            detailsCell.colSpan = 6;
+            detailsCell.colSpan = 7;
             detailsCell.appendChild(buildDetails(run));
             detailsRow.appendChild(detailsCell);
             button.addEventListener("click", function () {
@@ -82,7 +97,7 @@
                 detailsRow.hidden = expanded;
             });
             action.appendChild(button);
-            row.append(status, title, started, provider, scope, action);
+            row.append(status, title, started, provider, documentCell, scope, action);
             list.appendChild(row);
             list.appendChild(detailsRow);
         });
@@ -116,11 +131,11 @@
             renderCounts(data.counts || {});
             appendRuns(data.runs || []);
             offset += (data.runs || []).length;
-            if (offset === 0) list.innerHTML = '<tr><td class="magic-log-empty" colspan="6">No Magic runs yet.</td></tr>';
+            if (offset === 0) list.innerHTML = '<tr><td class="magic-log-empty" colspan="7">No Magic runs yet.</td></tr>';
             document.querySelector("[data-log-total]").textContent = `${total} total`;
             document.querySelector("[data-load-more]").hidden = offset >= total;
         } catch (error) {
-            list.innerHTML = '<tr><td class="magic-log-empty" colspan="6">Magic log is unavailable.</td></tr>';
+            list.innerHTML = '<tr><td class="magic-log-empty" colspan="7">Magic log is unavailable.</td></tr>';
         } finally {
             loading = false;
         }

@@ -35,7 +35,7 @@ VALID_NAME_RE = re.compile(r"^[^/\\]+$")
 
 # Single source of truth for asynchronous LLM runs, shared across all requests
 # and browser tabs.
-RUN_REGISTRY = LlmRunRegistry(MAGIC_LOG)
+RUN_REGISTRY = LlmRunRegistry(MAGIC_LOG, DATA_DIR)
 
 
 def build_data_tree(dir_path: Path, rel_prefix: str = "") -> list:
@@ -298,6 +298,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         label = ui.get("label") if isinstance(ui.get("label"), str) else scenario_id
         document = context.get("document") if isinstance(context.get("document"), dict) else {}
         context_label = document.get("name") if isinstance(document.get("name"), str) else ""
+        document_path = document.get("path") if isinstance(document.get("path"), str) else None
+        creation_dir = self.resolve_creation_dir(context.get("targetDirectory"))
 
         record = RUN_REGISTRY.start(
             scenario_id=scenario_id,
@@ -308,8 +310,23 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             config=config,
             cwd=str(APP_DIR.parent),
             context_label=context_label,
+            document_path=document_path,
+            creation_dir=creation_dir,
         )
         self.send_json_status(202, {"run": record.to_dict()})
+
+    def resolve_creation_dir(self, target_directory: object) -> Path | None:
+        if not isinstance(target_directory, str):
+            return None
+        target = target_directory.strip().strip("/")
+        if target == "data":
+            relative = ""
+        elif target.startswith("data/"):
+            relative = target[len("data/"):]
+        else:
+            return None
+        candidate = resolve_within_data_dir(relative)
+        return candidate if candidate is not None and candidate.is_dir() else None
 
     def handle_get_run(self, run_id: str) -> None:
         record = RUN_REGISTRY.get(run_id.strip("/"))

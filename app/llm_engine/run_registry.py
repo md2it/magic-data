@@ -12,6 +12,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from llm_engine.providers import ProviderError, RunCancelled, RunControl, run_cascade
@@ -29,6 +30,7 @@ class LlmRunRecord:
     status: str  # running | done | failed | cancelled
     started_at: float
     context_label: str = ""
+    document_path: str | None = None
     finished_at: float | None = None
     provider: str | None = None
     profile: str | None = None
@@ -43,6 +45,7 @@ class LlmRunRecord:
             "label": self.label,
             "selector": self.selector,
             "contextLabel": self.context_label,
+            "documentPath": self.document_path,
             "status": self.status,
             "startedAt": int(self.started_at * 1000),
             "finishedAt": int(self.finished_at * 1000) if self.finished_at is not None else None,
@@ -54,11 +57,12 @@ class LlmRunRecord:
 
 
 class LlmRunRegistry:
-    def __init__(self, magic_log: MagicLog, done_ttl_sec: int = DONE_TTL_SEC) -> None:
+    def __init__(self, magic_log: MagicLog, data_dir: Path, done_ttl_sec: int = DONE_TTL_SEC) -> None:
         self._runs: dict[str, LlmRunRecord] = {}
         self._lock = threading.Lock()
         self._done_ttl_sec = done_ttl_sec
         self._magic_log = magic_log
+        self._data_dir = data_dir.resolve()
 
     def start(
         self,
@@ -71,6 +75,8 @@ class LlmRunRegistry:
         config: dict[str, Any],
         cwd: str,
         context_label: str = "",
+        document_path: str | None = None,
+        creation_dir: Path | None = None,
     ) -> LlmRunRecord:
         run_id = uuid.uuid4().hex
         record = LlmRunRecord(
@@ -81,15 +87,17 @@ class LlmRunRegistry:
             status="running",
             started_at=time.time(),
             context_label=context_label,
+            document_path=document_path,
             _control=RunControl(),
         )
+        files_before = self._json_files_in(creation_dir)
         with self._lock:
             self._cleanup_locked()
             self._runs[run_id] = record
         self._magic_log.append(record.to_dict())
         threading.Thread(
             target=self._execute,
-            args=(record, steps, prompt, config, cwd),
+            args=(record, steps, prompt, config, cwd, creation_dir, files_before),
             name=f"llm-run-{run_id[:8]}",
             daemon=True,
         ).start()
@@ -121,15 +129,19 @@ class LlmRunRegistry:
         prompt: str,
         config: dict[str, Any],
         cwd: str,
+        creation_dir: Path | None,
+        files_before: set[Path],
     ) -> None:
         try:
             result = run_cascade(steps, prompt, config, cwd, control=record._control)
+            created_document = self._created_document_path(creation_dir, files_before)
             self._finish(
                 record,
                 "done",
                 provider=result.get("provider"),
                 profile=result.get("profile"),
                 text=result.get("text"),
+                document_path=created_document,
             )
         except RunCancelled:
             self._finish(record, "cancelled", error="Stopped by user")
@@ -147,6 +159,7 @@ class LlmRunRegistry:
         profile: str | None = None,
         text: str | None = None,
         error: str | None = None,
+        document_path: str | None = None,
     ) -> None:
         with self._lock:
             if record.status != "running":
@@ -157,9 +170,25 @@ class LlmRunRegistry:
             record.profile = profile
             record.text = text
             record.error = error
+            if document_path is not None:
+                record.document_path = document_path
             record._control = None
             snapshot = record.to_dict()
         self._magic_log.append(snapshot)
+
+    def _json_files_in(self, directory: Path | None) -> set[Path]:
+        if directory is None or not directory.is_dir():
+            return set()
+        return {path.resolve() for path in directory.iterdir() if path.is_file() and path.suffix == ".json"}
+
+    def _created_document_path(self, directory: Path | None, files_before: set[Path]) -> str | None:
+        created = self._json_files_in(directory) - files_before
+        if len(created) != 1:
+            return None
+        path = created.pop()
+        if self._data_dir not in path.parents:
+            return None
+        return str(path.relative_to(self._data_dir)).replace("\\", "/")
 
     def _cleanup_locked(self) -> None:
         cutoff = time.time() - self._done_ttl_sec
