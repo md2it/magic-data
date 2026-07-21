@@ -24,7 +24,9 @@ Follow [visual-style](visual-style) and [technical-standards](technical-standard
 
 ### Data views
 
-The **view switch** (`.view-switch`) selects one view for the main content area:
+The **view switch** (`.view-switch`) selects one view for the main content area.
+The chosen view is always reflected in the document URL as `?view=…`. When the
+URL has no view, the default from Settings is used (product default: table).
 
 - **JSON view** (`.json-node`) — the raw structure, rendered close to literal
   JSON, with collapsible nodes.
@@ -50,8 +52,8 @@ Schema-defining portions are de-emphasized rather than hidden (see the
 ### Settings
 
 - **Settings list** (`.settings-list` / `.settings-item`) — labelled rows of
-  controls, including the **select** control (`.settings-select`, e.g. number
-  format) and a **switch** (`.switch`) toggle.
+  controls, including the **select** control (`.settings-select`, e.g. default
+  view and number format) and a **switch** (`.switch`) toggle.
 
 ### Static pages
 

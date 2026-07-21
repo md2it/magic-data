@@ -238,10 +238,22 @@ let currentFileText = "";
 let currentDirPath = "";
 
 const VALID_VIEWS = ["json", "tree", "table", "text"];
+const DEFAULT_VIEW_STORAGE_KEY = "magicdata.defaultView";
+const FALLBACK_DEFAULT_VIEW = "table";
+
+function defaultView() {
+    try {
+        const stored = localStorage.getItem(DEFAULT_VIEW_STORAGE_KEY);
+        if (VALID_VIEWS.includes(stored)) return stored;
+    } catch (e) {
+        /* storage unavailable */
+    }
+    return FALLBACK_DEFAULT_VIEW;
+}
 
 function currentView() {
     const active = document.querySelector("#view-switch .view-switch__option.active");
-    return active ? active.dataset.view : "json";
+    return active ? active.dataset.view : defaultView();
 }
 
 function setActiveView(view) {
@@ -264,14 +276,15 @@ function setActiveView(view) {
 // All data routes live under the `/data` namespace, keeping them clear of
 // application pages and assets. A document is addressed by its readable
 // path with the `.json` extension dropped (e.g. `/data/language/english`);
-// a directory by its path (`/data/city`, or `/data` for the root).
+// a directory by its path (`/data/city`, or `/data` for the root). The
+// active view is always in the query string (`?view=table`).
 // ------------------------------------------------------------------
 
 function buildDocUrl(path) {
     const parts = path.split("/");
     parts[parts.length - 1] = displayName(parts[parts.length - 1]);
     const view = currentView();
-    const qs = view && view !== "json" ? `?view=${encodeURIComponent(view)}` : "";
+    const qs = `?view=${encodeURIComponent(view)}`;
     return `/data/${parts.map(encodeURIComponent).join("/")}${qs}`;
 }
 
@@ -449,7 +462,7 @@ function applyInitialState() {
     const state = window.__INITIAL_STATE__ || { kind: "dir", path: "" };
     const params = new URLSearchParams(window.location.search);
     const view = params.get("view");
-    setActiveView(VALID_VIEWS.includes(view) ? view : "json");
+    setActiveView(VALID_VIEWS.includes(view) ? view : defaultView());
 
     if (state.kind === "dir") {
         if (state.path) {
@@ -464,6 +477,7 @@ function applyInitialState() {
     if (button) {
         expandAncestors(button);
         selectFile(state.path, button, { silent: true });
+        updateUrl(false);
     }
 }
 
