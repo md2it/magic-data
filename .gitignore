@@ -2,6 +2,9 @@ data/*
 !data/.gitkeep
 !data/AGENTS.md
 !data/example.json
+!data/_archive/
+data/_archive/*
+!data/_archive/.gitkeep
 
 .venv/
 __pycache__/

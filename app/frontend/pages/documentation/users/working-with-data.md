@@ -19,4 +19,10 @@ You can:
 - filter data by attributes available in a specific JSON file;
 - manually manage the data.
 
+## Archiving and deletion
+
+The interface intentionally does not provide an option to delete a document. To remove a document from active work while preserving it, move it to the default `data/_archive` folder.
+
+The `data/_archive` folder itself is tracked and indexed by Git, while its contents are ignored. If a document must be permanently removed from the filesystem, delete it through the file tree.
+
 To use AI-assisted actions, see [magic-buttons](/documentation/users/magic-buttons).
