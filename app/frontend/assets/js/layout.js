@@ -33,6 +33,7 @@ function renderHeader() {
         <p class="app-header__title">${PROJECT_NAME}</p>
         <nav class="app-header__nav" aria-label="Main navigation">
             <a href="/data">Data</a>
+            <a class="app-header__magic-log" href="/magic-log">Magic log <span class="app-header__magic-counts" aria-label="Current Magic runs"></span></a>
             <a href="/documentation">Documentation</a>
             <a href="/settings">Settings</a>
         </nav>
@@ -60,6 +61,22 @@ function renderHeader() {
     });
 }
 
+function renderMagicLogCounters(counts) {
+    const element = document.querySelector(".app-header__magic-counts");
+    if (!element) return;
+    const values = (counts && counts.current) || {};
+    element.innerHTML = [["running", values.running || 0, "In progress"], ["success", values.success || 0, "Successful"], ["failed", values.failed || 0, "Unsuccessful"]].map(function (item) {
+        return `<span class="app-header__magic-count app-header__magic-count--${item[0]}" title="${item[2]}: ${item[1]}">${item[1]}</span>`;
+    }).join("");
+}
+
+async function refreshMagicLogCounters() {
+    try {
+        const response = await fetch("/api/magic-log?limit=0", { cache: "no-store" });
+        if (response.ok) renderMagicLogCounters((await response.json()).counts);
+    } catch (error) { /* The local server may be stopping. */ }
+}
+
 function renderFooter() {
     const footer = document.getElementById("app-footer");
     if (!footer) return;
@@ -80,6 +97,9 @@ function renderPrintFooter() {
 
 document.addEventListener("DOMContentLoaded", function () {
     renderHeader();
+    refreshMagicLogCounters();
+    window.addEventListener("magic-log-updated", refreshMagicLogCounters);
+    setInterval(refreshMagicLogCounters, 3000);
     renderFooter();
     renderPrintFooter();
 });

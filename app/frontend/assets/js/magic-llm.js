@@ -499,14 +499,11 @@
     }
 
     // ------------------------------------------------------------------
-    // Run store + global status widget
+    // Run store + header status refresh
     //
     // Runs are async and tracked server-side (the registry). This store polls
-    // /api/llm/runs while anything is active, mirrors every run into a
-    // bottom-left widget with aggregate counters, and lets any waiter resolve
-    // when its run reaches a terminal state. Because the registry is global,
-    // the widget shows all runs from every page/tab, and a finished run's
-    // result stays retrievable even after leaving the page that started it.
+    // /api/llm/runs while anything is active and lets any waiter resolve when
+    // its run reaches a terminal state. Aggregate counters live in Magic log.
     // ------------------------------------------------------------------
     const RunStore = (function () {
         const runs = new Map();       // id -> run object (server shape)
@@ -552,6 +549,7 @@
             } catch (error) {
                 // transient — try again on the next tick
             }
+            window.dispatchEvent(new Event("magic-log-updated"));
             render();
             clearTimeout(pollTimer);
             if (anyRunning() || waiters.size > 0) {
@@ -569,6 +567,7 @@
 
         function add(run) {
             runs.set(run.id, run);
+            window.dispatchEvent(new Event("magic-log-updated"));
             render();
             ensurePolling();
         }
@@ -603,22 +602,7 @@
         }
 
         function ensureWidget() {
-            if (container || !document.body) return;
-            ensureStyles(); // the widget is always visible, even before any modal
-            container = document.createElement("div");
-            container.className = "magic-runs";
-            pill = document.createElement("button");
-            pill.type = "button";
-            pill.className = "magic-runs__pill";
-            pill.addEventListener("click", function () {
-                open = !open;
-                container.classList.toggle("is-open", open);
-                render();
-            });
-            panel = document.createElement("div");
-            panel.className = "magic-runs__panel";
-            container.append(panel, pill);
-            document.body.appendChild(container);
+            // Aggregate status moved to the Magic log link in the header.
         }
 
         // Status groups shown, in this order, as titled sections when the panel
@@ -743,8 +727,8 @@
         }
 
         function init() {
-            if (document.body) { ensureWidget(); ensurePolling(); }
-            else document.addEventListener("DOMContentLoaded", function () { ensureWidget(); ensurePolling(); });
+            if (document.body) ensurePolling();
+            else document.addEventListener("DOMContentLoaded", ensurePolling);
         }
 
         return { add: add, waitFor: waitFor, init: init };

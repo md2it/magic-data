@@ -1,0 +1,19 @@
+---
+title: Magic log · Magic-data
+styles:
+  - /assets/css/magic-log.css
+scripts:
+  - /assets/js/magic-log.js
+---
+    <main class="magic-log-page">
+        <div class="magic-log-page__heading"><div><h1>Magic log</h1><p>All AI-agent runs across current and previous application sessions.</p></div></div>
+        <section class="magic-log-summary" aria-label="Magic log counters">
+            <div class="magic-log-summary__group"><h2>Current session</h2><div class="magic-log-counters" data-scope="current"></div></div>
+            <div class="magic-log-summary__group"><h2>Archived sessions</h2><div class="magic-log-counters" data-scope="archived"></div></div>
+        </section>
+        <section class="magic-log-list-section" aria-labelledby="magic-log-records-title">
+            <div class="magic-log-list-section__heading"><h2 id="magic-log-records-title">Runs</h2><span class="magic-log-list-section__total" data-log-total></span></div>
+            <div class="magic-log-list" data-log-list></div>
+            <button class="magic-log-more" type="button" data-load-more hidden>Load more</button>
+        </section>
+    </main>

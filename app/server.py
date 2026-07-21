@@ -5,6 +5,7 @@ import mimetypes
 import re
 import shutil
 import threading
+import uuid
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -17,6 +18,7 @@ from llm_engine import (
     resolve_steps,
 )
 from llm_engine.run_registry import LlmRunRegistry
+from llm_engine.magic_log import MagicLog
 from pages import render_page
 
 
@@ -26,12 +28,14 @@ PORT = 57214
 APP_DIR = Path(__file__).parent.resolve()
 UI_DIR = (APP_DIR / "frontend").resolve()
 DATA_DIR = (APP_DIR.parent / "data").resolve()
+USER_DIR = (APP_DIR.parent / ".user").resolve()
+MAGIC_LOG = MagicLog(USER_DIR / "magic-log.jsonl", uuid.uuid4().hex)
 STOPPED_PAGE = b"Server stopped."
 VALID_NAME_RE = re.compile(r"^[^/\\]+$")
 
 # Single source of truth for asynchronous LLM runs, shared across all requests
 # and browser tabs.
-RUN_REGISTRY = LlmRunRegistry()
+RUN_REGISTRY = LlmRunRegistry(MAGIC_LOG)
 
 
 def build_data_tree(dir_path: Path, rel_prefix: str = "") -> list:
@@ -119,6 +123,9 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/llm/runs":
             self.send_json({"runs": [record.to_dict() for record in RUN_REGISTRY.list_runs()]})
+            return
+        if path == "/api/magic-log":
+            self.handle_magic_log(urlsplit(self.path).query)
             return
         if path.startswith("/api/llm/runs/"):
             self.handle_get_run(path[len("/api/llm/runs/"):])
@@ -310,6 +317,31 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             self.send_json_error(404, "Run not found")
             return
         self.send_json({"run": record.to_dict()})
+
+    def handle_magic_log(self, query: str) -> None:
+        params = dict(item.split("=", 1) if "=" in item else (item, "") for item in query.split("&") if item)
+        try:
+            offset = max(0, int(params.get("offset", "0")))
+            limit = max(0, min(100, int(params.get("limit", "50"))))
+        except ValueError:
+            self.send_json_error(400, "offset and limit must be integers")
+            return
+
+        runs = MAGIC_LOG.list_runs()
+        counts = {
+            "current": {"running": 0, "success": 0, "failed": 0},
+            "archived": {"running": 0, "success": 0, "failed": 0},
+        }
+        for run in runs:
+            scope = "current" if run.get("sessionId") == MAGIC_LOG.session_id else "archived"
+            status = run.get("status")
+            bucket = "running" if status == "running" else "success" if status == "done" else "failed"
+            counts[scope][bucket] += 1
+
+        page = [] if limit == 0 else runs[offset:offset + limit]
+        for run in page:
+            run["scope"] = "current" if run.get("sessionId") == MAGIC_LOG.session_id else "archived"
+        self.send_json({"runs": page, "total": len(runs), "counts": counts})
 
     def handle_page(self, path: str) -> bool:
         body = render_page(path)

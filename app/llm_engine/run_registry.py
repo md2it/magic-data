@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from llm_engine.providers import ProviderError, RunCancelled, RunControl, run_cascade
+from llm_engine.magic_log import MagicLog
 
 DONE_TTL_SEC = 300  # keep finished runs visible this long, then forget them
 
@@ -53,10 +54,11 @@ class LlmRunRecord:
 
 
 class LlmRunRegistry:
-    def __init__(self, done_ttl_sec: int = DONE_TTL_SEC) -> None:
+    def __init__(self, magic_log: MagicLog, done_ttl_sec: int = DONE_TTL_SEC) -> None:
         self._runs: dict[str, LlmRunRecord] = {}
         self._lock = threading.Lock()
         self._done_ttl_sec = done_ttl_sec
+        self._magic_log = magic_log
 
     def start(
         self,
@@ -84,6 +86,7 @@ class LlmRunRegistry:
         with self._lock:
             self._cleanup_locked()
             self._runs[run_id] = record
+        self._magic_log.append(record.to_dict())
         threading.Thread(
             target=self._execute,
             args=(record, steps, prompt, config, cwd),
@@ -155,6 +158,8 @@ class LlmRunRegistry:
             record.text = text
             record.error = error
             record._control = None
+            snapshot = record.to_dict()
+        self._magic_log.append(snapshot)
 
     def _cleanup_locked(self) -> None:
         cutoff = time.time() - self._done_ttl_sec

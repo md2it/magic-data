@@ -7,5 +7,6 @@ data/_archive/*
 !data/_archive/.gitkeep
 
 .venv/
+.user/
 __pycache__/
 *.py[cod]
