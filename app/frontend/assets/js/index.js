@@ -82,6 +82,7 @@ function createFileNode(node) {
     button.textContent = displayName(node.name);
     button.title = node.name;
     button.dataset.path = node.path;
+    button.dataset.id = node.id || "";
     button.draggable = true;
     button.addEventListener("click", function () {
         selectFile(node.path, button, { push: true });
@@ -226,6 +227,7 @@ let fileTreeRoot;
 let currentTree = [];
 let currentMode = "doc";
 let currentFilePath = "";
+let currentFileId = "";
 let currentFileText = "";
 let currentDirPath = "";
 
@@ -330,6 +332,7 @@ async function selectFile(path, button, options) {
     });
 
     currentFilePath = path;
+    currentFileId = button && button.dataset ? (button.dataset.id || "") : "";
     currentFileText = await loadFileContent(path);
     renderCurrentFile();
     if (!opts.silent) updateUrl(Boolean(opts.push));
@@ -564,6 +567,70 @@ function initViewSwitch() {
     updateToolbarActions();
 }
 
+window.MagicData = {
+    currentContext: function () {
+        return {
+            document: {
+                path: currentFilePath,
+                name: currentFilePath.split("/").pop(),
+                id: currentFileId || null
+            },
+            view: currentView()
+        };
+    },
+    reloadDocument: async function () {
+        if (currentMode === "doc" && currentFilePath) {
+            currentFileText = await loadFileContent(currentFilePath);
+            renderCurrentFile();
+        }
+    }
+};
+
+function initMagicButtons() {
+    const sidebarToolbar = document.querySelector(".sidebar-toolbar");
+    if (sidebarToolbar) {
+        const structuredButton = document.createElement("button");
+        structuredButton.type = "button";
+        structuredButton.className = "sidebar-toolbar__button";
+        structuredButton.textContent = "✨ Structured";
+        structuredButton.title = "Create a file with a structure";
+        structuredButton.addEventListener("click", async function () {
+            const data = await window.magicLlm.runScenario("create-structured-file", { button: structuredButton });
+            if (data) await refreshTree();
+        });
+        sidebarToolbar.appendChild(structuredButton);
+    }
+
+    const toolbarActions = document.getElementById("content-toolbar-actions");
+    if (toolbarActions) {
+        const group = document.createElement("div");
+        group.className = "content-toolbar__group";
+
+        const docScenarios = [
+            { label: "✨ Fix structure", scenario: "fix-structure" },
+            { label: "✨ Fill all", scenario: "fill-all" },
+            { label: "✨ Custom", scenario: "custom-edit" }
+        ];
+
+        docScenarios.forEach(function (item) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "content-toolbar__button";
+            button.textContent = item.label;
+            button.addEventListener("click", async function () {
+                const data = await window.magicLlm.runScenario(item.scenario, {
+                    context: window.MagicData.currentContext(),
+                    button: button
+                });
+                if (data) await window.MagicData.reloadDocument();
+            });
+            group.appendChild(button);
+        });
+
+        toolbarActions.insertBefore(group, toolbarActions.firstChild);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
     fileTreeRoot = document.getElementById("file-tree");
 
@@ -612,4 +679,5 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     initDownloadMenu();
+    initMagicButtons();
 });

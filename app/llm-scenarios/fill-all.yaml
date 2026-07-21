@@ -1,0 +1,40 @@
+id: fill-all
+ui:
+  label: Fill all items
+  loadingLabel: Filling all...
+params:
+  use_subagents:
+    type: toggle
+    label: Let use subagents
+    default: false
+prompt: |
+  # Fill all items
+
+  Follow the rules in data/AGENTS.md.
+
+  The document is the JSON database file at: data/{{document.path}}
+  Its root has `schema` (a JSON Schema for a single item) and `items` (an array of objects).
+
+  Task: for EVERY item in `items`, fill in the missing values.
+
+  Rules:
+  - Only fill values that are missing or empty; do not rephrase or overwrite
+    values that are already present and correct.
+  - Before adding a key, make sure it exists in `schema`; add its description to
+    `schema` first if it does not.
+  - A key with no value is better than an inaccurate value. Accuracy comes first.
+  - Cite sources when the schema calls for it.
+
+  Work ITERATIVELY and save continuously: fill one item and write it to the file
+  immediately, then move to the next item. Never gather all data first and write
+  only at the end — partial progress must survive a timeout, so the file should
+  improve item by item.
+
+  Agents: per data/AGENTS.md, subagents are only allowed when explicitly
+  requested. Requested here (true = you may use subagents to work on items in
+  parallel; false = work as a single agent): {{params.use_subagents}}
+
+  Edit the file directly. When done, reply with a one-line summary of what you
+  filled.
+
+  Session id: {{runtime.session_id}}

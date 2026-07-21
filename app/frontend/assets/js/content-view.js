@@ -56,6 +56,62 @@
         return value !== null && (Array.isArray(value) || typeof value === "object");
     }
 
+    // ------------------------------------------------------------------
+    // Per-item "fill missing values" magic button
+    // ------------------------------------------------------------------
+
+    /**
+     * True when `value` is a plain (non-array) object, i.e. a real record
+     * object that can host a fill button.
+     */
+    function isPlainObject(value) {
+        return value !== null && typeof value === "object" && !Array.isArray(value);
+    }
+
+    /**
+     * True when the parsed document follows the project data contract:
+     * a root object `{ schema, items }` whose `items` is an array. Only then
+     * do per-item fill buttons make sense.
+     */
+    function hasItemsContract(parsedJson) {
+        return isPlainObject(parsedJson) && Array.isArray(parsedJson.items);
+    }
+
+    function onFillClick(event, index, btn) {
+        event.stopPropagation();               // must not toggle collapse/selection
+        const ctx = window.MagicData.currentContext();
+        window.magicLlm.runScenario("fill-item", {
+            context: Object.assign({}, ctx, { item: { index: index } }),
+            button: btn
+        }).then(function (data) { if (data) window.MagicData.reloadDocument(); });
+    }
+
+    /**
+     * Builds a ✨ fill button wired to onFillClick for the item at the given
+     * 0-based original index in the top-level `items` array.
+     */
+    function createFillButton(index) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "magic-inline-btn";
+        btn.title = "Fill missing values";
+        btn.textContent = "✨";
+        btn.addEventListener("click", function (event) {
+            onFillClick(event, index, btn);
+        });
+        return btn;
+    }
+
+    /**
+     * True when a node reached at `path` (array of keys/indices from the root)
+     * with the given `value` is a fillable top-level item: exactly
+     * `items[<number>]` and a plain object.
+     */
+    function isFillableItemPath(path, value) {
+        return path.length === 2 && path[0] === "items" &&
+            typeof path[1] === "number" && isPlainObject(value);
+    }
+
     function summarizeCollapsed(value) {
         if (Array.isArray(value)) {
             return `[...] ${value.length} item${value.length === 1 ? "" : "s"}`;
@@ -69,7 +125,8 @@
      * label (for object properties). Collapsible values (objects/arrays)
      * get a toggle button.
      */
-    function buildJsonNode(key, value) {
+    function buildJsonNode(key, value, path) {
+        path = path || [];
         const row = document.createElement("div");
         row.className = "json-node";
 
@@ -108,7 +165,7 @@
                 : Object.entries(value);
 
             entries.forEach(function ([childKey, childValue]) {
-                children.appendChild(buildJsonNode(childKey, childValue));
+                children.appendChild(buildJsonNode(childKey, childValue, path.concat([childKey])));
             });
 
             const header = document.createElement("div");
@@ -117,6 +174,9 @@
             if (key !== null) header.appendChild(keyLabel);
             header.appendChild(openBracket);
             header.appendChild(summary);
+            if (isFillableItemPath(path, value)) {
+                header.appendChild(createFillButton(path[1]));
+            }
 
             row.appendChild(header);
             row.appendChild(children);
@@ -164,7 +224,7 @@
         container.innerHTML = "";
         container.classList.remove("tree-view");
         container.classList.add("json-view");
-        const root = buildJsonNode(null, parsedJson);
+        const root = buildJsonNode(null, parsedJson, []);
         container.appendChild(root);
     }
 
@@ -198,7 +258,8 @@
      * "content-tree-node--collapsed" class hides the child list and flips the
      * toggle glyph/summary).
      */
-    function buildTreeNode(key, value) {
+    function buildTreeNode(key, value, path) {
+        path = path || [];
         const li = document.createElement("li");
         li.className = "content-tree-node";
 
@@ -229,6 +290,10 @@
             summary.hidden = true;
             line.appendChild(summary);
 
+            if (isFillableItemPath(path, value)) {
+                line.appendChild(createFillButton(path[1]));
+            }
+
             const childList = document.createElement("ul");
             childList.className = "content-tree-node__children";
 
@@ -238,7 +303,7 @@
                 : Object.entries(value);
 
             entries.forEach(function ([childKey, childValue]) {
-                childList.appendChild(buildTreeNode(childKey, childValue));
+                childList.appendChild(buildTreeNode(childKey, childValue, path.concat([childKey])));
             });
 
             li.appendChild(childList);
@@ -284,7 +349,7 @@
 
         const rootList = document.createElement("ul");
         rootList.className = "content-tree-node__children content-tree-node__children--root";
-        rootList.appendChild(buildTreeNode(null, parsedJson));
+        rootList.appendChild(buildTreeNode(null, parsedJson, []));
         container.appendChild(rootList);
     }
 
@@ -415,6 +480,13 @@
         const rowObjects = topLevelNodes.map(toRowObject);
         const columns = collectColumns(rowObjects);
 
+        // Fill buttons only make sense for the real data contract
+        // (`{ schema, items }`). Capture each row object's ORIGINAL index
+        // before sorting reorders the display; sorting reuses the same object
+        // references, so rowIndex.get(rowObj) stays correct after a sort.
+        const hasItems = hasItemsContract(parsedJson);
+        const rowIndex = new Map(rowObjects.map(function (o, i) { return [o, i]; }));
+
         // View-local sort state. Default is no sort (rows in original JSON
         // order). Clicking a header sorts it ascending; clicking the same
         // header again flips to descending. Only one column is active at a
@@ -431,6 +503,11 @@
         const thead = document.createElement("thead");
         const headerRow = document.createElement("tr");
         const headerCells = {};
+        if (hasItems) {
+            const fillHeader = document.createElement("th");
+            fillHeader.className = "content-table__header-cell";
+            headerRow.appendChild(fillHeader);
+        }
         columns.forEach(function (col) {
             const th = document.createElement("th");
             th.className = "content-table__header-cell content-table__header-cell--sortable";
@@ -497,6 +574,12 @@
             orderedRows().forEach(function (rowObj) {
                 const tr = document.createElement("tr");
                 tr.className = "content-table__row";
+                if (hasItems) {
+                    const fillCell = document.createElement("td");
+                    fillCell.className = "content-table__cell";
+                    fillCell.appendChild(createFillButton(rowIndex.get(rowObj)));
+                    tr.appendChild(fillCell);
+                }
                 columns.forEach(function (col) {
                     const td = document.createElement("td");
                     td.className = "content-table__cell";

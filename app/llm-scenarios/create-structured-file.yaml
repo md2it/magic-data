@@ -1,0 +1,39 @@
+id: create-structured-file
+ui:
+  label: Create structured file
+  loadingLabel: Creating...
+params:
+  name:
+    type: text
+    label: File name
+    placeholder: e.g. countries
+  structure:
+    type: textarea
+    label: What structure do you need?
+    placeholder: e.g. one object per country with name, population (number), capital, languages (list)
+prompt: |
+  # Create a structured file
+
+  Follow the rules in data/AGENTS.md.
+
+  Task: create a new JSON database file describing this structure:
+  {{params.structure}}
+
+  Where and how:
+  - Create the file at data/{{params.name}}.json (turn the requested name into a
+    safe file name: lowercase, words separated by hyphens, `.json` extension).
+    If a file with that name already exists, pick a close, non-colliding name.
+  - The root must be an object with exactly two keys:
+    - `schema`: a valid JSON Schema describing ONE item of this dataset, with a
+      described property for each field of the requested structure.
+    - `items`: an empty array `[]`.
+  - Do NOT invent any data rows — `items` stays empty; only the structure is
+    defined here.
+
+  Keep it accurate and free of clutter: only include what the requested
+  structure calls for.
+
+  Create the file directly. When done, reply with the exact path of the file you
+  created.
+
+  Session id: {{runtime.session_id}}

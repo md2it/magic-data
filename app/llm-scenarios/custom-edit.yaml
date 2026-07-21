@@ -1,0 +1,31 @@
+id: custom-edit
+ui:
+  label: Custom edit
+  loadingLabel: Editing...
+params:
+  instructions:
+    type: textarea
+    label: What should be done?
+    placeholder: describe exactly what to change in this document
+prompt: |
+  # Custom edit
+
+  Follow the rules in data/AGENTS.md.
+
+  The document is the JSON database file at: data/{{document.path}}
+  Its root has `schema` (a JSON Schema for a single item) and `items` (an array of objects).
+
+  Do exactly what the user asks below, and nothing beyond it:
+  {{params.instructions}}
+
+  Keep `schema` and `items` valid and consistent with each other. A key with no
+  value is better than an inaccurate value; accuracy comes first.
+
+  Work ITERATIVELY and save continuously: make one change and write it to the
+  file immediately, then the next — never prepare everything and write only at
+  the end, so partial progress survives a timeout.
+
+  Edit the file directly. When done, reply with a one-line summary of what you
+  changed.
+
+  Session id: {{runtime.session_id}}

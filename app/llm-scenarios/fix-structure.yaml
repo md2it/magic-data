@@ -1,0 +1,42 @@
+id: fix-structure
+ui:
+  label: Fix structure
+  loadingLabel: Adjusting structure...
+params:
+  requirements:
+    type: textarea
+    label: What should the structure be?
+    placeholder: e.g. add a numeric "population" field and a "capital" string; rename "lang" to "language"
+  allow_delete_keys:
+    type: toggle
+    label: Let delete keys
+    default: false
+prompt: |
+  # Fix document structure
+
+  Follow the rules in data/AGENTS.md.
+
+  The document is the JSON database file at: data/{{document.path}}
+  Its root has `schema` (a JSON Schema for a single item) and `items` (an array of objects).
+
+  Task: adjust the structure to satisfy these requirements:
+  {{params.requirements}}
+
+  Rules:
+  - Change `schema` to match the requirements: add, adjust, or rename keys and
+    their descriptions.
+  - Keep `schema` and `items` consistent: when you add a key to `schema`, add
+    that key (with an empty value) to every existing item; when you rename a key,
+    rename it in `schema` and in every item.
+  - Do NOT invent data values here — new keys are added empty, to be filled later.
+  - Deleting keys is allowed ONLY if the following is true, otherwise never
+    remove any key from `schema` or from items: {{params.allow_delete_keys}}
+
+  Work ITERATIVELY and save continuously: apply one change to the file, then the
+  next — never prepare everything and write only at the end, so partial progress
+  survives a timeout.
+
+  Edit the file directly. When done, reply with a one-line summary of the
+  structural changes.
+
+  Session id: {{runtime.session_id}}

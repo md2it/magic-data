@@ -90,12 +90,61 @@
 }
 .magic-llm-field { display: flex; flex-direction: column; gap: 4px; }
 .magic-llm-field > span { font-size: 0.85rem; color: #57606a; }
-.magic-llm-field input {
+.magic-llm-field input[type="text"],
+.magic-llm-field textarea {
     padding: 8px 10px;
     border: 1px solid #d0d7de;
     border-radius: 6px;
     font: inherit;
 }
+.magic-llm-field textarea { resize: vertical; min-height: 76px; }
+.magic-llm-field--toggle {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.magic-llm-field--toggle > span { font-size: 0.9rem; color: #1f2328; }
+.magic-llm-switch {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 34px;
+    height: 20px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: #d0d7de;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    transition: background .15s ease;
+}
+.magic-llm-switch::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left .15s ease;
+}
+.magic-llm-switch:checked { background: #1f2328; }
+.magic-llm-switch:checked::before { left: 16px; }
+.magic-inline-btn {
+    border: 1px solid #d0d7de;
+    background: #fff;
+    color: #57606a;
+    border-radius: 5px;
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+    padding: 1px 5px;
+    font-size: 0.8em;
+    vertical-align: baseline;
+}
+.magic-inline-btn:hover { background: #f6f8fa; color: #1f2328; }
+.magic-inline-btn:disabled { opacity: .6; cursor: wait; }
 @keyframes magic-llm-spin { to { transform: rotate(360deg); } }
 .magic-llm-spinner {
     display: inline-block;
@@ -163,12 +212,57 @@
         return response.json().catch(() => null);
     }
 
-    // A scenario may declare optional parameters as a { name: label } map.
-    // Returns the declared fields as [name, label] pairs, or [] when none.
+    // A scenario may declare optional parameters as a { name: spec } map. A
+    // spec is either a plain label string (a text field) or an object
+    // { type, label, placeholder, default } where type is text | textarea |
+    // toggle. Returns a normalized field list, or [] when none are declared.
+    const FIELD_TYPES = ["text", "textarea", "toggle"];
+
     function declaredParams(scenario) {
         const params = scenario && scenario.params;
         if (!params || typeof params !== "object") return [];
-        return Object.keys(params).map((name) => [name, String(params[name] || name)]);
+        return Object.keys(params).map(function (name) {
+            const spec = params[name];
+            if (spec && typeof spec === "object") {
+                return {
+                    name: name,
+                    type: FIELD_TYPES.indexOf(spec.type) !== -1 ? spec.type : "text",
+                    label: spec.label != null ? String(spec.label) : name,
+                    placeholder: spec.placeholder != null ? String(spec.placeholder) : "",
+                    default: spec.default,
+                };
+            }
+            return { name: name, type: "text", label: String(spec || name), placeholder: "", default: "" };
+        });
+    }
+
+    function buildField(field, controls) {
+        const wrap = document.createElement("label");
+        wrap.className = "magic-llm-field";
+        const caption = document.createElement("span");
+        caption.textContent = field.label;
+
+        if (field.type === "toggle") {
+            wrap.classList.add("magic-llm-field--toggle");
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.className = "magic-llm-switch";
+            input.checked = Boolean(field.default);
+            wrap.append(caption, input);
+            controls[field.name] = { input: input, type: "toggle" };
+            return wrap;
+        }
+
+        const input = field.type === "textarea"
+            ? document.createElement("textarea")
+            : document.createElement("input");
+        if (field.type !== "textarea") input.type = "text";
+        if (field.placeholder) input.placeholder = field.placeholder;
+        if (field.default != null) input.value = String(field.default);
+        input.name = field.name;
+        wrap.append(caption, input);
+        controls[field.name] = { input: input, type: field.type };
+        return wrap;
     }
 
     // Show a small form for the declared optional parameters. Resolves with a
@@ -189,18 +283,9 @@
 
             const form = document.createElement("form");
             form.className = "magic-llm-form";
-            const inputs = {};
-            fields.forEach(function (pair) {
-                const field = document.createElement("label");
-                field.className = "magic-llm-field";
-                const caption = document.createElement("span");
-                caption.textContent = pair[1];
-                const input = document.createElement("input");
-                input.type = "text";
-                input.name = pair[0];
-                inputs[pair[0]] = input;
-                field.append(caption, input);
-                form.appendChild(field);
+            const controls = {};
+            fields.forEach(function (field) {
+                form.appendChild(buildField(field, controls));
             });
 
             const footer = document.createElement("div");
@@ -229,8 +314,11 @@
             form.addEventListener("submit", function (event) {
                 event.preventDefault();
                 const values = {};
-                Object.keys(inputs).forEach(function (name) {
-                    values[name] = inputs[name].value.trim();
+                Object.keys(controls).forEach(function (name) {
+                    const control = controls[name];
+                    values[name] = control.type === "toggle"
+                        ? control.input.checked
+                        : control.input.value.trim();
                 });
                 close(values);
             });
@@ -241,8 +329,8 @@
             modal.append(header, form);
             backdrop.appendChild(modal);
             document.body.appendChild(backdrop);
-            const first = fields[0] && inputs[fields[0][0]];
-            if (first) first.focus();
+            const firstText = fields.find(function (field) { return field.type !== "toggle"; });
+            if (firstText) controls[firstText.name].input.focus();
         });
     }
 

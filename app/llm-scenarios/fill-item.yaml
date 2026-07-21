@@ -1,0 +1,31 @@
+id: fill-item
+ui:
+  label: Fill this item
+  loadingLabel: Filling...
+prompt: |
+  # Fill one item
+
+  Follow the rules in data/AGENTS.md.
+
+  The document is the JSON database file at: data/{{document.path}}
+  Its root has `schema` (a JSON Schema for a single item) and `items` (an array of objects).
+
+  Task: fill in the MISSING values of a single existing item — the one at
+  index {{item.index}} in `items` (0-based). Do not touch other items.
+
+  Rules:
+  - Only fill values that are missing or empty for that item; do not rephrase or
+    overwrite values that are already present and correct.
+  - Before adding a key to the item, make sure it exists in `schema`; add its
+    description to `schema` first if it does not.
+  - A key with no value is better than an inaccurate value. Accuracy comes first.
+  - Cite sources when the schema calls for it.
+
+  Work ITERATIVELY and save continuously: find one value, write it to the file
+  immediately, then find the next and write it. Never gather everything first
+  and write only at the end — partial progress must survive a timeout.
+
+  Edit the file directly. When done, reply with a one-line summary of what you
+  filled.
+
+  Session id: {{runtime.session_id}}
