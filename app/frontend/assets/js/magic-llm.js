@@ -159,6 +159,9 @@
 .magic-llm-switch:checked { background: #1f2328; }
 .magic-llm-switch:checked::before { left: 16px; }
 .magic-inline-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid #d0d7de;
     background: #fff;
     color: #57606a;
@@ -166,9 +169,9 @@
     cursor: pointer;
     font: inherit;
     line-height: 1;
-    padding: 1px 5px;
+    padding: 2px 5px;
     font-size: 0.8em;
-    vertical-align: baseline;
+    vertical-align: -0.25em;
 }
 .magic-inline-btn:hover { background: #f6f8fa; color: #1f2328; }
 .magic-inline-btn:disabled { opacity: .6; cursor: wait; }
@@ -177,13 +180,12 @@
     left: 16px;
     bottom: 16px;
     z-index: 900;
-    display: none;
+    display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
     font: inherit;
 }
-.magic-runs.is-visible { display: flex; }
 .magic-runs__pill {
     display: inline-flex;
     align-items: center;
@@ -229,6 +231,29 @@
     border-radius: 7px;
 }
 .magic-runs__row + .magic-runs__row { border-top: 1px solid #eaeef2; }
+.magic-runs__section {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 8px 4px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #8c959f;
+}
+.magic-runs__section--running { color: #1f6feb; }
+.magic-runs__section--done { color: #1a7f37; }
+.magic-runs__section--failed { color: #cf222e; }
+.magic-runs__section--cancelled { color: #8c959f; }
+.magic-runs__section-count { font-variant-numeric: tabular-nums; opacity: .75; }
+.magic-runs__empty {
+    padding: 16px 10px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #8c959f;
+}
 .magic-runs__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: #8c959f; }
 .magic-runs__dot--running { background: #1f6feb; }
 .magic-runs__dot--done { background: #1a7f37; }
@@ -579,6 +604,7 @@
 
         function ensureWidget() {
             if (container || !document.body) return;
+            ensureStyles(); // the widget is always visible, even before any modal
             container = document.createElement("div");
             container.className = "magic-runs";
             pill = document.createElement("button");
@@ -595,13 +621,25 @@
             document.body.appendChild(container);
         }
 
+        // Status groups shown, in this order, as titled sections when the panel
+        // is open. Only groups with at least one visible run get a header. Titles
+        // are uppercased by CSS ("Magic in progress" -> "MAGIC IN PROGRESS").
+        const GROUPS = [
+            { key: "running", title: "Magic in progress" },
+            { key: "done", title: "Magic done" },
+            { key: "failed", title: "Magic failed" },
+            { key: "cancelled", title: "Magic stopped" }
+        ];
+
         function render() {
             ensureWidget();
             if (!container) return;
             const list = visibleRuns();
-            container.classList.toggle("is-visible", list.length > 0);
-            if (list.length === 0) { open = false; container.classList.remove("is-open"); }
 
+            // The counter is a permanent fixture — always visible, even with no
+            // runs (it just reads 0). Dismissing individual runs, or clearing a
+            // whole status group, never removes the counter itself; only the
+            // expandable panel's contents come and go.
             let running = 0, done = 0, failed = 0;
             list.forEach(function (run) {
                 if (run.status === "running") running++;
@@ -617,7 +655,32 @@
 
             if (!open) { panel.innerHTML = ""; return; }
             panel.innerHTML = "";
-            list.forEach(function (run) { panel.appendChild(buildRow(run)); });
+            let shown = 0;
+            GROUPS.forEach(function (group) {
+                const items = list.filter(function (run) { return run.status === group.key; });
+                if (items.length === 0) return;
+                shown += items.length;
+                panel.appendChild(sectionHeader(group, items.length));
+                items.forEach(function (run) { panel.appendChild(buildRow(run)); });
+            });
+            if (shown === 0) {
+                const empty = document.createElement("div");
+                empty.className = "magic-runs__empty";
+                empty.textContent = "No magic runs yet.";
+                panel.appendChild(empty);
+            }
+        }
+
+        function sectionHeader(group, count) {
+            const header = document.createElement("div");
+            header.className = "magic-runs__section magic-runs__section--" + group.key;
+            const title = document.createElement("span");
+            title.textContent = group.title;
+            const badge = document.createElement("span");
+            badge.className = "magic-runs__section-count";
+            badge.textContent = String(count);
+            header.append(title, badge);
+            return header;
         }
 
         function counter(kind, glyph, value) {
