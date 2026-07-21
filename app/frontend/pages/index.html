@@ -9,8 +9,8 @@ scripts:
     <div class="app-body">
         <aside class="app-body__sidebar">
             <div class="sidebar-toolbar">
-                <button type="button" class="sidebar-toolbar__button" id="new-file">+ File</button>
-                <button type="button" class="sidebar-toolbar__button" id="new-folder">+ Folder</button>
+                <button type="button" class="sidebar-toolbar__button sidebar-toolbar__button--icon" id="new-file" aria-label="New file" data-tooltip="New file"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#file-plus"></use></svg><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#pointer"></use></svg></button>
+                <button type="button" class="sidebar-toolbar__button sidebar-toolbar__button--icon" id="new-folder" aria-label="New folder" data-tooltip="New folder"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#folder-plus"></use></svg><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#pointer"></use></svg></button>
             </div>
             <ul id="file-tree" class="tree-list tree-list--root"></ul>
         </aside>
@@ -24,12 +24,13 @@ scripts:
                 </div>
                 <div class="content-toolbar__actions" id="content-toolbar-actions">
                     <div class="content-toolbar__group" id="collapse-expand-group">
-                        <button type="button" class="content-toolbar__button" id="collapse-all">Collapse all</button>
-                        <button type="button" class="content-toolbar__button" id="expand-all">Expand all</button>
+                        <button type="button" class="content-toolbar__button content-toolbar__button--icon" id="collapse-all" aria-label="Collapse all" data-tooltip="Collapse all"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#chevrons-down-up"></use></svg></button>
+                        <button type="button" class="content-toolbar__button content-toolbar__button--icon" id="expand-all" aria-label="Expand all" data-tooltip="Expand all"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#chevrons-up-down"></use></svg></button>
                     </div>
-                    <div class="content-toolbar__download">
-                        <button type="button" class="content-toolbar__button" id="download-button" aria-haspopup="true" aria-expanded="false">Download ▾</button>
+                    <div class="content-toolbar__menu">
+                        <button type="button" class="content-toolbar__button content-toolbar__button--menu" id="download-button" aria-haspopup="true" aria-expanded="false" aria-label="Download" data-tooltip="Download"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#file-down"></use></svg><svg class="icon icon--sm content-toolbar__caret" aria-hidden="true"><use href="/assets/images/icons.svg#chevron-down"></use></svg></button>
                         <div class="content-toolbar__dropdown" id="download-dropdown" role="menu" hidden>
+                            <p class="content-toolbar__dropdown-header">Download</p>
                             <button type="button" class="content-toolbar__dropdown-item" data-format="json" role="menuitem">JSON</button>
                             <button type="button" class="content-toolbar__dropdown-item" data-format="csv" role="menuitem">CSV</button>
                             <button type="button" class="content-toolbar__dropdown-item" data-format="tsv" role="menuitem">TSV</button>

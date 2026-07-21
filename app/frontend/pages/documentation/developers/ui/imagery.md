@@ -51,15 +51,18 @@ Requires explicit agreement:
 
 ## Icon combinations
 
-For meanings that need two icons, compose a **subject** and corner **modifier**:
+For meanings that need two icons, place a **subject** and a **modifier** inline,
+side by side:
 
-| Action                | Composition                |
-| --------------------- | -------------------------- |
-| Add a file manually   | `file-plus-corner` + `pointer`  |
-| Add a file with AI    | `file-plus-corner` + `sparkles` |
-| Add a directory manually | `folder-plus` + `pointer`    |
+| Action                | Composition            |
+| --------------------- | ---------------------- |
+| Add a file manually   | `file-plus` + `pointer`   |
+| Add a file with AI    | `file-plus` + `sparkles`  |
+| Add a directory manually | `folder-plus` + `pointer` |
 
-`pointer` marks a manual action; `sparkles` marks an AI-driven action. Reuse these meanings everywhere.
+`pointer` marks a manual action; `sparkles` marks an AI-driven action. Reuse
+these meanings everywhere. Compose them as two plain `.icon` elements in the
+control — no overlay or badge.
 
 ## Prefer icons for controls
 

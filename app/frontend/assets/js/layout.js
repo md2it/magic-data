@@ -1,6 +1,29 @@
 const PROJECT_NAME = "Magic-data";
 const GITHUB_URL = "https://github.com/md2it/magic-data";
 
+// ------------------------------------------------------------------
+// Icons. Every icon in the UI comes from the one sprite
+// (/assets/images/icons.svg) through this single helper, styled by the
+// shared .icon class. See /documentation/developers/ui/imagery.
+// ------------------------------------------------------------------
+
+const ICON_SPRITE = "/assets/images/icons.svg";
+
+function iconMarkup(name, modifier) {
+    const className = modifier ? `icon ${modifier}` : "icon";
+    return `<svg class="${className}" aria-hidden="true"><use href="${ICON_SPRITE}#${name}"></use></svg>`;
+}
+
+// Sets a control's content to an icon, optionally followed by a text label.
+// The label is appended as a text node, so dynamic values (file names, keys)
+// are never interpreted as HTML.
+function setIconLabel(el, name, label) {
+    el.innerHTML = iconMarkup(name);
+    if (label != null && label !== "") el.append(" ", label);
+}
+
+window.AppIcons = { markup: iconMarkup, setLabel: setIconLabel };
+
 function renderHeader() {
     const header = document.getElementById("app-header");
     if (!header) return;

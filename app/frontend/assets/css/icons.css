@@ -34,24 +34,3 @@
     width: 1.5em;
     height: 1.5em;
 }
-
-/*
- * Icon combinations. A single object drawn from two icons — a subject and a
- * modifier badge in its corner (e.g. "file-plus-corner" + "sparkles" for
- * "add a file with AI"). The modifier sits over the lower-right corner of the
- * subject. See /documentation/developers/ui/imagery.
- */
-.icon-combo {
-    position: relative;
-    display: inline-block;
-    line-height: 0;
-}
-
-.icon-combo > .icon-combo__badge {
-    position: absolute;
-    right: -0.15em;
-    bottom: -0.15em;
-    width: 0.7em;
-    height: 0.7em;
-    vertical-align: baseline;
-}

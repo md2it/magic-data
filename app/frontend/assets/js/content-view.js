@@ -94,8 +94,9 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "magic-inline-btn";
-        btn.title = "Fill missing values";
-        btn.textContent = "✨";
+        btn.setAttribute("aria-label", "Fill missing values");
+        btn.dataset.tooltip = "Fill missing values";
+        btn.innerHTML = window.AppIcons.markup("sparkles");
         btn.addEventListener("click", function (event) {
             onFillClick(event, index, btn);
         });
@@ -120,8 +121,9 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "magic-inline-btn content-table__col-fill";
-        btn.title = "Fill this column";
-        btn.textContent = "✨";
+        btn.setAttribute("aria-label", "Fill this column");
+        btn.dataset.tooltip = "Fill this column";
+        btn.innerHTML = window.AppIcons.markup("sparkles");
         btn.addEventListener("click", function (event) {
             onFillColumnClick(event, key, btn);
         });
@@ -179,7 +181,7 @@
             toggle.type = "button";
             toggle.className = "json-node__toggle";
             toggle.setAttribute("aria-expanded", "true");
-            toggle.textContent = "▾";
+            toggle.innerHTML = window.AppIcons.markup("chevron-down");
 
             const keyLabel = document.createElement("span");
             keyLabel.className = "json-node__key";
@@ -258,7 +260,7 @@
         const toggle = row.querySelector(":scope > .json-node__header > .json-node__toggle");
         const summary = row.querySelector(":scope > .json-node__header > .json-node__summary");
         if (toggle) {
-            toggle.textContent = expanded ? "▾" : "▸";
+            toggle.innerHTML = window.AppIcons.markup(expanded ? "chevron-down" : "chevron-right");
             toggle.setAttribute("aria-expanded", String(expanded));
         }
         if (summary) summary.hidden = expanded;
@@ -319,7 +321,7 @@
             toggle.type = "button";
             toggle.className = "content-tree-node__toggle";
             toggle.setAttribute("aria-expanded", "true");
-            toggle.textContent = "▾";
+            toggle.innerHTML = window.AppIcons.markup("chevron-down");
             line.appendChild(toggle);
 
             if (key !== null) {
@@ -383,7 +385,7 @@
         const toggle = li.querySelector(":scope > .content-tree-node__line > .content-tree-node__toggle");
         const summary = li.querySelector(":scope > .content-tree-node__line > .content-tree-node__summary");
         if (toggle) {
-            toggle.textContent = expanded ? "▾" : "▸";
+            toggle.innerHTML = window.AppIcons.markup(expanded ? "chevron-down" : "chevron-right");
             toggle.setAttribute("aria-expanded", String(expanded));
         }
         if (summary) summary.hidden = expanded;
@@ -655,7 +657,10 @@
                 // Active column shows its real direction; every other column
                 // shows a faint two-way chevron hinting that it is sortable.
                 cell.indicator.classList.toggle("content-table__sort-indicator--hint", !active);
-                cell.indicator.textContent = active ? (sortState.dir === "asc" ? "▲" : "▼") : "⇅";
+                cell.indicator.innerHTML = window.AppIcons.markup(
+                    active ? (sortState.dir === "asc" ? "chevron-up" : "chevron-down") : "chevrons-up-down",
+                    "icon--sm"
+                );
             });
         }
 

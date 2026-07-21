@@ -6,6 +6,10 @@
 
 .sidebar-toolbar__button {
     flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     padding: 6px 10px;
     border: 1px solid #d0d7de;
     border-radius: 6px;
@@ -13,6 +17,12 @@
     color: #1f2328;
     cursor: pointer;
     font-size: 0.85rem;
+}
+
+/* Icon-only add controls (new file/folder/structured): compact, not stretched. */
+.sidebar-toolbar__button--icon {
+    flex: 0 0 auto;
+    padding: 6px 12px;
 }
 
 .sidebar-toolbar__button:hover {
@@ -100,6 +110,9 @@
     font-weight: 600;
     flex: 1;
     min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .tree-node__toggle:hover,
@@ -166,6 +179,9 @@
 }
 
 .content-toolbar__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 6px 14px;
     border: 1px solid #d0d7de;
     border-radius: 6px;
@@ -173,6 +189,22 @@
     color: #1f2328;
     cursor: pointer;
     font-size: 0.85rem;
+}
+
+/* Icon-only toolbar controls (collapse/expand): square, centered. */
+.content-toolbar__button--icon {
+    justify-content: center;
+    padding: 6px 10px;
+}
+
+/* Icon control that opens a menu: icon plus a small caret. */
+.content-toolbar__button--menu {
+    gap: 3px;
+    padding: 6px 10px;
+}
+
+.content-toolbar__caret {
+    color: #57606a;
 }
 
 .content-toolbar__button:hover {
@@ -184,7 +216,7 @@
     gap: 8px;
 }
 
-.content-toolbar__download {
+.content-toolbar__menu {
     position: relative;
 }
 
@@ -208,7 +240,22 @@
     display: none;
 }
 
+/* Uppercase caption naming the menu, above its items. */
+.content-toolbar__dropdown-header {
+    margin: 2px 6px 4px;
+    padding: 2px 4px 6px;
+    border-bottom: 1px solid #eaeef2;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #57606a;
+}
+
 .content-toolbar__dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 6px 10px;
     border: none;
     border-radius: 4px;
@@ -292,6 +339,8 @@
 }
 
 .json-node__toggle {
+    display: inline-flex;
+    align-items: center;
     border: none;
     background: transparent;
     color: #57606a;
@@ -389,6 +438,8 @@
 }
 
 .content-tree-node__toggle {
+    display: inline-flex;
+    align-items: center;
     border: none;
     background: transparent;
     color: #57606a;
@@ -495,10 +546,10 @@
 }
 
 .content-table__sort-indicator {
-    display: inline-block;
-    width: 1em;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
     margin-left: 4px;
-    font-size: 0.75em;
     color: #0969da;
 }
 

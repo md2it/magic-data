@@ -5,6 +5,9 @@
 }
 
 .settings-magic .magic-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 6px 14px;
     border: 1px solid #d0d7de;
     border-radius: 6px;

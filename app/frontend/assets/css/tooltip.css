@@ -1,0 +1,56 @@
+/*
+ * The one tooltip style for the whole product. A single #app-tooltip element
+ * is positioned by tooltip.js and reused everywhere; any element carrying a
+ * data-tooltip attribute gets it on hover and keyboard focus.
+ *
+ * See /documentation/developers/ui/components (Tooltips).
+ */
+
+#app-tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    /* Top layer: above every application layer, including dialogs. */
+    z-index: 2147483000;
+    max-width: 260px;
+    /* Adaptive: sizes to content, then wraps at the max width above. */
+    width: max-content;
+    padding: 6px 9px;
+    border-radius: 6px;
+    /* High contrast against any surface. */
+    background: #1f2328;
+    color: #fff;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    box-shadow: 0 4px 14px rgba(31, 35, 40, 0.28);
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+#app-tooltip.app-tooltip--visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Tail: a small diamond pointing from the tooltip to its target. Its
+   horizontal position tracks the target center (set by tooltip.js) so it
+   stays on the element even when the tooltip is clamped to the viewport. */
+#app-tooltip::after {
+    content: "";
+    position: absolute;
+    left: var(--app-tooltip-tail-x, 50%);
+    width: 8px;
+    height: 8px;
+    background: inherit;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+#app-tooltip[data-side="top"]::after {
+    bottom: -3px;
+}
+
+#app-tooltip[data-side="bottom"]::after {
+    top: -3px;
+}

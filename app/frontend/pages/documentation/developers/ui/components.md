@@ -78,3 +78,10 @@ product shares one style so it reads as the same object everywhere:
 
 A tooltip is an aid, not the accessible name of a control; an icon-only control
 must still carry an `aria-label` or equivalent.
+
+**Usage.** Add a `data-tooltip="..."` attribute to any element; `tooltip.js`
+(loaded globally) shows it on hover and keyboard focus through the one shared
+`#app-tooltip` element, styled by `assets/css/tooltip.css`. Because that element
+is positioned on `<body>`, the tooltip escapes clipping toolbars and scrolling
+tables. Do not use the native `title` attribute for the same purpose — it would
+duplicate the tooltip and bypass the shared style.
