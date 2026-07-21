@@ -48,40 +48,6 @@
     border-bottom: none;
 }
 
-.switch {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 34px;
-    height: 20px;
-    flex-shrink: 0;
-    border-radius: 999px;
-    background: #d0d7de;
-    position: relative;
-    cursor: pointer;
-    outline: none;
-    transition: background 0.15s ease;
-}
-
-.switch::before {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #fff;
-    transition: left 0.15s ease;
-}
-
-.switch:checked {
-    background: #1f2328;
-}
-
-.switch:checked::before {
-    left: 16px;
-}
-
 .settings-select {
     font: inherit;
     padding: 4px 8px;
