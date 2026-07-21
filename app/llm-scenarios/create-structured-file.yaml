@@ -14,29 +14,48 @@ params:
     type: textarea
     label: What structure do you need?
     placeholder: e.g. one object per country with name, population (number), capital, languages (list)
+  objects:
+    type: textarea
+    label: What objects do you want to add and what is their limit?
+    placeholder: 'E.g. "Top 10 biggest lakes". If leave it empty, the file will be created without objects / rows'
+  fill:
+    type: toggle
+    label: Fill the document
+    default: false
 prompt: |
   # Create a structured file
 
   Follow the rules in data/AGENTS.md.
 
-  Task: create a new JSON database file describing this structure:
-  {{params.structure}}
+  Create the new JSON database directly. Work in the following order and save
+  the file after every numbered phase and after every small batch within phases
+  3 and 4. Never postpone saving while gathering or researching information:
 
-  Where and how:
-  - Create the file in {{targetDirectory}} at {{targetDirectory}}{{params.name}}.json (turn the requested name into a
-    safe file name: lowercase, words separated by hyphens, `.json` extension).
-    If a file with that name already exists, pick a close, non-colliding name.
-  - The root must be an object with exactly two keys:
-    - `schema`: a valid JSON Schema describing ONE item of this dataset, with a
-      described property for each field of the requested structure.
-    - `items`: an empty array `[]`.
-  - Do NOT invent any data rows — `items` stays empty; only the structure is
-    defined here.
+  1. Create the file in {{targetDirectory}} at {{targetDirectory}}{{params.name}}.json
+     (turn the requested name into a safe, lowercase, hyphen-separated file
+     name with a `.json` extension; use a close non-colliding name if needed).
+     Save it immediately with exactly the root keys `schema` and `items`; use an
+     initially valid minimal JSON Schema and an empty `items` array.
+  2. Set the schema for one item and save it. Structure requirement:
+     {{params.structure}}
+     If a structure is specified, follow it accurately. If it is empty, choose
+     a sensible, minimal structure for the requested objects. Describe every
+     schema property and add no clutter.
+  3. Add the requested objects as rows, then save after each small batch.
+     Object requirement and limit:
+     {{params.objects}}
+     If this is empty, do not add any rows. If it is specified, add only the
+     requested objects and do not exceed the stated limit. When filling is off,
+     add only enough reliable identifying data to represent each requested row;
+     do not research or enrich the remaining fields.
+  4. Fill rows only when `Fill the document` is true: {{params.fill}}.
+     Fill incrementally, completing and saving a small batch of existing rows
+     before researching the next batch. Preserve every successfully saved row
+     if the session ends early. When it is false, do not fill or enrich rows.
 
-  Keep it accurate and free of clutter: only include what the requested
-  structure calls for.
-
-  Create the file directly. When done, reply with the exact path of the file you
-  created.
+  Keep data accurate and free of clutter. Do not replace the file wholesale in
+  a later phase: update the already-created file so partial progress remains
+  usable after an interruption. When done, reply with the exact path of the
+  file you created.
 
   Session id: {{runtime.session_id}}
