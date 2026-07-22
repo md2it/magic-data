@@ -16,8 +16,9 @@ Follow [visual-style](visual-style) and [technical-standards](technical-standard
   navigation (Data, Documentation, Settings), and the process actions Restart
   app and Stop app. If Magic AI processes are still running, these actions ask
   for confirmation first. Rendered once by `layout.js`.
-- **Footer** (`.app-footer`) — product name and repository link. A separate
-  **print footer** (`.print-footer`) repeats per page when printing.
+- **Footer** (`.app-footer`) — product name, repository link, and GitHub Issues
+  link. A separate **print footer** (`.print-footer`) repeats per page when
+  printing.
 - **Sidebar** — the collapsible catalogue of files and directories: the file
   **tree** (`.tree-list` / `.tree-node`, and `.directory-listing` for a plain
   listing), a **sidebar toolbar** (`.sidebar-toolbar`) of catalogue actions,

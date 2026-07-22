@@ -1,5 +1,6 @@
 const PROJECT_NAME = "Magic-data";
 const GITHUB_URL = "https://github.com/md2it/magic-data";
+const GITHUB_ISSUES_URL = "https://github.com/md2it/magic-data/issues";
 
 // ------------------------------------------------------------------
 // Icons. Every icon in the UI comes from the one sprite
@@ -171,6 +172,7 @@ function renderFooter() {
     footer.innerHTML = `
         <span>${PROJECT_NAME}</span>
         <a href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="${GITHUB_ISSUES_URL}" target="_blank" rel="noopener noreferrer">Report issue</a>
     `;
 }
 
