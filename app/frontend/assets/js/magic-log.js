@@ -152,7 +152,6 @@
                 });
             });
         });
-        window.addEventListener("magic-log-updated", function () { load(true); });
         load(true);
     });
 })();
