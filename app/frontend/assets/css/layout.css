@@ -84,6 +84,68 @@ body {
     background: #0550ae;
 }
 
+.app-confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.36);
+    padding: 16px;
+}
+
+.app-confirm {
+    width: min(480px, 100%);
+    border-radius: 10px;
+    background: #fff;
+    color: #1f2328;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+}
+
+.app-confirm__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #d0d7de;
+    font-weight: 600;
+}
+
+.app-confirm__body {
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+}
+
+.app-confirm__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 20px 20px;
+}
+
+.app-confirm__button {
+    padding: 8px 18px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background: #f6f8fa;
+    color: #1f2328;
+    cursor: pointer;
+    font: inherit;
+}
+
+.app-confirm__button:hover {
+    background: #eaeef2;
+}
+
+.app-confirm__button--primary {
+    border-color: #1f6feb;
+    background: #1f6feb;
+    color: #fff;
+}
+
+.app-confirm__button--primary:hover {
+    background: #1a5fd0;
+}
+
 @media (max-width: 720px) {
     .app-header {
         grid-template-columns: 1fr;

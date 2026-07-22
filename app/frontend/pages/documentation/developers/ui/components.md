@@ -14,7 +14,8 @@ Follow [visual-style](visual-style) and [technical-standards](technical-standard
 
 - **Header** (`.app-header`) — the fixed top bar: product title, main
   navigation (Data, Documentation, Settings), and the process actions Restart
-  and Stop. Rendered once by `layout.js`.
+  app and Stop app. If Magic AI processes are still running, these actions ask
+  for confirmation first. Rendered once by `layout.js`.
 - **Footer** (`.app-footer`) — product name and repository link. A separate
   **print footer** (`.print-footer`) repeats per page when printing.
 - **Sidebar** — the collapsible catalogue of files and directories: the file

@@ -24,6 +24,96 @@ function setIconLabel(el, name, label) {
 
 window.AppIcons = { markup: iconMarkup, setLabel: setIconLabel };
 
+let magicRunningCount = 0;
+
+function confirmAppLifecycleAction(actionLabel) {
+    return new Promise(function (resolve) {
+        const backdrop = document.createElement("div");
+        backdrop.className = "app-confirm-backdrop";
+        const modal = document.createElement("div");
+        modal.className = "app-confirm";
+        modal.setAttribute("role", "dialog");
+        modal.setAttribute("aria-modal", "true");
+        modal.setAttribute("aria-labelledby", "app-confirm-title");
+
+        const header = document.createElement("div");
+        header.className = "app-confirm__header";
+        header.id = "app-confirm-title";
+        header.textContent = actionLabel + "?";
+
+        const body = document.createElement("p");
+        body.className = "app-confirm__body";
+        body.textContent = "There are running Magic AI processes. Even briefly stopping the server will interrupt them.";
+
+        const footer = document.createElement("div");
+        footer.className = "app-confirm__footer";
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.className = "app-confirm__button";
+        cancel.textContent = "Cancel";
+        const proceed = document.createElement("button");
+        proceed.type = "button";
+        proceed.className = "app-confirm__button app-confirm__button--primary";
+        proceed.textContent = "Proceed";
+
+        function close(result) {
+            document.removeEventListener("keydown", onKeydown);
+            backdrop.remove();
+            resolve(result);
+        }
+        function onKeydown(event) {
+            if (event.key === "Escape") close(false);
+        }
+        cancel.addEventListener("click", function () { close(false); });
+        proceed.addEventListener("click", function () { close(true); });
+        backdrop.addEventListener("click", function (event) {
+            if (event.target === backdrop) close(false);
+        });
+        document.addEventListener("keydown", onKeydown);
+
+        footer.append(cancel, proceed);
+        modal.append(header, body, footer);
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+        cancel.focus();
+    });
+}
+
+async function hasRunningMagicProcesses() {
+    try {
+        const response = await fetch("/api/magic-log?limit=0", { cache: "no-store" });
+        if (!response.ok) return magicRunningCount > 0;
+        const counts = (await response.json()).counts;
+        const running = ((counts && counts.current) || {}).running || 0;
+        magicRunningCount = running;
+        renderMagicLogCounters(counts);
+        return running > 0;
+    } catch (error) {
+        return magicRunningCount > 0;
+    }
+}
+
+async function confirmIfMagicRunning(actionLabel) {
+    if (!(await hasRunningMagicProcesses())) return true;
+    return confirmAppLifecycleAction(actionLabel);
+}
+
+function stopApp() {
+    fetch("/stop", { method: "POST" }).then(function () {
+        const status = document.getElementById("status");
+        if (status) status.textContent = "Server stopped.";
+        setTimeout(function () {
+            window.location.reload();
+        }, 300);
+    });
+}
+
+function restartApp(button) {
+    button.disabled = true;
+    button.textContent = "Restarting…";
+    fetch("/restart", { method: "POST" });
+}
+
 function renderHeader() {
     const header = document.getElementById("app-header");
     if (!header) return;
@@ -38,26 +128,20 @@ function renderHeader() {
             <a href="/settings">Settings</a>
         </nav>
         <div class="app-header__actions">
-            <button id="restart-btn" type="button">Restart</button>
-            <button id="stop-btn" type="button">Stop</button>
+            <button id="restart-btn" type="button">Restart app</button>
+            <button id="stop-btn" type="button">Stop app</button>
         </div>
     `;
 
-    header.querySelector("#stop-btn").addEventListener("click", function () {
-        fetch("/stop", { method: "POST" }).then(function () {
-            const status = document.getElementById("status");
-            if (status) status.textContent = "Server stopped.";
-            setTimeout(function () {
-                window.location.reload();
-            }, 300);
-        });
+    header.querySelector("#stop-btn").addEventListener("click", async function () {
+        if (!(await confirmIfMagicRunning("Stop app"))) return;
+        stopApp();
     });
 
-    header.querySelector("#restart-btn").addEventListener("click", function (event) {
+    header.querySelector("#restart-btn").addEventListener("click", async function (event) {
         const button = event.currentTarget;
-        button.disabled = true;
-        button.textContent = "Restarting…";
-        fetch("/restart", { method: "POST" });
+        if (!(await confirmIfMagicRunning("Restart app"))) return;
+        restartApp(button);
     });
 }
 
@@ -65,7 +149,8 @@ function renderMagicLogCounters(counts) {
     const element = document.querySelector(".app-header__magic-counts");
     if (!element) return;
     const values = (counts && counts.current) || {};
-    const parts = [["running", values.running || 0, "In progress"], ["success", values.success || 0, "Successful"], ["failed", values.failed || 0, "Unsuccessful"]].map(function (item) {
+    magicRunningCount = values.running || 0;
+    const parts = [["running", magicRunningCount, "In progress"], ["success", values.success || 0, "Successful"], ["failed", values.failed || 0, "Unsuccessful"]].map(function (item) {
         return `<span class="app-header__magic-count app-header__magic-count--${item[0]}" title="${item[2]}: ${item[1]}">${item[1]}</span>`;
     });
     element.innerHTML = `( ${parts.join(" | ")} )`;
