@@ -30,7 +30,7 @@ function renderHeader() {
 
     header.className = "app-header";
     header.innerHTML = `
-        <p class="app-header__title">${PROJECT_NAME}</p>
+        <a class="app-header__title" href="/">${PROJECT_NAME}</a>
         <nav class="app-header__nav" aria-label="Main navigation">
             <a href="/data">Data</a>
             <a class="app-header__magic-log" href="/magic-log">Magic log <span class="app-header__magic-counts" aria-label="Current Magic runs"></span></a>
