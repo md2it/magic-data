@@ -65,9 +65,10 @@ function renderMagicLogCounters(counts) {
     const element = document.querySelector(".app-header__magic-counts");
     if (!element) return;
     const values = (counts && counts.current) || {};
-    element.innerHTML = [["running", values.running || 0, "In progress"], ["success", values.success || 0, "Successful"], ["failed", values.failed || 0, "Unsuccessful"]].map(function (item) {
+    const parts = [["running", values.running || 0, "In progress"], ["success", values.success || 0, "Successful"], ["failed", values.failed || 0, "Unsuccessful"]].map(function (item) {
         return `<span class="app-header__magic-count app-header__magic-count--${item[0]}" title="${item[2]}: ${item[1]}">${item[1]}</span>`;
-    }).join("");
+    });
+    element.innerHTML = `( ${parts.join(" | ")} )`;
 }
 
 async function refreshMagicLogCounters() {

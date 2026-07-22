@@ -56,9 +56,7 @@ body {
 }
 
 .app-header__magic-log { display: inline-flex; align-items: center; gap: 6px; }
-.app-header__magic-counts { display: inline-flex; gap: 4px; font-size: .72rem; font-variant-numeric: tabular-nums; }
-.app-header__magic-count { display: inline-flex; align-items: center; gap: 3px; }
-.app-header__magic-count::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.app-header__magic-counts { font-variant-numeric: tabular-nums; }
 .app-header__magic-count--running { color: #79c0ff; }
 .app-header__magic-count--success { color: #7ee787; }
 .app-header__magic-count--failed { color: #ff7b72; }
