@@ -117,7 +117,7 @@ def render_content(page_path: Path, source: str) -> str:
     if page_path.suffix == ".html":
         return source
 
-    markdown = MarkdownIt("commonmark", {"html": False})
+    markdown = MarkdownIt("commonmark", {"html": False}).enable("table")
     content = markdown.render(source)
     return f"""    <main class=\"static-page\">
         <article class=\"markdown-content\">
