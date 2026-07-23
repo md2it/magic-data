@@ -35,14 +35,10 @@
 }
 
 .sidebar-collapse {
-    position: fixed;
-    /* Keep clear of the persistent status control in the viewport corner. */
-    bottom: 48px;
-    left: 0;
-    z-index: 6;
+    margin-top: auto;
     width: var(--sidebar-width);
     min-height: 40px;
-    margin: 0;
+    margin-bottom: 0;
     padding: 8px;
     border: 1px solid #d0d7de;
     border-left: 0;
