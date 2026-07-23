@@ -705,6 +705,13 @@ function initMagicButtons() {
         const popupContent = document.createElement("div");
         popupContent.className = "data-structure-popup__content";
 
+        // Keep interactions with the rendered structure inside the dialog.
+        // In particular, collapsing a node must not reach the document-level
+        // outside-click handler that closes toolbar menus.
+        popup.addEventListener("click", function (event) {
+            event.stopPropagation();
+        });
+
         function renderStructure() {
             structureSwitch.querySelectorAll("[data-structure-view]").forEach(function (option) {
                 const active = option.dataset.structureView === structureView;
