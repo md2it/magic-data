@@ -641,59 +641,6 @@ function closeOtherMenus(keep) {
     });
 }
 
-// Builds a toolbar dropdown menu: an icon trigger with a caret, plus a panel
-// with an uppercase header. The caller appends items to `.dropdown` and may
-// call `.close()`. Open/close, outside-click, and Escape are wired here.
-function buildDropdownMenu(config) {
-    const root = document.createElement("div");
-    root.className = "content-toolbar__menu";
-
-    const trigger = document.createElement("button");
-    trigger.type = "button";
-    trigger.className = "content-toolbar__button content-toolbar__button--menu";
-    trigger.id = config.id + "-button";
-    trigger.setAttribute("aria-haspopup", "menu");
-    trigger.setAttribute("aria-expanded", "false");
-    trigger.setAttribute("aria-label", config.triggerLabel);
-    trigger.dataset.tooltip = config.triggerLabel;
-    trigger.innerHTML = window.AppIcons.markup(config.triggerIcon) +
-        window.AppIcons.markup("chevron-down", "icon--sm content-toolbar__caret");
-
-    const dropdown = document.createElement("div");
-    dropdown.className = "content-toolbar__dropdown";
-    dropdown.id = config.id + "-dropdown";
-    dropdown.setAttribute("role", "menu");
-    dropdown.hidden = true;
-
-    const header = document.createElement("p");
-    header.className = "content-toolbar__dropdown-header";
-    header.textContent = config.header;
-    dropdown.appendChild(header);
-
-    function close() {
-        dropdown.hidden = true;
-        trigger.setAttribute("aria-expanded", "false");
-    }
-
-    trigger.addEventListener("click", function (event) {
-        event.stopPropagation();
-        const willOpen = dropdown.hidden;
-        if (willOpen) closeOtherMenus(close);
-        dropdown.hidden = !willOpen;
-        trigger.setAttribute("aria-expanded", String(willOpen));
-    });
-    document.addEventListener("click", function (event) {
-        if (!dropdown.hidden && !dropdown.contains(event.target) && !trigger.contains(event.target)) close();
-    });
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape" && !dropdown.hidden) close();
-    });
-
-    toolbarMenuClosers.push(close);
-    root.append(trigger, dropdown);
-    return { root: root, dropdown: dropdown, trigger: trigger, close: close };
-}
-
 function initMagicButtons() {
     const sidebarToolbar = document.querySelector(".sidebar-toolbar");
     if (sidebarToolbar) {
@@ -712,37 +659,130 @@ function initMagicButtons() {
 
     const toolbarActions = document.getElementById("content-toolbar-actions");
     if (toolbarActions) {
-        const docScenarios = [
-            { label: "Fix structure", scenario: "fix-structure" },
-            { label: "Fill all", scenario: "fill-all" },
-            { label: "Custom", scenario: "custom-edit" }
-        ];
+        const structureRoot = document.createElement("div");
+        structureRoot.className = "content-toolbar__menu";
 
-        const menu = buildDropdownMenu({
-            id: "magic",
-            triggerLabel: "Magic buttons",
-            triggerIcon: "sparkles",
-            header: "Magic buttons",
+        const structureButton = document.createElement("button");
+        structureButton.type = "button";
+        structureButton.className = "content-toolbar__button content-toolbar__button--icon";
+        structureButton.id = "data-structure-button";
+        structureButton.setAttribute("aria-haspopup", "dialog");
+        structureButton.setAttribute("aria-expanded", "false");
+        structureButton.setAttribute("aria-label", "Data structure");
+        structureButton.dataset.tooltip = "data-sctructure";
+        structureButton.innerHTML = window.AppIcons.markup("columns-3-cog");
+
+        const popup = document.createElement("div");
+        popup.className = "data-structure-popup";
+        popup.id = "data-structure-popup";
+        popup.setAttribute("role", "dialog");
+        popup.setAttribute("aria-label", "Data structure");
+        popup.hidden = true;
+
+        const popupHeader = document.createElement("div");
+        popupHeader.className = "data-structure-popup__header";
+
+        const popupTitle = document.createElement("span");
+        popupTitle.className = "data-structure-popup__title";
+        popupTitle.textContent = "Data structure";
+
+        const structureSwitch = document.createElement("div");
+        structureSwitch.className = "view-switch data-structure-popup__switch";
+        structureSwitch.setAttribute("role", "radiogroup");
+        structureSwitch.setAttribute("aria-label", "Data structure view");
+
+        let structureView = "tree";
+        ["Tree", "JSON"].forEach(function (label) {
+            const option = document.createElement("button");
+            option.type = "button";
+            option.className = "view-switch__option";
+            option.dataset.structureView = label.toLowerCase();
+            option.setAttribute("role", "radio");
+            option.textContent = label;
+            structureSwitch.appendChild(option);
         });
 
-        docScenarios.forEach(function (item) {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "content-toolbar__dropdown-item";
-            button.setAttribute("role", "menuitem");
-            window.AppIcons.setLabel(button, "sparkles", item.label);
-            button.addEventListener("click", async function () {
-                menu.close();
-                const data = await window.magicLlm.runScenario(item.scenario, {
-                    context: window.MagicData.currentContext(),
-                    button: button
-                });
-                if (data) await window.MagicData.reloadDocument();
+        const popupContent = document.createElement("div");
+        popupContent.className = "data-structure-popup__content";
+
+        function renderStructure() {
+            structureSwitch.querySelectorAll("[data-structure-view]").forEach(function (option) {
+                const active = option.dataset.structureView === structureView;
+                option.classList.toggle("active", active);
+                option.setAttribute("aria-checked", String(active));
             });
-            menu.dropdown.appendChild(button);
+            window.ContentView.renderStructure(currentFileText, structureView, popupContent);
+        }
+
+        structureSwitch.addEventListener("click", function (event) {
+            const option = event.target.closest("[data-structure-view]");
+            if (!option) return;
+            structureView = option.dataset.structureView;
+            renderStructure();
         });
 
-        toolbarActions.insertBefore(menu.root, toolbarActions.firstChild);
+        const fixButton = document.createElement("button");
+        fixButton.type = "button";
+        fixButton.className = "content-toolbar__dropdown-item data-structure-popup__fix";
+        window.AppIcons.setLabel(fixButton, "sparkles", "Update structure");
+        fixButton.addEventListener("click", async function () {
+            const data = await window.magicLlm.runScenario("fix-structure", {
+                context: window.MagicData.currentContext(),
+                button: fixButton
+            });
+            if (data) {
+                await window.MagicData.reloadDocument();
+                renderStructure();
+            }
+        });
+
+        popupHeader.append(popupTitle, fixButton, structureSwitch);
+        popup.append(popupHeader, popupContent);
+        structureRoot.append(structureButton, popup);
+
+        function closeStructurePopup() {
+            popup.hidden = true;
+            structureButton.setAttribute("aria-expanded", "false");
+        }
+
+        structureButton.addEventListener("click", function (event) {
+            event.stopPropagation();
+            const willOpen = popup.hidden;
+            if (willOpen) {
+                closeOtherMenus(closeStructurePopup);
+                renderStructure();
+            }
+            popup.hidden = !willOpen;
+            structureButton.setAttribute("aria-expanded", String(willOpen));
+        });
+        document.addEventListener("click", function (event) {
+            if (!popup.hidden && !popup.contains(event.target) && !structureButton.contains(event.target)) {
+                closeStructurePopup();
+            }
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !popup.hidden) closeStructurePopup();
+        });
+        toolbarMenuClosers.push(closeStructurePopup);
+
+        const customButton = document.createElement("button");
+        customButton.type = "button";
+        customButton.className = "content-toolbar__button content-toolbar__button--icon";
+        customButton.id = "magic-custom-button";
+        customButton.setAttribute("aria-label", "Custom");
+        customButton.dataset.tooltip = "Custom";
+        customButton.innerHTML = window.AppIcons.markup("sparkles");
+        customButton.addEventListener("click", async function () {
+            const data = await window.magicLlm.runScenario("custom-edit", {
+                context: window.MagicData.currentContext(),
+                button: customButton
+            });
+            if (data) await window.MagicData.reloadDocument();
+        });
+
+        const fragment = document.createDocumentFragment();
+        fragment.append(structureRoot, customButton);
+        toolbarActions.insertBefore(fragment, toolbarActions.firstChild);
     }
 }
 

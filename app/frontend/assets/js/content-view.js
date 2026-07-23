@@ -103,6 +103,23 @@
         return btn;
     }
 
+    function createFillAllButton() {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "magic-inline-btn magic-fill-all-btn";
+        btn.setAttribute("aria-label", "Fill all");
+        btn.dataset.tooltip = "Fill all";
+        btn.innerHTML = window.AppIcons.markup("sparkles");
+        btn.addEventListener("click", function (event) {
+            event.stopPropagation();
+            window.magicLlm.runScenario("fill-all", {
+                context: window.MagicData.currentContext(),
+                button: btn
+            }).then(function (data) { if (data) window.MagicData.reloadDocument(); });
+        });
+        return btn;
+    }
+
     function onFillColumnClick(event, key, btn) {
         event.stopPropagation();               // must not trigger the header sort
         const ctx = window.MagicData.currentContext();
@@ -271,6 +288,10 @@
         container.classList.remove("tree-view");
         container.classList.add("json-view");
         const root = buildJsonNode(null, parsedJson, []);
+        if (hasItemsContract(parsedJson)) {
+            const rootHeader = root.querySelector(":scope > .json-node__header");
+            if (rootHeader) rootHeader.appendChild(createFillAllButton());
+        }
         container.appendChild(root);
     }
 
@@ -396,9 +417,17 @@
         container.classList.remove("json-view");
         container.classList.add("tree-view");
 
+        const visibleJson = isPlainObject(parsedJson)
+            ? Object.fromEntries(Object.entries(parsedJson).filter(function ([key]) { return key !== "schema"; }))
+            : parsedJson;
         const rootList = document.createElement("ul");
         rootList.className = "content-tree-node__children content-tree-node__children--root";
-        rootList.appendChild(buildTreeNode(null, parsedJson, []));
+        const root = buildTreeNode(null, visibleJson, []);
+        if (hasItemsContract(parsedJson)) {
+            const rootLine = root.querySelector(":scope > .content-tree-node__line");
+            if (rootLine) rootLine.appendChild(createFillAllButton());
+        }
+        rootList.appendChild(root);
         container.appendChild(rootList);
     }
 
@@ -555,6 +584,7 @@
         if (hasItems) {
             const fillHeader = document.createElement("th");
             fillHeader.className = "content-table__header-cell";
+            fillHeader.appendChild(createFillAllButton());
             headerRow.appendChild(fillHeader);
         }
         columns.forEach(function (col) {
@@ -773,22 +803,19 @@
         container.classList.remove("json-view", "tree-view", "content-table-view");
         container.classList.add("content-text-view");
 
+        if (hasItemsContract(parsedJson)) {
+            const actions = document.createElement("div");
+            actions.className = "content-text__actions";
+            actions.appendChild(createFillAllButton());
+            container.appendChild(actions);
+        }
+
         if (isCollapsible(parsedJson)) {
             if (Array.isArray(parsedJson)) {
                 renderTextNode(null, parsedJson, container, 1);
             } else {
-                // Root object: render children directly, but wrap the technical
-                // `schema` block in a muted section (the Text view has no
-                // collapsing, so de-emphasis is the only cue available here).
                 Object.entries(parsedJson).forEach(function ([childKey, childValue]) {
-                    if (isSchemaPath([childKey])) {
-                        const section = document.createElement("section");
-                        section.className = "content-text__schema";
-                        renderTextNode(childKey, childValue, section, 1);
-                        container.appendChild(section);
-                    } else {
-                        renderTextNode(childKey, childValue, container, 1);
-                    }
+                    if (!isSchemaPath([childKey])) renderTextNode(childKey, childValue, container, 1);
                 });
             }
         } else {
@@ -908,6 +935,31 @@
         view.render(parsedJson, rawText, container);
     }
 
+    function renderStructure(rawText, viewName, container) {
+        const parsedJson = parseJsonSafe(rawText);
+        container.innerHTML = "";
+        container.classList.remove("json-view", "tree-view");
+
+        if (!isPlainObject(parsedJson) || !Object.prototype.hasOwnProperty.call(parsedJson, "schema")) {
+            container.className = "data-structure-popup__content data-structure-popup__empty";
+            container.textContent = "No data structure";
+            return;
+        }
+
+        container.className = "data-structure-popup__content";
+        if (viewName === "json") {
+            container.classList.add("json-view");
+            container.appendChild(buildJsonNode(null, parsedJson.schema, []));
+            return;
+        }
+
+        container.classList.add("tree-view");
+        const rootList = document.createElement("ul");
+        rootList.className = "content-tree-node__children content-tree-node__children--root";
+        rootList.appendChild(buildTreeNode(null, parsedJson.schema, []));
+        container.appendChild(rootList);
+    }
+
     function collapseAll(container) {
         const viewName = container.dataset.currentView;
         const view = views[viewName];
@@ -924,6 +976,7 @@
         render: render,
         collapseAll: collapseAll,
         expandAll: expandAll,
+        renderStructure: renderStructure,
         toDelimited: toDelimited,
     };
 })();
