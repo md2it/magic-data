@@ -99,7 +99,7 @@
     border-radius: 6px;
     font: inherit;
 }
-.magic-llm-field textarea { resize: vertical; min-height: 76px; }
+.magic-llm-field textarea { resize: vertical; min-height: 57px; }
 .magic-llm-field__control { position: relative; display: flex; }
 .magic-llm-field__control > input,
 .magic-llm-field__control > textarea { width: 100%; box-sizing: border-box; }
@@ -426,7 +426,7 @@
             ? document.createElement("textarea")
             : document.createElement("input");
         if (field.type !== "textarea") input.type = "text";
-        else input.rows = 7; // taller by default; still user-resizable (CSS resize: vertical)
+        else input.rows = 6; // taller by default; still user-resizable (CSS resize: vertical)
         if (field.default != null) input.value = String(field.default);
         input.name = field.name;
         input.setAttribute("aria-label", field.label); // no visible <label> text now
