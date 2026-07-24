@@ -5,19 +5,33 @@ context:
 ui:
   label: Create structured file
   loadingLabel: Creating...
+  requireOneOf:
+    - description
+    - structure
 params:
   name:
     type: text
     label: File name
-    placeholder: e.g. countries
+  description:
+    type: textarea
+    label: Description
+    hint: What this file is about. Either Description or Structure is required.
   structure:
     type: textarea
-    label: What structure do you need?
-    placeholder: e.g. one object per country with name, population (number), capital, languages (list)
+    label: Structure
+    hint: The fields each object should have. Either Description or Structure is required.
+    examples:
+      - "E.g. 1: Countries with name, population (number), capital, official languages (list)"
+      - "E.g. 2: Books with title, author, year published (number), genre"
+      - "E.g. 3: Tasks with title, priority (high/medium/low), done (yes/no), due date"
   objects:
     type: textarea
-    label: What objects do you want to add and what is their limit?
-    placeholder: 'E.g. "Top 10 biggest lakes". If leave it empty, the file will be created without objects / rows'
+    label: Object list
+    hint: Which rows to add. Leave empty to create the file with no rows.
+    examples:
+      - "E.g. 1: Top 10 biggest lakes"
+      - "E.g. 2: All EU countries"
+      - "E.g. 3: Leave empty to create no rows"
   fill:
     type: toggle
     label: Fill the document
@@ -27,28 +41,38 @@ prompt: |
 
   Follow the rules in data/AGENTS.md.
 
-  Create the new JSON database directly. Work in the following order and save
-  the file after every numbered phase and after every small batch within phases
-  3 and 4. Never postpone saving while gathering or researching information:
+  Create the new JSON database directly. The root object has exactly the keys
+  `metadata`, `schema` and `items`, in that order. Work in the following order
+  and save the file after every numbered phase and after every small batch
+  within phases 4 and 5. Never postpone saving while gathering or researching
+  information:
 
   1. Create the file in {{targetDirectory}} at {{targetDirectory}}{{params.name}}.json
      (turn the requested name into a safe, lowercase, hyphen-separated file
      name with a `.json` extension; use a close non-colliding name if needed).
-     Save it immediately with exactly the root keys `schema` and `items`; use an
-     initially valid minimal JSON Schema and an empty `items` array.
-  2. Set the schema for one item and save it. Structure requirement:
+     Save it immediately with exactly the root keys `metadata`, `schema` and
+     `items`; use an empty `metadata` object, an initially valid minimal JSON
+     Schema and an empty `items` array.
+  2. Set `metadata.description` and save it. Description:
+     {{params.description}}
+     If a description is provided above, put a concise version of it in
+     `metadata.description`. If it is empty, leave `metadata.description` as an
+     empty string.
+  3. Set the schema for one item and save it. Structure requirement:
      {{params.structure}}
-     If a structure is specified, follow it accurately. If it is empty, choose
-     a sensible, minimal structure for the requested objects. Describe every
-     schema property and add no clutter.
-  3. Add the requested objects as rows, then save after each small batch.
+     If a Structure is explicitly provided above, follow it accurately. If the
+     Structure is empty but a Description is provided (see phase 2), design a
+     sensible, minimal structure yourself based on the Description. At least one
+     of Structure or Description is always provided. Describe every schema
+     property and add no clutter.
+  4. Add the requested objects as rows, then save after each small batch.
      Object requirement and limit:
      {{params.objects}}
      If this is empty, do not add any rows. If it is specified, add only the
      requested objects and do not exceed the stated limit. When filling is off,
      add only enough reliable identifying data to represent each requested row;
      do not research or enrich the remaining fields.
-  4. Fill rows only when `Fill the document` is true: {{params.fill}}.
+  5. Fill rows only when `Fill the document` is true: {{params.fill}}.
      Fill incrementally, completing and saving a small batch of existing rows
      before researching the next batch. Preserve every successfully saved row
      if the session ends early. When it is false, do not fill or enrich rows.

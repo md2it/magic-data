@@ -1,4 +1,7 @@
 {
+    "metadata": {
+      "description": "Example dataset of countries with population, GDP, and official languages, illustrating the schema/items file format."
+    },
     "schema": {
       "type": "object",
       "properties": {

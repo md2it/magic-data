@@ -11,7 +11,8 @@
 - This JSON file is a database
 - You only work with the specified data/*.json files
 - Structure:
-   - Each JSON file has a root object with the keys `schema` and `items`
+   - Each JSON file has a root object with the keys `schema` and `items`, optionally preceded by `metadata`
+   - `metadata` is an optional (but recommended) object placed before `schema` and `items`; its `description` is a free-form string describing the file's purpose
    - `schema` is a valid JSON Schema describing a single object from `items`
    - `items` is an array of data objects
    - Before adding an attribute to an object, first add its description to `schema`

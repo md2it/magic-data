@@ -172,6 +172,51 @@
         return path.length === 1 && path[0] === "schema";
     }
 
+    /**
+     * True when a node reached at `path` is the top-level `metadata` node of
+     * the project data contract. Like `schema`, it is not primary content:
+     * views surface only its `description` (see getMetadataDescription) and
+     * otherwise filter the raw object out.
+     */
+    function isMetadataPath(path) {
+        return path.length === 1 && path[0] === "metadata";
+    }
+
+    /**
+     * Returns the human-readable description carried by the optional top-level
+     * `metadata` object (`{ metadata: { description }, schema, items }`), or
+     * null when it is missing, malformed, or blank. Guards every layer so a
+     * caller can treat null as "render nothing extra, keep current behavior".
+     */
+    function getMetadataDescription(parsedJson) {
+        if (!isPlainObject(parsedJson)) return null;
+        const metadata = parsedJson.metadata;
+        if (!isPlainObject(metadata)) return null;
+        if (typeof metadata.description !== "string") return null;
+        return metadata.description.trim() === "" ? null : metadata.description;
+    }
+
+    /**
+     * Resolves the display name of the current document from the runtime
+     * context, stripping a trailing `.json` extension. Returns null when the
+     * name is unavailable so callers can fall back gracefully.
+     */
+    function getDocumentDisplayName() {
+        try {
+            const ctx = window.MagicData &&
+                typeof window.MagicData.currentContext === "function"
+                ? window.MagicData.currentContext()
+                : null;
+            const name = ctx && ctx.document && ctx.document.name;
+            if (typeof name === "string" && name.trim() !== "") {
+                return name.replace(/\.json$/i, "");
+            }
+        } catch (err) {
+            // fall through to graceful null
+        }
+        return null;
+    }
+
     function summarizeCollapsed(value) {
         if (Array.isArray(value)) {
             return `[...] ${value.length} item${value.length === 1 ? "" : "s"}`;
@@ -418,7 +463,7 @@
         container.classList.add("tree-view");
 
         const visibleJson = isPlainObject(parsedJson)
-            ? Object.fromEntries(Object.entries(parsedJson).filter(function ([key]) { return key !== "schema"; }))
+            ? Object.fromEntries(Object.entries(parsedJson).filter(function ([key]) { return key !== "schema" && key !== "metadata"; }))
             : parsedJson;
         const rootList = document.createElement("ul");
         rootList.className = "content-tree-node__children content-tree-node__children--root";
@@ -426,6 +471,18 @@
         if (hasItemsContract(parsedJson)) {
             const rootLine = root.querySelector(":scope > .content-tree-node__line");
             if (rootLine) rootLine.appendChild(createFillAllButton());
+        }
+        // Surface metadata.description (the raw metadata object is filtered out
+        // above) as a first-level tree entry, ahead of the real content nodes.
+        const description = getMetadataDescription(parsedJson);
+        if (description !== null) {
+            const childList = root.querySelector(":scope > .content-tree-node__children");
+            if (childList) {
+                childList.insertBefore(
+                    buildTreeNode("description", description, ["description"]),
+                    childList.firstChild
+                );
+            }
         }
         rootList.appendChild(root);
         container.appendChild(rootList);
@@ -539,6 +596,16 @@
         container.innerHTML = "";
         container.classList.remove("json-view", "tree-view");
         container.classList.add("content-table-view");
+
+        // Optional metadata.description block sits above the table. It is not a
+        // row/column (selectRowSource only reads `items`), just a caption.
+        const description = getMetadataDescription(parsedJson);
+        if (description !== null) {
+            const caption = document.createElement("p");
+            caption.className = "content-table__description";
+            caption.textContent = description;
+            container.appendChild(caption);
+        }
 
         const topLevelNodes = selectRowSource(parsedJson);
         if (topLevelNodes === null) {
@@ -814,8 +881,21 @@
             if (Array.isArray(parsedJson)) {
                 renderTextNode(null, parsedJson, container, 1);
             } else {
+                const description = getMetadataDescription(parsedJson);
                 Object.entries(parsedJson).forEach(function ([childKey, childValue]) {
-                    if (!isSchemaPath([childKey])) renderTextNode(childKey, childValue, container, 1);
+                    if (isSchemaPath([childKey]) || isMetadataPath([childKey])) return;
+                    if (childKey === "items") {
+                        // The top-level items section is headed by the document
+                        // name (not the literal key), with the description as
+                        // its first paragraph, then the "Item N" entries.
+                        appendHeading(container, getDocumentDisplayName() || "items", 1);
+                        if (description !== null) appendParagraph(container, description);
+                        // key === null suppresses a second heading; level 2 keeps
+                        // "Item N" nested one step under the document heading.
+                        renderTextNode(null, childValue, container, 2);
+                    } else {
+                        renderTextNode(childKey, childValue, container, 1);
+                    }
                 });
             }
         } else {

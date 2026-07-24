@@ -209,7 +209,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         if data.get("type") == "dir":
             self.create_directory(dir_path, name)
         else:
-            self.create_file(dir_path, name)
+            description = str(data.get("description", "")).strip()
+            self.create_file(dir_path, name, description)
 
     def create_directory(self, dir_path: Path, name: str) -> None:
         new_dir = dir_path / name
@@ -221,7 +222,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         rel_path = str(new_dir.relative_to(DATA_DIR)).replace("\\", "/")
         self.send_json({"path": rel_path, "type": "dir"})
 
-    def create_file(self, dir_path: Path, name: str) -> None:
+    def create_file(self, dir_path: Path, name: str, description: str = "") -> None:
         if name.lower().endswith(".json"):
             name = sanitize_name(name[: -len(".json")])
             if name is None:
@@ -233,7 +234,17 @@ class ApplicationHandler(BaseHTTPRequestHandler):
             self.send_error(409)
             return
 
-        file_path.write_text("{}\n", encoding="utf-8")
+        # With a description, seed the full contract (metadata first); without
+        # one, keep the historical empty-object seed untouched.
+        if description:
+            seed = json.dumps(
+                {"metadata": {"description": description}, "schema": {}, "items": []},
+                ensure_ascii=False,
+                indent=2,
+            ) + "\n"
+        else:
+            seed = "{}\n"
+        file_path.write_text(seed, encoding="utf-8")
         rel_path = str(file_path.relative_to(DATA_DIR)).replace("\\", "/")
         self.send_json({"path": rel_path, "type": "file"})
 

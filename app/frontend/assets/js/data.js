@@ -192,6 +192,19 @@ function startCreateEntry(dirPath, childList, type) {
     input.className = "tree-node__input";
     input.placeholder = type === "dir" ? "folder name" : "name";
     li.appendChild(input);
+
+    // Files may carry an optional one-line description. Folders stay name-only.
+    // The description input sits directly under the name input and is fully
+    // optional - leaving it empty reproduces the previous name-only behaviour.
+    let descInput = null;
+    if (type !== "dir") {
+        descInput = document.createElement("input");
+        descInput.type = "text";
+        descInput.className = "tree-node__input tree-node__input--desc";
+        descInput.placeholder = "description (optional)";
+        li.appendChild(descInput);
+    }
+
     childList.insertBefore(li, childList.firstChild);
     input.focus();
 
@@ -210,10 +223,15 @@ function startCreateEntry(dirPath, childList, type) {
             cancel();
             return;
         }
+        const body = { dir: dirPath, name: name, type: type };
+        if (descInput) {
+            const description = descInput.value.trim();
+            if (description) body.description = description;
+        }
         const response = await fetch("/api/data-tree/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ dir: dirPath, name: name, type: type }),
+            body: JSON.stringify(body),
         });
         if (response.ok) {
             done = true;
@@ -227,7 +245,7 @@ function startCreateEntry(dirPath, childList, type) {
         }
     }
 
-    input.addEventListener("keydown", function (event) {
+    function onKeydown(event) {
         if (event.key === "Enter") {
             event.preventDefault();
             submit();
@@ -235,10 +253,22 @@ function startCreateEntry(dirPath, childList, type) {
             event.preventDefault();
             cancel();
         }
-    });
-    input.addEventListener("blur", function () {
-        setTimeout(cancel, 150);
-    });
+    }
+
+    // Cancel only when focus leaves the create row entirely, so tabbing or
+    // clicking between the name and description inputs does not abort.
+    function onBlur() {
+        setTimeout(function () {
+            if (!li.contains(document.activeElement)) cancel();
+        }, 150);
+    }
+
+    input.addEventListener("keydown", onKeydown);
+    input.addEventListener("blur", onBlur);
+    if (descInput) {
+        descInput.addEventListener("keydown", onKeydown);
+        descInput.addEventListener("blur", onBlur);
+    }
 }
 
 // ------------------------------------------------------------------

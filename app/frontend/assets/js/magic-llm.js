@@ -100,6 +100,34 @@
     font: inherit;
 }
 .magic-llm-field textarea { resize: vertical; min-height: 76px; }
+.magic-llm-field__control { position: relative; display: flex; }
+.magic-llm-field__control > input,
+.magic-llm-field__control > textarea { width: 100%; box-sizing: border-box; }
+.magic-llm-placeholder {
+    position: absolute;
+    inset: 0;
+    padding: 9px 11px;
+    pointer-events: none;
+    font: inherit;
+    line-height: 1.45;
+    color: #8c959f;
+    overflow: hidden;
+}
+.magic-llm-placeholder__label { display: block; font-weight: 600; color: #57606a; }
+.magic-llm-placeholder__hint,
+.magic-llm-placeholder__eg { display: block; font-size: 0.92em; }
+.magic-llm-placeholder__eg { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.magic-llm-field--invalid input[type="text"],
+.magic-llm-field--invalid textarea { border-color: #cf222e; }
+.magic-llm-form__error {
+    margin: 0;
+    padding: 8px 10px;
+    border: 1px solid #f0b3b3;
+    border-radius: 6px;
+    background: #fff5f5;
+    color: #b42318;
+    font-size: 0.85rem;
+}
 .magic-llm-prompt {
     border: 1px solid #d0d7de;
     border-radius: 6px;
@@ -361,21 +389,23 @@
                     type: FIELD_TYPES.indexOf(spec.type) !== -1 ? spec.type : "text",
                     label: spec.label != null ? String(spec.label) : name,
                     placeholder: spec.placeholder != null ? String(spec.placeholder) : "",
+                    hint: spec.hint != null ? String(spec.hint) : "",
+                    examples: Array.isArray(spec.examples) ? spec.examples.map(String) : [],
                     default: spec.default,
                 };
             }
-            return { name: name, type: "text", label: String(spec || name), placeholder: "", default: "" };
+            return { name: name, type: "text", label: String(spec || name), placeholder: "", hint: "", examples: [], default: "" };
         });
     }
 
     function buildField(field, controls) {
         const wrap = document.createElement("label");
         wrap.className = "magic-llm-field";
-        const caption = document.createElement("span");
-        caption.textContent = field.label;
 
         if (field.type === "toggle") {
             wrap.classList.add("magic-llm-field--toggle");
+            const caption = document.createElement("span");
+            caption.textContent = field.label;
             const input = document.createElement("input");
             input.type = "checkbox";
             input.className = "magic-llm-switch";
@@ -385,16 +415,53 @@
             return wrap;
         }
 
+        // The field NAME is shown inside the field as a custom placeholder
+        // overlay: a bold label on the first line, followed by lighter hint and
+        // example lines. It hides on focus or when the field holds a value.
+        // Native placeholder can't be bold or multi-line, hence the overlay.
+        const control = document.createElement("div");
+        control.className = "magic-llm-field__control";
+
         const input = field.type === "textarea"
             ? document.createElement("textarea")
             : document.createElement("input");
         if (field.type !== "textarea") input.type = "text";
         else input.rows = 7; // taller by default; still user-resizable (CSS resize: vertical)
-        if (field.placeholder) input.placeholder = field.placeholder;
         if (field.default != null) input.value = String(field.default);
         input.name = field.name;
-        wrap.append(caption, input);
-        controls[field.name] = { input: input, type: field.type };
+        input.setAttribute("aria-label", field.label); // no visible <label> text now
+
+        const overlay = document.createElement("div");
+        overlay.className = "magic-llm-placeholder";
+        overlay.setAttribute("aria-hidden", "true");
+        const strong = document.createElement("span");
+        strong.className = "magic-llm-placeholder__label";
+        strong.textContent = field.label;
+        overlay.appendChild(strong);
+        if (field.hint) {
+            const hint = document.createElement("span");
+            hint.className = "magic-llm-placeholder__hint";
+            hint.textContent = field.hint;
+            overlay.appendChild(hint);
+        }
+        (field.examples || []).forEach(function (example) {
+            const eg = document.createElement("span");
+            eg.className = "magic-llm-placeholder__eg";
+            eg.textContent = example;
+            overlay.appendChild(eg);
+        });
+
+        function syncOverlay() {
+            overlay.style.display = input.value.trim() === "" ? "" : "none";
+        }
+        input.addEventListener("focus", function () { overlay.style.display = "none"; });
+        input.addEventListener("blur", syncOverlay);
+        input.addEventListener("input", syncOverlay);
+        syncOverlay();
+
+        control.append(input, overlay);
+        wrap.appendChild(control);
+        controls[field.name] = { input: input, type: field.type, wrap: wrap };
         return wrap;
     }
 
@@ -418,7 +485,7 @@
     // Show a small form for the declared optional parameters. Resolves with a
     // { name: value } object, or null if the user cancelled. When a base prompt
     // is given, a collapsed disclosure of it is shown above the fields.
-    function collectParams(title, fields, promptText, selectedDirectory) {
+    function collectParams(title, fields, promptText, selectedDirectory, requireOneOf) {
         ensureStyles();
         return new Promise(function (resolve) {
             const backdrop = document.createElement("div");
@@ -449,6 +516,34 @@
             fields.forEach(function (field) {
                 form.appendChild(buildField(field, controls));
             });
+
+            // Inline validation message, hidden until submission fails.
+            const errorBox = document.createElement("p");
+            errorBox.className = "magic-llm-form__error";
+            errorBox.setAttribute("role", "alert");
+            errorBox.style.display = "none";
+            form.appendChild(errorBox);
+
+            // "One of" rule only applies when every named field actually exists.
+            const oneOf = (Array.isArray(requireOneOf) ? requireOneOf : [])
+                .filter(function (name) { return controls[name]; });
+
+            function fieldLabel(name) {
+                const field = fields.find(function (f) { return f.name === name; });
+                return (field && field.label) || name;
+            }
+            function markInvalid(name) {
+                const control = controls[name];
+                if (control && control.wrap) control.wrap.classList.add("magic-llm-field--invalid");
+            }
+            function clearInvalid() {
+                Object.keys(controls).forEach(function (name) {
+                    const control = controls[name];
+                    if (control && control.wrap) control.wrap.classList.remove("magic-llm-field--invalid");
+                });
+                errorBox.style.display = "none";
+                errorBox.textContent = "";
+            }
 
             const footer = document.createElement("div");
             footer.className = "magic-llm-modal__footer magic-llm-modal__footer--split";
@@ -482,6 +577,23 @@
                         ? control.input.checked
                         : control.input.value.trim();
                 });
+
+                clearInvalid();
+                const errors = [];
+                if (controls.name && !values.name) {
+                    errors.push("Please enter a file name.");
+                    markInvalid("name");
+                }
+                if (oneOf.length && !oneOf.some(function (name) { return values[name]; })) {
+                    const labels = oneOf.map(fieldLabel);
+                    errors.push("Please fill in " + labels.join(" or ") + ".");
+                    oneOf.forEach(markInvalid);
+                }
+                if (errors.length) {
+                    errorBox.textContent = errors.join(" ");
+                    errorBox.style.display = "";
+                    return;
+                }
                 close(values);
             });
             document.addEventListener("keydown", onKeydown);
@@ -760,7 +872,8 @@
         if (!params && scenario) {
             const fields = declaredParams(scenario);
             if (fields.length > 0) {
-                params = await collectParams(title, fields, scenario.prompt, options.selectedDirectory);
+                const requireOneOf = scenario.ui && scenario.ui.requireOneOf;
+                params = await collectParams(title, fields, scenario.prompt, options.selectedDirectory, requireOneOf);
                 if (params === null) return null; // cancelled
             }
         }
