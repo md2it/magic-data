@@ -806,8 +806,8 @@ function initMagicButtons() {
         customButton.type = "button";
         customButton.className = "content-toolbar__button content-toolbar__button--icon";
         customButton.id = "magic-custom-button";
-        customButton.setAttribute("aria-label", "Custom");
-        customButton.dataset.tooltip = "Custom";
+        customButton.setAttribute("aria-label", "Magic assistant");
+        customButton.dataset.tooltip = "Magic assistant";
         customButton.innerHTML = window.AppIcons.markup("sparkles");
         customButton.addEventListener("click", async function () {
             const data = await window.magicLlm.runScenario("custom-edit", {
@@ -818,7 +818,7 @@ function initMagicButtons() {
         });
 
         const fragment = document.createDocumentFragment();
-        fragment.append(structureRoot, customButton);
+        fragment.append(customButton, structureRoot);
         toolbarActions.insertBefore(fragment, toolbarActions.firstChild);
     }
 }

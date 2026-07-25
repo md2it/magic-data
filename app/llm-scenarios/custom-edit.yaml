@@ -1,6 +1,6 @@
 id: custom-edit
 ui:
-  label: Custom edit
+  label: Magic assistant
   loadingLabel: Editing...
 params:
   instructions:
