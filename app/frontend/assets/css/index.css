@@ -758,6 +758,10 @@
     color: #57606a;
 }
 
+.content-table__cell--null {
+    opacity: 0.55;
+}
+
 .content-table__empty {
     color: #8c959f;
     font-style: italic;
@@ -885,4 +889,9 @@
 .content-text__list-item {
     margin: 0.15em 0;
     color: #24292f;
+}
+
+.content-text__value--null,
+.content-text__list-item--null {
+    opacity: 0.55;
 }

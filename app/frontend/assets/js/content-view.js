@@ -735,6 +735,9 @@
                     if (value !== undefined && typeof value === "object") {
                         td.classList.add("content-table__cell--json");
                     }
+                    if (value === null) {
+                        td.classList.add("content-table__cell--null");
+                    }
                     td.textContent = formatCellValue(value);
                     tr.appendChild(td);
                 });
@@ -790,6 +793,7 @@
     function appendParagraph(container, value) {
         const p = document.createElement("p");
         p.className = "content-text__value";
+        if (value === null) p.classList.add("content-text__value--null");
         p.textContent = value === null ? "null" : String(value);
         container.appendChild(p);
     }
@@ -822,6 +826,7 @@
                     value.forEach(function (item) {
                         const li = document.createElement("li");
                         li.className = "content-text__list-item";
+                        if (item === null) li.classList.add("content-text__list-item--null");
                         li.textContent = item === null ? "null" : String(item);
                         list.appendChild(li);
                     });
@@ -852,7 +857,10 @@
             label.className = "content-text__label";
             label.textContent = `${key}: `;
             p.appendChild(label);
-            p.appendChild(document.createTextNode(value === null ? "null" : String(value)));
+            const valueNode = document.createElement("span");
+            if (value === null) valueNode.className = "content-text__value--null";
+            valueNode.textContent = value === null ? "null" : String(value);
+            p.appendChild(valueNode);
             container.appendChild(p);
         } else {
             appendParagraph(container, value);
