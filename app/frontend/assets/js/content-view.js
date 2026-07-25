@@ -27,8 +27,8 @@
  *   - toDelimited(rawText, delimiter)
  *       Converts `rawText` (raw file content) to a delimited-text string
  *       (e.g. "," for CSV, "\t" for TSV) using the same row/column
- *       extraction and cell formatting as the Table view, so downloads
- *       match what is rendered on screen.
+ *       extraction as the Table view. Export preserves source values even
+ *       when a display preference changes their on-screen representation.
  *
  * Extending with a new view (tree/table/text):
  *   Each view is implemented as an entry in the `views` object below, with
@@ -54,6 +54,26 @@
 
     function isCollapsible(value) {
         return value !== null && (Array.isArray(value) || typeof value === "object");
+    }
+
+    const BOOLEAN_ICONS_STORAGE_KEY = "magicdata.booleanIcons";
+
+    /**
+     * Returns the display form of a primitive value in the human-readable
+     * views. The preference defaults to enabled so existing installations gain
+     * the clearer boolean markers without requiring a stored setting.
+     */
+    function formatReadableValue(value) {
+        if (typeof value === "boolean") {
+            try {
+                if (localStorage.getItem(BOOLEAN_ICONS_STORAGE_KEY) !== "false") {
+                    return value ? "✅" : "❌";
+                }
+            } catch (err) {
+                return value ? "✅" : "❌";
+            }
+        }
+        return value === null ? "null" : String(value);
     }
 
     // ------------------------------------------------------------------
@@ -440,7 +460,7 @@
 
         const valueSpan = document.createElement("span");
         valueSpan.className = `content-tree-node__value content-tree-node__value--${typeof value === "object" ? "null" : typeof value}`;
-        valueSpan.textContent = JSON.stringify(value);
+        valueSpan.textContent = formatReadableValue(value);
         line.appendChild(valueSpan);
 
         return li;
@@ -511,6 +531,13 @@
      *  - objects/arrays (2nd level and deeper) -> compact JSON text
      */
     function formatCellValue(value) {
+        if (value === undefined) return "";
+        if (value === null) return "null";
+        if (typeof value === "object") return JSON.stringify(value);
+        return formatReadableValue(value);
+    }
+
+    function formatExportCellValue(value) {
         if (value === undefined) return "";
         if (value === null) return "null";
         if (typeof value === "object") return JSON.stringify(value);
@@ -794,7 +821,7 @@
         const p = document.createElement("p");
         p.className = "content-text__value";
         if (value === null) p.classList.add("content-text__value--null");
-        p.textContent = value === null ? "null" : String(value);
+        p.textContent = formatReadableValue(value);
         container.appendChild(p);
     }
 
@@ -827,7 +854,7 @@
                         const li = document.createElement("li");
                         li.className = "content-text__list-item";
                         if (item === null) li.classList.add("content-text__list-item--null");
-                        li.textContent = item === null ? "null" : String(item);
+                        li.textContent = formatReadableValue(item);
                         list.appendChild(li);
                     });
                     container.appendChild(list);
@@ -859,7 +886,7 @@
             p.appendChild(label);
             const valueNode = document.createElement("span");
             if (value === null) valueNode.className = "content-text__value--null";
-            valueNode.textContent = value === null ? "null" : String(value);
+            valueNode.textContent = formatReadableValue(value);
             p.appendChild(valueNode);
             container.appendChild(p);
         } else {
@@ -913,8 +940,8 @@
 
     // ------------------------------------------------------------------
     // Delimited text export (CSV/TSV) - reuses the exact same row/column
-    // extraction and cell formatting as the Table view, so the exported
-    // file matches what is rendered on screen.
+    // extraction as the Table view. Formatting remains raw so a visual
+    // preference never changes exported data.
     // ------------------------------------------------------------------
 
     function needsQuoting(value, delimiter) {
@@ -931,7 +958,7 @@
         if (parsedJson === undefined) return rawText;
 
         const topLevelNodes = selectRowSource(parsedJson);
-        if (topLevelNodes === null) return delimitedEscape(formatCellValue(parsedJson), delimiter);
+        if (topLevelNodes === null) return delimitedEscape(formatExportCellValue(parsedJson), delimiter);
         if (topLevelNodes.length === 0) return "";
 
         const rowObjects = topLevelNodes.map(toRowObject);
@@ -940,7 +967,7 @@
         const lines = [columns.map(function (col) { return delimitedEscape(col, delimiter); }).join(delimiter)];
         rowObjects.forEach(function (rowObj) {
             lines.push(columns.map(function (col) {
-                return delimitedEscape(formatCellValue(rowObj[col]), delimiter);
+                return delimitedEscape(formatExportCellValue(rowObj[col]), delimiter);
             }).join(delimiter));
         });
         return lines.join("\r\n");

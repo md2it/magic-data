@@ -31,12 +31,12 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    width: fit-content;
+    width: min(100%, 52rem);
 }
 
 .settings-item {
     display: grid;
-    grid-template-columns: 8rem 18rem;
+    grid-template-columns: minmax(16rem, 1fr) 18rem;
     align-items: center;
     gap: 12px;
     padding: 0;
@@ -54,4 +54,43 @@
     background: #fff;
     color: inherit;
     cursor: pointer;
+}
+
+.settings-toggle {
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    width: 34px;
+    height: 20px;
+    margin: 0;
+    border: 0;
+    border-radius: 999px;
+    background: #d0d7de;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.settings-toggle::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.15s ease;
+}
+
+.settings-toggle:checked {
+    background: #1f2328;
+}
+
+.settings-toggle:checked::before {
+    left: 16px;
+}
+
+.settings-toggle:focus-visible {
+    outline: 2px solid #0969da;
+    outline-offset: 2px;
 }
