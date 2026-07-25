@@ -4,8 +4,12 @@ async function loadFileTree() {
 }
 
 async function loadFileContent(path) {
-    const response = await fetch(`/api/data-files/${path.split("/").map(encodeURIComponent).join("/")}`);
+    const response = await fetch(dataFileUrl(path));
     return response.text();
+}
+
+function dataFileUrl(path) {
+    return `/api/data-files/${path.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 function createDirNode(node) {
@@ -628,6 +632,74 @@ function initDownloadMenu() {
     });
 }
 
+async function copyToClipboard(content) {
+    if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(content);
+        return;
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = content;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    if (!copied) throw new Error("Clipboard copy failed");
+}
+
+function copyAs(format) {
+    if (!currentFilePath) return Promise.resolve();
+
+    const content = format === "table"
+        ? window.ContentView.toDelimited(currentFileText, "\t")
+        : currentFileText;
+
+    return copyToClipboard(content).then(function () {
+        showToast("Copied to clipboard");
+    }).catch(function () {
+        showToast("Could not copy to clipboard");
+    });
+}
+
+function initCopyMenu() {
+    const button = document.getElementById("copy-button");
+    const dropdown = document.getElementById("copy-dropdown");
+
+    function closeDropdown() {
+        dropdown.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+    }
+    toolbarMenuClosers.push(closeDropdown);
+
+    button.addEventListener("click", function (event) {
+        event.stopPropagation();
+        const willOpen = dropdown.hidden;
+        if (willOpen) closeOtherMenus(closeDropdown);
+        dropdown.hidden = !willOpen;
+        button.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    dropdown.querySelectorAll("[data-copy-format]").forEach(function (item) {
+        item.addEventListener("click", function () {
+            closeDropdown();
+            copyAs(item.dataset.copyFormat);
+        });
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!dropdown.hidden && !dropdown.contains(event.target) && event.target !== button) {
+            closeDropdown();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !dropdown.hidden) closeDropdown();
+    });
+}
+
 function initViewSwitch() {
     const switchEl = document.getElementById("view-switch");
     switchEl.querySelectorAll(".view-switch__option").forEach(function (option) {
@@ -929,7 +1001,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("expand-all").addEventListener("click", function () {
         window.ContentView.expandAll(document.getElementById("file-content"));
     });
+    document.getElementById("open-raw-json").addEventListener("click", function () {
+        if (currentFilePath) window.open(dataFileUrl(currentFilePath), "_blank", "noopener");
+    });
 
+    initCopyMenu();
     initDownloadMenu();
     initMagicButtons();
 });

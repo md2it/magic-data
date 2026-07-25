@@ -407,7 +407,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
         if DATA_DIR not in file_path.parents or file_path.suffix != ".json" or not file_path.is_file():
             self.send_error(404)
             return
-        self.send_bytes(file_path.read_bytes(), "text/plain; charset=utf-8")
+        self.send_bytes(file_path.read_bytes(), "application/json; charset=utf-8")
 
     def send_json(self, data: object) -> None:
         self.send_bytes(json.dumps(data).encode("utf-8"), "application/json; charset=utf-8")
