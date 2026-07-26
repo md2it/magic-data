@@ -30,6 +30,11 @@
  *       extraction as the Table view. Export preserves source values even
  *       when a display preference changes their on-screen representation.
  *
+ *   - toMarkdownTable(rawText, titleFallback)
+ *       Converts `rawText` to a Markdown document with title, Meta
+ *       (Created / Updated / Version), Description, and a GFM table of the
+ *       same rows/columns as the Table view / delimited export.
+ *
  * Extending with a new view (tree/table/text):
  *   Each view is implemented as an entry in the `views` object below, with
  *   the shape:
@@ -1029,6 +1034,80 @@
     }
 
     // ------------------------------------------------------------------
+    // Markdown table export - document chrome (title / meta / description)
+    // plus a GFM table using the same row/column extraction as Table view.
+    // ------------------------------------------------------------------
+
+    function markdownEscapeCell(value) {
+        return String(value)
+            .replace(/\r\n|\r|\n/g, " ")
+            .replace(/\|/g, "\\|");
+    }
+
+    function toMarkdownTable(rawText, titleFallback) {
+        const parsedJson = parseJsonSafe(rawText);
+        const title = getDocumentDisplayName() || titleFallback || "Document";
+
+        let created = "";
+        let updated = "";
+        let version = "";
+        let description = "";
+        if (parsedJson !== undefined) {
+            const summary = summarizeDocumentHistory(parsedJson);
+            if (summary) {
+                created = summary.created;
+                updated = summary.updated;
+                version = String(summary.version);
+            }
+            const desc = getMetadataDescription(parsedJson);
+            if (desc !== null) description = desc;
+        }
+
+        const lines = [
+            "# " + title,
+            "",
+            "## Meta",
+            "",
+            "- Created: " + created,
+            "- Updated: " + updated,
+            "- Version: " + version,
+            "",
+            "Description:",
+            description,
+            "",
+            "## Table",
+            "",
+        ];
+
+        if (parsedJson === undefined) {
+            lines.push(rawText);
+            return lines.join("\n");
+        }
+
+        const topLevelNodes = selectRowSource(parsedJson);
+        if (topLevelNodes === null) {
+            lines.push("| value |");
+            lines.push("| --- |");
+            lines.push("| " + markdownEscapeCell(formatExportCellValue(parsedJson)) + " |");
+            return lines.join("\n");
+        }
+        if (topLevelNodes.length === 0) {
+            return lines.join("\n");
+        }
+
+        const rowObjects = topLevelNodes.map(toRowObject);
+        const columns = collectColumns(rowObjects);
+        lines.push("| " + columns.map(markdownEscapeCell).join(" | ") + " |");
+        lines.push("| " + columns.map(function () { return "---"; }).join(" | ") + " |");
+        rowObjects.forEach(function (rowObj) {
+            lines.push("| " + columns.map(function (col) {
+                return markdownEscapeCell(formatExportCellValue(rowObj[col]));
+            }).join(" | ") + " |");
+        });
+        return lines.join("\n");
+    }
+
+    // ------------------------------------------------------------------
     // View registry
     // ------------------------------------------------------------------
 
@@ -1148,6 +1227,7 @@
         expandAll: expandAll,
         renderStructure: renderStructure,
         toDelimited: toDelimited,
+        toMarkdownTable: toMarkdownTable,
         summarizeDocumentHistory: summarizeDocumentHistory,
         formatHistoryInstant: formatHistoryInstant,
     };

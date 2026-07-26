@@ -625,11 +625,14 @@ function downloadAs(format) {
         case "tsv":
             triggerDownload(`${base}.tsv`, window.ContentView.toDelimited(currentFileText, "\t"), "text/tab-separated-values");
             break;
-        case "pdf-text":
-            printAsView("text");
+        case "markdown-table":
+            triggerDownload(`${base}.md`, window.ContentView.toMarkdownTable(currentFileText, base), "text/markdown");
             break;
         case "pdf-table":
             printAsView("table");
+            break;
+        case "pdf-text":
+            printAsView("text");
             break;
     }
 }

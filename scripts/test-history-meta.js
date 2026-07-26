@@ -39,6 +39,7 @@ vm.runInNewContext(source, sandbox, { filename: "content-view.js" });
 const {
   summarizeDocumentHistory,
   formatHistoryInstant,
+  toMarkdownTable,
 } = sandbox.window.ContentView;
 
 let pass = 0;
@@ -122,6 +123,47 @@ const formatted = formatHistoryInstant("2026-07-26T08:30:00Z");
 assert(
   "valid instant formats to YYYY-MM-DD HH:MM",
   typeof formatted === "string" && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(formatted)
+);
+
+// --- Markdown Table export ---
+const md = toMarkdownTable(
+  JSON.stringify({
+    metadata: {
+      description: "Sample countries",
+      history: [
+        { version: 1, at: "2026-07-26T08:30:00Z", comment: "a" },
+        { version: 2, at: "2026-07-26T09:15:00Z", comment: "b" },
+      ],
+    },
+    schema: {},
+    items: [
+      { name: "Albania", population: 1 },
+      { name: "A|B", population: null },
+    ],
+  }),
+  "example"
+);
+assert("markdown starts with title", md.startsWith("# example\n"));
+assert("markdown has Meta heading", md.includes("\n## Meta\n"));
+assert(
+  "markdown has Created from history",
+  md.includes("- Created: " + formatHistoryInstant("2026-07-26T08:30:00Z"))
+);
+assert(
+  "markdown has Updated from history",
+  md.includes("- Updated: " + formatHistoryInstant("2026-07-26T09:15:00Z"))
+);
+assert("markdown has Version from history", md.includes("- Version: 2"));
+assert("markdown has Description label", md.includes("\nDescription:\nSample countries\n"));
+assert("markdown has Table heading", md.includes("\n## Table\n"));
+assert("markdown table header row", md.includes("| name | population |"));
+assert("markdown table separator", md.includes("| --- | --- |"));
+assert("markdown escapes pipe in cell", md.includes("| A\\|B | null |"));
+assert(
+  "markdown empty meta when no history",
+  toMarkdownTable(JSON.stringify({ schema: {}, items: [] }), "x").includes(
+    "- Created: \n- Updated: \n- Version: \n"
+  )
 );
 
 console.log(`\nhistory-meta tests: ${pass} passed, ${fail} failed`);
