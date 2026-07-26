@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Append a metadata.history entry to a data JSON document.
+# Prepend a metadata.versions entry to a data JSON document (newest first).
+# Versions is an object keyed by vN (e.g. v3, v2, v1).
 # Usage: ./scripts/add-history.sh <file.json> "<comment>"
 set -euo pipefail
 
@@ -43,14 +44,12 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+VERSION_KEY_RE = re.compile(r"^v([1-9]\d*)$")
+
 
 def fail(message: str) -> None:
     print(f"Error: {message}", file=sys.stderr)
     sys.exit(1)
-
-
-def is_positive_int(value: object) -> bool:
-    return isinstance(value, int) and not isinstance(value, bool) and value >= 1
 
 
 def detect_indent_unit(raw: str) -> str:
@@ -182,16 +181,29 @@ def find_root_object_start(s: str) -> int:
     return i if i < len(s) and s[i] == "{" else -1
 
 
-def format_entry(entry: dict, item_indent: str, value_indent: str) -> str:
-    # Keep a compact, readable multi-line object aligned to surrounding indent.
-    parts = [
-        "{",
-        f'{item_indent}"version": {entry["version"]},',
-        f'{item_indent}"at": {json.dumps(entry["at"], ensure_ascii=False)},',
-        f'{item_indent}"comment": {json.dumps(entry["comment"], ensure_ascii=False)}',
-        f"{value_indent}" + "}",
-    ]
-    return "\n".join(parts)
+def parse_version_number(key: str) -> int:
+    matched = VERSION_KEY_RE.fullmatch(key)
+    if matched is None:
+        fail(f"metadata.versions keys must look like v1, v2, ... (got {key!r})")
+    return int(matched.group(1))
+
+
+def next_version_number(versions: dict) -> int:
+    if not versions:
+        return 1
+    return max(parse_version_number(key) for key in versions) + 1
+
+
+def format_version_prop(version_key: str, entry: dict, prop_indent: str, indent_unit: str) -> str:
+    field_indent = prop_indent + indent_unit
+    return "\n".join(
+        [
+            f'{prop_indent}"{version_key}": {{',
+            f'{field_indent}"at": {json.dumps(entry["at"], ensure_ascii=False)},',
+            f'{field_indent}"comment": {json.dumps(entry["comment"], ensure_ascii=False)}',
+            f"{prop_indent}}}",
+        ]
+    )
 
 
 def newline_before(s: str, idx: int) -> bool:
@@ -201,7 +213,7 @@ def newline_before(s: str, idx: int) -> bool:
     return j >= 0 and s[j] == "\n"
 
 
-def surgical_insert(raw: str, entry: dict, indent_unit: str):
+def surgical_insert(raw: str, version_key: str, entry: dict, indent_unit: str):
     root_start = find_root_object_start(raw)
     if root_start < 0:
         return None
@@ -215,14 +227,13 @@ def surgical_insert(raw: str, entry: dict, indent_unit: str):
         if root_end < 0:
             return None
         body_indent = indent_unit
-        item_indent = indent_unit * 3
-        hist_indent = indent_unit * 2
-        entry_text = format_entry(entry, item_indent, hist_indent)
+        versions_indent = indent_unit * 2
+        entry_prop = format_version_prop(version_key, entry, versions_indent + indent_unit, indent_unit)
         block = (
             f'{body_indent}"metadata": {{\n'
-            f'{hist_indent}"history": [\n'
-            f"{item_indent}{entry_text}\n"
-            f"{hist_indent}]\n"
+            f'{versions_indent}"versions": {{\n'
+            f"{entry_prop}\n"
+            f"{versions_indent}}}\n"
             f"{body_indent}}}"
         )
         inner = skip_ws(raw, root_start + 1)
@@ -238,70 +249,63 @@ def surgical_insert(raw: str, entry: dict, indent_unit: str):
         return None
 
     meta_props = list(iter_object_properties(raw, meta_value_start))
-    history_prop = next((p for p in meta_props if p[0] == "history"), None)
+    versions_prop = next((p for p in meta_props if p[0] == "versions"), None)
 
-    # metadata.history exists: append (or fill empty array) without rewriting the file.
-    if history_prop is not None:
-        _hk, _hks, hist_start, hist_end = history_prop
-        if raw[hist_start] != "[":
+    # metadata.versions exists: prepend (or fill empty object) without rewriting the file.
+    if versions_prop is not None:
+        _hk, _hks, versions_start, versions_end = versions_prop
+        if raw[versions_start] != "{":
             return None
-        close_idx = hist_end - 1
-        if close_idx < hist_start or raw[close_idx] != "]":
+        close_idx = versions_end - 1
+        if close_idx < versions_start or raw[close_idx] != "}":
             return None
 
-        array_inner = raw[hist_start + 1 : close_idx]
-        empty = array_inner.strip() == ""
+        object_inner = raw[versions_start + 1 : close_idx]
+        empty = object_inner.strip() == ""
 
-        hist_key_start = history_prop[1]
-        hist_key_line_start = raw.rfind("\n", 0, hist_key_start) + 1
-        hist_key_indent = raw[hist_key_line_start:hist_key_start]
-        item_indent = hist_key_indent + indent_unit
-        object_field_indent = item_indent + indent_unit
-        entry_text = format_entry(entry, object_field_indent, item_indent)
+        versions_key_start = versions_prop[1]
+        versions_key_line_start = raw.rfind("\n", 0, versions_key_start) + 1
+        versions_key_indent = raw[versions_key_line_start:versions_key_start]
+        prop_indent = versions_key_indent + indent_unit
+        entry_prop = format_version_prop(version_key, entry, prop_indent, indent_unit)
 
         if empty:
-            insertion = f"\n{item_indent}{entry_text}\n{hist_key_indent}"
-            return raw[: hist_start + 1] + insertion + raw[close_idx:]
+            insertion = f"\n{entry_prop}\n{versions_key_indent}"
+            return raw[: versions_start + 1] + insertion + raw[close_idx:]
 
-        # Non-empty: insert after the last element, with a leading comma.
-        last_non_ws = close_idx - 1
-        while last_non_ws > hist_start and raw[last_non_ws] in " \t\r\n":
-            last_non_ws -= 1
-        insertion = f",\n{item_indent}{entry_text}"
-        return raw[: last_non_ws + 1] + insertion + "\n" + hist_key_indent + raw[close_idx:]
+        # Non-empty: insert at the front, with a trailing comma after the new property.
+        insertion = f"\n{entry_prop},"
+        return raw[: versions_start + 1] + insertion + raw[versions_start + 1 :]
 
-    # metadata exists but no history: add history as the last metadata property.
+    # metadata exists but no versions: add versions as the last metadata property.
     meta_close = meta_value_end - 1
     if meta_close < meta_value_start or raw[meta_close] != "}":
         return None
     meta_key_start = meta_prop[1]
     meta_key_line_start = raw.rfind("\n", 0, meta_key_start) + 1
     close_indent = raw[meta_key_line_start:meta_key_start]
-    # Prefer inferring property indent from an existing property.
     if meta_props:
         first_key_start = meta_props[0][1]
         prop_line_start = raw.rfind("\n", 0, first_key_start) + 1
         prop_indent = raw[prop_line_start:first_key_start]
     else:
         prop_indent = close_indent + indent_unit
-    item_indent = prop_indent + indent_unit
-    entry_text = format_entry(entry, item_indent + indent_unit, item_indent)
-    history_block = (
-        f'{prop_indent}"history": [\n'
-        f"{item_indent}{entry_text}\n"
-        f"{prop_indent}]"
+    entry_prop = format_version_prop(version_key, entry, prop_indent + indent_unit, indent_unit)
+    versions_block = (
+        f'{prop_indent}"versions": {{\n'
+        f"{entry_prop}\n"
+        f"{prop_indent}}}"
     )
 
     inner = skip_ws(raw, meta_value_start + 1)
     if inner == meta_close:
-        # Empty metadata object.
-        insertion = f"\n{history_block}\n{close_indent}"
+        insertion = f"\n{versions_block}\n{close_indent}"
         return raw[: meta_value_start + 1] + insertion + raw[meta_close:]
 
     last_non_ws = meta_close - 1
     while last_non_ws > meta_value_start and raw[last_non_ws] in " \t\r\n":
         last_non_ws -= 1
-    insertion = f",\n{history_block}"
+    insertion = f",\n{versions_block}"
     return raw[: last_non_ws + 1] + insertion + "\n" + close_indent + raw[meta_close:]
 
 
@@ -351,67 +355,65 @@ def main() -> None:
 
     metadata = data.get("metadata")
     if metadata is None:
-        history = []
+        versions = {}
     elif not isinstance(metadata, dict):
         fail("metadata must be an object")
     else:
-        history = metadata.get("history", [])
-        if "history" in metadata and not isinstance(history, list):
-            fail("metadata.history must be an array")
-        if not isinstance(history, list):
-            fail("metadata.history must be an array")
+        versions = metadata.get("versions", {})
+        if "versions" in metadata and not isinstance(versions, dict):
+            fail("metadata.versions must be an object")
+        if not isinstance(versions, dict):
+            fail("metadata.versions must be an object")
+        for key in versions:
+            parse_version_number(key)
 
-    if history:
-        last = history[-1]
-        if not isinstance(last, dict):
-            fail("last history entry must be an object")
-        last_version = last.get("version")
-        if not is_positive_int(last_version):
-            fail("last history entry must contain an integer version")
-        next_version = last_version + 1
-    else:
-        next_version = 1
+    next_version = next_version_number(versions)
+    version_key = f"v{next_version}"
 
     entry = {
-        "version": next_version,
         "at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "comment": comment,
     }
 
     indent_unit = detect_indent_unit(raw)
-    text = surgical_insert(raw, entry, indent_unit)
+    text = surgical_insert(raw, version_key, entry, indent_unit)
 
     # Fallback: full rewrite only when surgical editing cannot locate structure.
     if text is None:
         if metadata is None:
-            data = {"metadata": {"history": [entry]}, **data}
+            data = {"metadata": {"versions": {version_key: entry}}, **data}
         else:
             metadata = data.setdefault("metadata", {})
-            metadata.setdefault("history", [])
-            if not metadata["history"] or metadata["history"][-1] != entry:
-                # Rebuild history from the validated snapshot + new entry.
-                hist = list(history)
-                hist.append(entry)
-                metadata["history"] = hist
+            existing = metadata.get("versions")
+            if not isinstance(existing, dict):
+                existing = {}
+            rebuilt = {version_key: entry}
+            for key, value in existing.items():
+                if key != version_key:
+                    rebuilt[key] = value
+            metadata["versions"] = rebuilt
         dump_indent = 4 if indent_unit == "    " else 2
         text = json.dumps(data, ensure_ascii=False, indent=dump_indent)
         if raw.endswith("\n"):
             text += "\n"
 
-    # Never leave a partially written / invalid document.
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError as exc:
         fail(f"internal error: produced invalid JSON ({exc})")
 
     out_meta = parsed.get("metadata")
-    if not isinstance(out_meta, dict) or not isinstance(out_meta.get("history"), list):
-        fail("internal error: history missing after update")
-    out_hist = out_meta["history"]
-    if not out_hist or out_hist[-1].get("version") != next_version:
-        fail("internal error: new history entry not applied")
+    if not isinstance(out_meta, dict) or not isinstance(out_meta.get("versions"), dict):
+        fail("internal error: versions missing after update")
+    out_versions = out_meta["versions"]
+    if version_key not in out_versions:
+        fail("internal error: new versions entry not applied")
+    if out_versions[version_key].get("comment") != comment:
+        fail("internal error: new versions entry not applied")
+    first_key = next(iter(out_versions))
+    if first_key != version_key:
+        fail("internal error: newest versions key is not first")
     if metadata is not None and isinstance(metadata, dict):
-        # Preserve description when it existed.
         if "description" in metadata and metadata["description"] != out_meta.get("description"):
             fail("internal error: metadata.description changed")
 
@@ -420,7 +422,7 @@ def main() -> None:
     except OSError as exc:
         fail(f"cannot write file: {exc}")
 
-    print(f"Added history version {next_version} to {path}")
+    print(f"Added versions entry {version_key} to {path}")
 
 
 if __name__ == "__main__":

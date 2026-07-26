@@ -208,16 +208,16 @@
     }
 
     /**
-     * True when a node is `metadata.history` — the append-only change log.
+     * True when a node is `metadata.versions` — the prepend-only change log.
      * Collapsed by default in the JSON view so the raw dump stays focused on
-     * schema/items while history remains one click away.
+     * schema/items while versions remains one click away.
      */
-    function isHistoryPath(path) {
-        return path.length === 2 && path[0] === "metadata" && path[1] === "history";
+    function isVersionsPath(path) {
+        return path.length === 2 && path[0] === "metadata" && path[1] === "versions";
     }
 
     /**
-     * Formats a history `at` timestamp for the secondary meta line.
+     * Formats a versions `at` timestamp for the secondary meta line.
      * Uses the local timezone (same idea as magic-log's toLocaleString) but
      * a compact YYYY-MM-DD HH:MM shape so the line stays short.
      * Returns null when the value is missing or not a valid date.
@@ -237,26 +237,36 @@
     }
 
     /**
-     * Derives Created / Updated / Version from metadata.history.
-     * Trusts array order (first = created, last = updated/version) per contract;
-     * does not trust object key order. Returns null when history is absent or
-     * malformed so callers can hide the meta line without throwing.
+     * Derives Created / Updated / Version from metadata.versions.
+     * Trusts object key order (first key = newest/updated, last = created);
+     * keys are `vN` and the current version is N from the first key.
+     * Returns null when versions is absent or malformed so callers can hide
+     * the meta line without throwing.
      */
     function summarizeDocumentHistory(parsedJson) {
         try {
             if (!isPlainObject(parsedJson)) return null;
             const metadata = parsedJson.metadata;
             if (!isPlainObject(metadata)) return null;
-            const history = metadata.history;
-            if (!Array.isArray(history) || history.length === 0) return null;
-            const first = history[0];
-            const last = history[history.length - 1];
-            if (!isPlainObject(first) || !isPlainObject(last)) return null;
-            if (typeof last.version !== "number" || !Number.isInteger(last.version)) return null;
-            const created = formatHistoryInstant(first.at);
-            const updated = formatHistoryInstant(last.at);
+            const versions = metadata.versions;
+            if (!isPlainObject(versions)) return null;
+            const keys = Object.keys(versions);
+            if (keys.length === 0) return null;
+            const newestKey = keys[0];
+            const oldestKey = keys[keys.length - 1];
+            const versionMatch = /^v([1-9]\d*)$/.exec(newestKey);
+            if (!versionMatch) return null;
+            const newest = versions[newestKey];
+            const oldest = versions[oldestKey];
+            if (!isPlainObject(newest) || !isPlainObject(oldest)) return null;
+            const created = formatHistoryInstant(oldest.at);
+            const updated = formatHistoryInstant(newest.at);
             if (created === null || updated === null) return null;
-            return { created: created, updated: updated, version: last.version };
+            return {
+                created: created,
+                updated: updated,
+                version: Number(versionMatch[1]),
+            };
         } catch (err) {
             return null;
         }
@@ -372,7 +382,7 @@
                 setNodeExpanded(row, !row.classList.contains("json-node--collapsed") ? false : true);
             });
 
-            if (isSchemaPath(path) || isHistoryPath(path)) setNodeExpanded(row, false);
+            if (isSchemaPath(path) || isVersionsPath(path)) setNodeExpanded(row, false);
 
             return row;
         }

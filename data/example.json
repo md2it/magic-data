@@ -1,1245 +1,1242 @@
 {
     "metadata": {
-      "description": "Example dataset of countries with population, GDP, and official languages, illustrating the schema/items file format.",
-      "history": [
-          {
-              "version": 1,
-              "at": "2026-07-26T11:15:10Z",
-              "comment": "Added change history"
-          },
-          {
-              "version": 2,
-              "at": "2026-07-26T11:16:13Z",
-              "comment": "Filled Australia population and languages"
-          },
-          {
-              "version": 3,
-              "at": "2026-07-26T11:22:46Z",
-              "comment": "Translated history comment to English"
-          }
-      ]
+        "description": "Example dataset of countries with population, GDP, and official languages, illustrating the schema/items file format.",
+        "versions": {
+            "v3": {
+                "at": "2026-07-26T11:22:46Z",
+                "comment": "Translated history comment to English"
+            },
+            "v2": {
+                "at": "2026-07-26T11:16:13Z",
+                "comment": "Filled Australia population and languages"
+            },
+            "v1": {
+                "at": "2026-07-26T11:15:10Z",
+                "comment": "Added change history"
+            }
+        }
     },
     "schema": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Official short country name (English), UN member state"
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "Official short country name (English), UN member state"
+            },
+            "population": {
+                "type": [
+                    "integer",
+                    "null"
+                ],
+                "description": "Population"
+            },
+            "gdp": {
+                "type": [
+                    "number",
+                    "null"
+                ],
+                "description": "GDP"
+            },
+            "languages": {
+                "type": [
+                    "array",
+                    "null"
+                ],
+                "items": {
+                    "type": "string"
+                },
+                "description": "Official languages"
+            }
         },
-        "population": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "description": "Population"
-        },
-        "gdp": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "description": "GDP"
-        },
-        "languages": {
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "type": "string"
-          },
-          "description": "Official languages"
-        }
-      },
-      "required": [
-        "name"
-      ]
+        "required": [
+            "name"
+        ]
     },
     "items": [
-      {
-        "name": "Afghanistan",
-        "population": 42239854,
-        "gdp": 17245127545,
-        "languages": [
-          "Pashto",
-          "Dari"
-        ]
-      },
-      {
-        "name": "Albania",
-        "population": 2377128,
-        "gdp": 27177735528,
-        "languages": [
-          "Albanian"
-        ]
-      },
-      {
-        "name": "Algeria",
-        "population": 46814308,
-        "gdp": 269320000000,
-        "languages": [
-          "Arabic",
-          "Tamazight"
-        ]
-      },
-      {
-        "name": "Andorra",
-        "population": 80856,
-        "gdp": 3785067332,
-        "languages": [
-          "Catalan"
-        ]
-      },
-      {
-        "name": "Angola",
-        "population": 36749906,
-        "gdp": 129255159104,
-        "languages": [
-          "Portuguese"
-        ]
-      },
-      {
-        "name": "Antigua and Barbuda",
-        "population": 93772,
-        "gdp": 2162366667,
-        "languages": [
-          "English"
-        ]
-      },
-      {
-        "name": "Argentina",
-        "population": 46044703,
-        "gdp": 631133015588,
-        "languages": [
-          "Spanish"
-        ]
-      },
-      {
-        "name": "Armenia",
-        "population": 2777970,
-        "gdp": 24003000000,
-        "languages": [
-          "Armenian"
-        ]
-      },
-      {
-        "name": "Australia",
-        "population": 26638544,
-        "gdp": 1687000000000,
-        "languages": [
-          "English"
-        ]
-      },
-      {
-        "name": "Austria",
-        "population": 9131761,
-        "gdp": 511690000000.0,
-        "languages": [
-          "German"
-        ]
-      },
-      {
-        "name": "Azerbaijan",
-        "population": null,
-        "gdp": 78000000000,
-        "languages": null
-      },
-      {
-        "name": "Bahamas",
-        "population": null,
-        "gdp": 13700000000,
-        "languages": null
-      },
-      {
-        "name": "Bahrain",
-        "population": null,
-        "gdp": 44000000000,
-        "languages": null
-      },
-      {
-        "name": "Bangladesh",
-        "population": null,
-        "gdp": 446000000000,
-        "languages": null
-      },
-      {
-        "name": "Barbados",
-        "population": null,
-        "gdp": 5900000000,
-        "languages": null
-      },
-      {
-        "name": "Belarus",
-        "population": null,
-        "gdp": 72000000000,
-        "languages": null
-      },
-      {
-        "name": "Belgium",
-        "population": null,
-        "gdp": 627000000000,
-        "languages": null
-      },
-      {
-        "name": "Belize",
-        "population": null,
-        "gdp": 2300000000,
-        "languages": null
-      },
-      {
-        "name": "Benin",
-        "population": null,
-        "gdp": 19600000000,
-        "languages": null
-      },
-      {
-        "name": "Bhutan",
-        "population": null,
-        "gdp": 2900000000,
-        "languages": null
-      },
-      {
-        "name": "Bolivia",
-        "population": null,
-        "gdp": 48000000000,
-        "languages": null
-      },
-      {
-        "name": "Bosnia and Herzegovina",
-        "population": null,
-        "gdp": 24700000000,
-        "languages": null
-      },
-      {
-        "name": "Botswana",
-        "population": null,
-        "gdp": 20000000000,
-        "languages": null
-      },
-      {
-        "name": "Brazil",
-        "population": null,
-        "gdp": 2174000000000,
-        "languages": null
-      },
-      {
-        "name": "Brunei",
-        "population": null,
-        "gdp": 14900000000,
-        "languages": null
-      },
-      {
-        "name": "Bulgaria",
-        "population": null,
-        "gdp": 104000000000,
-        "languages": null
-      },
-      {
-        "name": "Burkina Faso",
-        "population": null,
-        "gdp": 21000000000,
-        "languages": null
-      },
-      {
-        "name": "Burundi",
-        "population": null,
-        "gdp": 3300000000,
-        "languages": null
-      },
-      {
-        "name": "Cabo Verde",
-        "population": null,
-        "gdp": 2400000000,
-        "languages": null
-      },
-      {
-        "name": "Cambodia",
-        "population": null,
-        "gdp": 35000000000,
-        "languages": null
-      },
-      {
-        "name": "Cameroon",
-        "population": null,
-        "gdp": 48000000000,
-        "languages": null
-      },
-      {
-        "name": "Canada",
-        "population": null,
-        "gdp": 2117000000000,
-        "languages": null
-      },
-      {
-        "name": "Central African Republic",
-        "population": null,
-        "gdp": 2500000000,
-        "languages": null
-      },
-      {
-        "name": "Chad",
-        "population": null,
-        "gdp": 13500000000,
-        "languages": null
-      },
-      {
-        "name": "Chile",
-        "population": null,
-        "gdp": 344000000000,
-        "languages": null
-      },
-      {
-        "name": "China",
-        "population": null,
-        "gdp": 17795000000000,
-        "languages": null
-      },
-      {
-        "name": "Colombia",
-        "population": null,
-        "gdp": 363000000000,
-        "languages": null
-      },
-      {
-        "name": "Comoros",
-        "population": null,
-        "gdp": 1300000000,
-        "languages": null
-      },
-      {
-        "name": "Congo, Republic of the",
-        "population": null,
-        "gdp": 14700000000,
-        "languages": null
-      },
-      {
-        "name": "Costa Rica",
-        "population": null,
-        "gdp": 86000000000,
-        "languages": null
-      },
-      {
-        "name": "Croatia",
-        "population": null,
-        "gdp": 81000000000,
-        "languages": null
-      },
-      {
-        "name": "Cuba",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Cyprus",
-        "population": null,
-        "gdp": 32000000000,
-        "languages": null
-      },
-      {
-        "name": "Czechia",
-        "population": null,
-        "gdp": 344000000000,
-        "languages": null
-      },
-      {
-        "name": "Democratic Republic of the Congo",
-        "population": null,
-        "gdp": 66000000000,
-        "languages": null
-      },
-      {
-        "name": "Denmark",
-        "population": null,
-        "gdp": 406000000000,
-        "languages": null
-      },
-      {
-        "name": "Djibouti",
-        "population": null,
-        "gdp": 4000000000,
-        "languages": null
-      },
-      {
-        "name": "Dominica",
-        "population": null,
-        "gdp": 650000000,
-        "languages": null
-      },
-      {
-        "name": "Dominican Republic",
-        "population": null,
-        "gdp": 124000000000,
-        "languages": null
-      },
-      {
-        "name": "Ecuador",
-        "population": null,
-        "gdp": 118000000000,
-        "languages": null
-      },
-      {
-        "name": "Egypt",
-        "population": null,
-        "gdp": 380000000000,
-        "languages": null
-      },
-      {
-        "name": "El Salvador",
-        "population": null,
-        "gdp": 34000000000,
-        "languages": null
-      },
-      {
-        "name": "Equatorial Guinea",
-        "population": null,
-        "gdp": 12000000000,
-        "languages": null
-      },
-      {
-        "name": "Eritrea",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Estonia",
-        "population": null,
-        "gdp": 40000000000,
-        "languages": null
-      },
-      {
-        "name": "Eswatini",
-        "population": null,
-        "gdp": 4900000000,
-        "languages": null
-      },
-      {
-        "name": "Ethiopia",
-        "population": null,
-        "gdp": 127000000000,
-        "languages": null
-      },
-      {
-        "name": "Fiji",
-        "population": null,
-        "gdp": 5500000000,
-        "languages": null
-      },
-      {
-        "name": "Finland",
-        "population": null,
-        "gdp": 300000000000,
-        "languages": null
-      },
-      {
-        "name": "France",
-        "population": null,
-        "gdp": 3031000000000,
-        "languages": null
-      },
-      {
-        "name": "Gabon",
-        "population": null,
-        "gdp": 20500000000,
-        "languages": null
-      },
-      {
-        "name": "Gambia",
-        "population": null,
-        "gdp": 2500000000,
-        "languages": null
-      },
-      {
-        "name": "Georgia",
-        "population": null,
-        "gdp": 30000000000,
-        "languages": null
-      },
-      {
-        "name": "Germany",
-        "population": null,
-        "gdp": 4456000000000,
-        "languages": null
-      },
-      {
-        "name": "Ghana",
-        "population": null,
-        "gdp": 76000000000,
-        "languages": null
-      },
-      {
-        "name": "Greece",
-        "population": null,
-        "gdp": 238000000000,
-        "languages": null
-      },
-      {
-        "name": "Grenada",
-        "population": null,
-        "gdp": 1400000000,
-        "languages": null
-      },
-      {
-        "name": "Guatemala",
-        "population": null,
-        "gdp": 102000000000,
-        "languages": null
-      },
-      {
-        "name": "Guinea",
-        "population": null,
-        "gdp": 21000000000,
-        "languages": null
-      },
-      {
-        "name": "Guinea-Bissau",
-        "population": null,
-        "gdp": 1900000000,
-        "languages": null
-      },
-      {
-        "name": "Guyana",
-        "population": null,
-        "gdp": 20000000000,
-        "languages": null
-      },
-      {
-        "name": "Haiti",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Honduras",
-        "population": null,
-        "gdp": 35000000000,
-        "languages": null
-      },
-      {
-        "name": "Hungary",
-        "population": null,
-        "gdp": 213000000000,
-        "languages": null
-      },
-      {
-        "name": "Iceland",
-        "population": null,
-        "gdp": 31000000000,
-        "languages": null
-      },
-      {
-        "name": "India",
-        "population": null,
-        "gdp": 3730000000000,
-        "languages": null
-      },
-      {
-        "name": "Indonesia",
-        "population": null,
-        "gdp": 1417000000000,
-        "languages": null
-      },
-      {
-        "name": "Iran",
-        "population": null,
-        "gdp": 404000000000,
-        "languages": null
-      },
-      {
-        "name": "Iraq",
-        "population": null,
-        "gdp": 264000000000,
-        "languages": null
-      },
-      {
-        "name": "Ireland",
-        "population": null,
-        "gdp": 545000000000,
-        "languages": null
-      },
-      {
-        "name": "Israel",
-        "population": null,
-        "gdp": 525000000000,
-        "languages": null
-      },
-      {
-        "name": "Italy",
-        "population": null,
-        "gdp": 2255000000000,
-        "languages": null
-      },
-      {
-        "name": "Ivory Coast",
-        "population": null,
-        "gdp": 78000000000,
-        "languages": null
-      },
-      {
-        "name": "Jamaica",
-        "population": null,
-        "gdp": 19400000000,
-        "languages": null
-      },
-      {
-        "name": "Japan",
-        "population": null,
-        "gdp": 4213000000000,
-        "languages": null
-      },
-      {
-        "name": "Jordan",
-        "population": null,
-        "gdp": 50000000000,
-        "languages": null
-      },
-      {
-        "name": "Kazakhstan",
-        "population": null,
-        "gdp": 262000000000,
-        "languages": null
-      },
-      {
-        "name": "Kenya",
-        "population": null,
-        "gdp": 118000000000,
-        "languages": null
-      },
-      {
-        "name": "Kiribati",
-        "population": null,
-        "gdp": 280000000,
-        "languages": null
-      },
-      {
-        "name": "Kuwait",
-        "population": null,
-        "gdp": 163000000000,
-        "languages": null
-      },
-      {
-        "name": "Kyrgyzstan",
-        "population": null,
-        "gdp": 13000000000,
-        "languages": null
-      },
-      {
-        "name": "Laos",
-        "population": null,
-        "gdp": 15000000000,
-        "languages": null
-      },
-      {
-        "name": "Latvia",
-        "population": null,
-        "gdp": 44000000000,
-        "languages": null
-      },
-      {
-        "name": "Lebanon",
-        "population": 5770000,
-        "gdp": 20080000000,
-        "languages": [
-          "Arabic"
-        ]
-      },
-      {
-        "name": "Lesotho",
-        "population": null,
-        "gdp": 2200000000,
-        "languages": null
-      },
-      {
-        "name": "Liberia",
-        "population": null,
-        "gdp": 4300000000,
-        "languages": null
-      },
-      {
-        "name": "Libya",
-        "population": null,
-        "gdp": 46000000000,
-        "languages": null
-      },
-      {
-        "name": "Liechtenstein",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Lithuania",
-        "population": null,
-        "gdp": 72000000000,
-        "languages": null
-      },
-      {
-        "name": "Luxembourg",
-        "population": null,
-        "gdp": 86000000000,
-        "languages": null
-      },
-      {
-        "name": "Madagascar",
-        "population": null,
-        "gdp": 16300000000,
-        "languages": null
-      },
-      {
-        "name": "Malawi",
-        "population": null,
-        "gdp": 13000000000,
-        "languages": null
-      },
-      {
-        "name": "Malaysia",
-        "population": null,
-        "gdp": 430000000000,
-        "languages": null
-      },
-      {
-        "name": "Maldives",
-        "population": null,
-        "gdp": 7300000000,
-        "languages": null
-      },
-      {
-        "name": "Mali",
-        "population": null,
-        "gdp": 19400000000,
-        "languages": null
-      },
-      {
-        "name": "Malta",
-        "population": null,
-        "gdp": 20600000000,
-        "languages": null
-      },
-      {
-        "name": "Marshall Islands",
-        "population": null,
-        "gdp": 280000000,
-        "languages": null
-      },
-      {
-        "name": "Mauritania",
-        "population": null,
-        "gdp": 10400000000,
-        "languages": null
-      },
-      {
-        "name": "Mauritius",
-        "population": null,
-        "gdp": 14500000000,
-        "languages": null
-      },
-      {
-        "name": "Mexico",
-        "population": null,
-        "gdp": 1789000000000,
-        "languages": null
-      },
-      {
-        "name": "Micronesia",
-        "population": null,
-        "gdp": 440000000,
-        "languages": null
-      },
-      {
-        "name": "Moldova",
-        "population": null,
-        "gdp": 16700000000,
-        "languages": null
-      },
-      {
-        "name": "Monaco",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Mongolia",
-        "population": null,
-        "gdp": 19000000000,
-        "languages": null
-      },
-      {
-        "name": "Montenegro",
-        "population": null,
-        "gdp": 6900000000,
-        "languages": null
-      },
-      {
-        "name": "Morocco",
-        "population": null,
-        "gdp": 141000000000,
-        "languages": null
-      },
-      {
-        "name": "Mozambique",
-        "population": null,
-        "gdp": 21000000000,
-        "languages": null
-      },
-      {
-        "name": "Myanmar",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Namibia",
-        "population": null,
-        "gdp": 12800000000,
-        "languages": null
-      },
-      {
-        "name": "Nauru",
-        "population": null,
-        "gdp": 150000000,
-        "languages": null
-      },
-      {
-        "name": "Nepal",
-        "population": null,
-        "gdp": 41000000000,
-        "languages": null
-      },
-      {
-        "name": "Netherlands",
-        "population": null,
-        "gdp": 1092000000000,
-        "languages": null
-      },
-      {
-        "name": "New Zealand",
-        "population": null,
-        "gdp": 253000000000,
-        "languages": null
-      },
-      {
-        "name": "Nicaragua",
-        "population": null,
-        "gdp": 17000000000,
-        "languages": null
-      },
-      {
-        "name": "Niger",
-        "population": null,
-        "gdp": 17000000000,
-        "languages": null
-      },
-      {
-        "name": "Nigeria",
-        "population": null,
-        "gdp": 363000000000,
-        "languages": null
-      },
-      {
-        "name": "North Korea",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "North Macedonia",
-        "population": null,
-        "gdp": 15700000000,
-        "languages": null
-      },
-      {
-        "name": "Norway",
-        "population": null,
-        "gdp": 485000000000,
-        "languages": null
-      },
-      {
-        "name": "Oman",
-        "population": null,
-        "gdp": 104000000000,
-        "languages": null
-      },
-      {
-        "name": "Pakistan",
-        "population": null,
-        "gdp": 341000000000,
-        "languages": null
-      },
-      {
-        "name": "Palau",
-        "population": null,
-        "gdp": 260000000,
-        "languages": null
-      },
-      {
-        "name": "Panama",
-        "population": null,
-        "gdp": 86000000000,
-        "languages": null
-      },
-      {
-        "name": "Papua New Guinea",
-        "population": null,
-        "gdp": 31000000000,
-        "languages": null
-      },
-      {
-        "name": "Paraguay",
-        "population": 6861524,
-        "gdp": 43094000000,
-        "languages": [
-          "Spanish",
-          "Guaraní"
-        ]
-      },
-      {
-        "name": "Peru",
-        "population": null,
-        "gdp": 267000000000,
-        "languages": null
-      },
-      {
-        "name": "Philippines",
-        "population": null,
-        "gdp": 437000000000,
-        "languages": null
-      },
-      {
-        "name": "Poland",
-        "population": null,
-        "gdp": 811000000000,
-        "languages": null
-      },
-      {
-        "name": "Portugal",
-        "population": null,
-        "gdp": 289000000000,
-        "languages": null
-      },
-      {
-        "name": "Qatar",
-        "population": null,
-        "gdp": 236000000000,
-        "languages": null
-      },
-      {
-        "name": "Romania",
-        "population": null,
-        "gdp": 349000000000,
-        "languages": null
-      },
-      {
-        "name": "Russia",
-        "population": null,
-        "gdp": 2021000000000,
-        "languages": null
-      },
-      {
-        "name": "Rwanda",
-        "population": null,
-        "gdp": 14100000000,
-        "languages": null
-      },
-      {
-        "name": "Saint Kitts and Nevis",
-        "population": null,
-        "gdp": 1100000000,
-        "languages": null
-      },
-      {
-        "name": "Saint Lucia",
-        "population": null,
-        "gdp": 2500000000,
-        "languages": null
-      },
-      {
-        "name": "Saint Vincent and the Grenadines",
-        "population": null,
-        "gdp": 1100000000,
-        "languages": null
-      },
-      {
-        "name": "Samoa",
-        "population": null,
-        "gdp": 850000000,
-        "languages": null
-      },
-      {
-        "name": "San Marino",
-        "population": null,
-        "gdp": 1900000000,
-        "languages": null
-      },
-      {
-        "name": "Sao Tome and Principe",
-        "population": null,
-        "gdp": 600000000,
-        "languages": null
-      },
-      {
-        "name": "Saudi Arabia",
-        "population": null,
-        "gdp": 1067000000000,
-        "languages": null
-      },
-      {
-        "name": "Senegal",
-        "population": null,
-        "gdp": 31000000000,
-        "languages": null
-      },
-      {
-        "name": "Serbia",
-        "population": null,
-        "gdp": 74000000000,
-        "languages": null
-      },
-      {
-        "name": "Seychelles",
-        "population": null,
-        "gdp": 1900000000,
-        "languages": null
-      },
-      {
-        "name": "Sierra Leone",
-        "population": null,
-        "gdp": 4200000000,
-        "languages": null
-      },
-      {
-        "name": "Singapore",
-        "population": null,
-        "gdp": 501000000000,
-        "languages": null
-      },
-      {
-        "name": "Slovakia",
-        "population": null,
-        "gdp": 132000000000,
-        "languages": null
-      },
-      {
-        "name": "Slovenia",
-        "population": null,
-        "gdp": 68000000000,
-        "languages": null
-      },
-      {
-        "name": "Solomon Islands",
-        "population": null,
-        "gdp": 1600000000,
-        "languages": null
-      },
-      {
-        "name": "Somalia",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "South Africa",
-        "population": null,
-        "gdp": 380000000000,
-        "languages": null
-      },
-      {
-        "name": "South Korea",
-        "population": null,
-        "gdp": 1713000000000,
-        "languages": null
-      },
-      {
-        "name": "South Sudan",
-        "population": null,
-        "gdp": 7100000000,
-        "languages": null
-      },
-      {
-        "name": "Spain",
-        "population": null,
-        "gdp": 1580000000000,
-        "languages": null
-      },
-      {
-        "name": "Sri Lanka",
-        "population": null,
-        "gdp": 74000000000,
-        "languages": null
-      },
-      {
-        "name": "Sudan",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Suriname",
-        "population": null,
-        "gdp": 3700000000,
-        "languages": null
-      },
-      {
-        "name": "Sweden",
-        "population": null,
-        "gdp": 593000000000,
-        "languages": null
-      },
-      {
-        "name": "Switzerland",
-        "population": null,
-        "gdp": 885000000000,
-        "languages": null
-      },
-      {
-        "name": "Syria",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Tajikistan",
-        "population": null,
-        "gdp": 11900000000,
-        "languages": null
-      },
-      {
-        "name": "Tanzania",
-        "population": null,
-        "gdp": 79000000000,
-        "languages": null
-      },
-      {
-        "name": "Thailand",
-        "population": null,
-        "gdp": 514000000000,
-        "languages": null
-      },
-      {
-        "name": "Timor-Leste",
-        "population": null,
-        "gdp": 2000000000,
-        "languages": null
-      },
-      {
-        "name": "Togo",
-        "population": null,
-        "gdp": 9200000000,
-        "languages": null
-      },
-      {
-        "name": "Tonga",
-        "population": null,
-        "gdp": 500000000,
-        "languages": null
-      },
-      {
-        "name": "Trinidad and Tobago",
-        "population": null,
-        "gdp": 28000000000,
-        "languages": null
-      },
-      {
-        "name": "Tunisia",
-        "population": null,
-        "gdp": 48000000000,
-        "languages": null
-      },
-      {
-        "name": "Turkey",
-        "population": null,
-        "gdp": 1110000000000,
-        "languages": null
-      },
-      {
-        "name": "Turkmenistan",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Tuvalu",
-        "population": null,
-        "gdp": 60000000,
-        "languages": null
-      },
-      {
-        "name": "Uganda",
-        "population": null,
-        "gdp": 49000000000,
-        "languages": null
-      },
-      {
-        "name": "Ukraine",
-        "population": null,
-        "gdp": 178000000000,
-        "languages": null
-      },
-      {
-        "name": "United Arab Emirates",
-        "population": null,
-        "gdp": 509000000000,
-        "languages": null
-      },
-      {
-        "name": "United Kingdom",
-        "population": null,
-        "gdp": 3340000000000,
-        "languages": null
-      },
-      {
-        "name": "United States",
-        "population": null,
-        "gdp": 27360000000000,
-        "languages": null
-      },
-      {
-        "name": "Uruguay",
-        "population": null,
-        "gdp": 77000000000,
-        "languages": null
-      },
-      {
-        "name": "Uzbekistan",
-        "population": null,
-        "gdp": 90000000000,
-        "languages": null
-      },
-      {
-        "name": "Vanuatu",
-        "population": null,
-        "gdp": 1100000000,
-        "languages": null
-      },
-      {
-        "name": "Venezuela",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Vietnam",
-        "population": null,
-        "gdp": 433000000000,
-        "languages": null
-      },
-      {
-        "name": "Yemen",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      },
-      {
-        "name": "Zambia",
-        "population": null,
-        "gdp": 29000000000,
-        "languages": null
-      },
-      {
-        "name": "Zimbabwe",
-        "population": null,
-        "gdp": null,
-        "languages": null
-      }
+        {
+            "name": "Afghanistan",
+            "population": 42239854,
+            "gdp": 17245127545,
+            "languages": [
+                "Pashto",
+                "Dari"
+            ]
+        },
+        {
+            "name": "Albania",
+            "population": 2377128,
+            "gdp": 27177735528,
+            "languages": [
+                "Albanian"
+            ]
+        },
+        {
+            "name": "Algeria",
+            "population": 46814308,
+            "gdp": 269320000000,
+            "languages": [
+                "Arabic",
+                "Tamazight"
+            ]
+        },
+        {
+            "name": "Andorra",
+            "population": 80856,
+            "gdp": 3785067332,
+            "languages": [
+                "Catalan"
+            ]
+        },
+        {
+            "name": "Angola",
+            "population": 36749906,
+            "gdp": 129255159104,
+            "languages": [
+                "Portuguese"
+            ]
+        },
+        {
+            "name": "Antigua and Barbuda",
+            "population": 93772,
+            "gdp": 2162366667,
+            "languages": [
+                "English"
+            ]
+        },
+        {
+            "name": "Argentina",
+            "population": 46044703,
+            "gdp": 631133015588,
+            "languages": [
+                "Spanish"
+            ]
+        },
+        {
+            "name": "Armenia",
+            "population": 2777970,
+            "gdp": 24003000000,
+            "languages": [
+                "Armenian"
+            ]
+        },
+        {
+            "name": "Australia",
+            "population": 26638544,
+            "gdp": 1687000000000,
+            "languages": [
+                "English"
+            ]
+        },
+        {
+            "name": "Austria",
+            "population": 9131761,
+            "gdp": 511690000000.0,
+            "languages": [
+                "German"
+            ]
+        },
+        {
+            "name": "Azerbaijan",
+            "population": null,
+            "gdp": 78000000000,
+            "languages": null
+        },
+        {
+            "name": "Bahamas",
+            "population": null,
+            "gdp": 13700000000,
+            "languages": null
+        },
+        {
+            "name": "Bahrain",
+            "population": null,
+            "gdp": 44000000000,
+            "languages": null
+        },
+        {
+            "name": "Bangladesh",
+            "population": null,
+            "gdp": 446000000000,
+            "languages": null
+        },
+        {
+            "name": "Barbados",
+            "population": null,
+            "gdp": 5900000000,
+            "languages": null
+        },
+        {
+            "name": "Belarus",
+            "population": null,
+            "gdp": 72000000000,
+            "languages": null
+        },
+        {
+            "name": "Belgium",
+            "population": null,
+            "gdp": 627000000000,
+            "languages": null
+        },
+        {
+            "name": "Belize",
+            "population": null,
+            "gdp": 2300000000,
+            "languages": null
+        },
+        {
+            "name": "Benin",
+            "population": null,
+            "gdp": 19600000000,
+            "languages": null
+        },
+        {
+            "name": "Bhutan",
+            "population": null,
+            "gdp": 2900000000,
+            "languages": null
+        },
+        {
+            "name": "Bolivia",
+            "population": null,
+            "gdp": 48000000000,
+            "languages": null
+        },
+        {
+            "name": "Bosnia and Herzegovina",
+            "population": null,
+            "gdp": 24700000000,
+            "languages": null
+        },
+        {
+            "name": "Botswana",
+            "population": null,
+            "gdp": 20000000000,
+            "languages": null
+        },
+        {
+            "name": "Brazil",
+            "population": null,
+            "gdp": 2174000000000,
+            "languages": null
+        },
+        {
+            "name": "Brunei",
+            "population": null,
+            "gdp": 14900000000,
+            "languages": null
+        },
+        {
+            "name": "Bulgaria",
+            "population": null,
+            "gdp": 104000000000,
+            "languages": null
+        },
+        {
+            "name": "Burkina Faso",
+            "population": null,
+            "gdp": 21000000000,
+            "languages": null
+        },
+        {
+            "name": "Burundi",
+            "population": null,
+            "gdp": 3300000000,
+            "languages": null
+        },
+        {
+            "name": "Cabo Verde",
+            "population": null,
+            "gdp": 2400000000,
+            "languages": null
+        },
+        {
+            "name": "Cambodia",
+            "population": null,
+            "gdp": 35000000000,
+            "languages": null
+        },
+        {
+            "name": "Cameroon",
+            "population": null,
+            "gdp": 48000000000,
+            "languages": null
+        },
+        {
+            "name": "Canada",
+            "population": null,
+            "gdp": 2117000000000,
+            "languages": null
+        },
+        {
+            "name": "Central African Republic",
+            "population": null,
+            "gdp": 2500000000,
+            "languages": null
+        },
+        {
+            "name": "Chad",
+            "population": null,
+            "gdp": 13500000000,
+            "languages": null
+        },
+        {
+            "name": "Chile",
+            "population": null,
+            "gdp": 344000000000,
+            "languages": null
+        },
+        {
+            "name": "China",
+            "population": null,
+            "gdp": 17795000000000,
+            "languages": null
+        },
+        {
+            "name": "Colombia",
+            "population": null,
+            "gdp": 363000000000,
+            "languages": null
+        },
+        {
+            "name": "Comoros",
+            "population": null,
+            "gdp": 1300000000,
+            "languages": null
+        },
+        {
+            "name": "Congo, Republic of the",
+            "population": null,
+            "gdp": 14700000000,
+            "languages": null
+        },
+        {
+            "name": "Costa Rica",
+            "population": null,
+            "gdp": 86000000000,
+            "languages": null
+        },
+        {
+            "name": "Croatia",
+            "population": null,
+            "gdp": 81000000000,
+            "languages": null
+        },
+        {
+            "name": "Cuba",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Cyprus",
+            "population": null,
+            "gdp": 32000000000,
+            "languages": null
+        },
+        {
+            "name": "Czechia",
+            "population": null,
+            "gdp": 344000000000,
+            "languages": null
+        },
+        {
+            "name": "Democratic Republic of the Congo",
+            "population": null,
+            "gdp": 66000000000,
+            "languages": null
+        },
+        {
+            "name": "Denmark",
+            "population": null,
+            "gdp": 406000000000,
+            "languages": null
+        },
+        {
+            "name": "Djibouti",
+            "population": null,
+            "gdp": 4000000000,
+            "languages": null
+        },
+        {
+            "name": "Dominica",
+            "population": null,
+            "gdp": 650000000,
+            "languages": null
+        },
+        {
+            "name": "Dominican Republic",
+            "population": null,
+            "gdp": 124000000000,
+            "languages": null
+        },
+        {
+            "name": "Ecuador",
+            "population": null,
+            "gdp": 118000000000,
+            "languages": null
+        },
+        {
+            "name": "Egypt",
+            "population": null,
+            "gdp": 380000000000,
+            "languages": null
+        },
+        {
+            "name": "El Salvador",
+            "population": null,
+            "gdp": 34000000000,
+            "languages": null
+        },
+        {
+            "name": "Equatorial Guinea",
+            "population": null,
+            "gdp": 12000000000,
+            "languages": null
+        },
+        {
+            "name": "Eritrea",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Estonia",
+            "population": null,
+            "gdp": 40000000000,
+            "languages": null
+        },
+        {
+            "name": "Eswatini",
+            "population": null,
+            "gdp": 4900000000,
+            "languages": null
+        },
+        {
+            "name": "Ethiopia",
+            "population": null,
+            "gdp": 127000000000,
+            "languages": null
+        },
+        {
+            "name": "Fiji",
+            "population": null,
+            "gdp": 5500000000,
+            "languages": null
+        },
+        {
+            "name": "Finland",
+            "population": null,
+            "gdp": 300000000000,
+            "languages": null
+        },
+        {
+            "name": "France",
+            "population": null,
+            "gdp": 3031000000000,
+            "languages": null
+        },
+        {
+            "name": "Gabon",
+            "population": null,
+            "gdp": 20500000000,
+            "languages": null
+        },
+        {
+            "name": "Gambia",
+            "population": null,
+            "gdp": 2500000000,
+            "languages": null
+        },
+        {
+            "name": "Georgia",
+            "population": null,
+            "gdp": 30000000000,
+            "languages": null
+        },
+        {
+            "name": "Germany",
+            "population": null,
+            "gdp": 4456000000000,
+            "languages": null
+        },
+        {
+            "name": "Ghana",
+            "population": null,
+            "gdp": 76000000000,
+            "languages": null
+        },
+        {
+            "name": "Greece",
+            "population": null,
+            "gdp": 238000000000,
+            "languages": null
+        },
+        {
+            "name": "Grenada",
+            "population": null,
+            "gdp": 1400000000,
+            "languages": null
+        },
+        {
+            "name": "Guatemala",
+            "population": null,
+            "gdp": 102000000000,
+            "languages": null
+        },
+        {
+            "name": "Guinea",
+            "population": null,
+            "gdp": 21000000000,
+            "languages": null
+        },
+        {
+            "name": "Guinea-Bissau",
+            "population": null,
+            "gdp": 1900000000,
+            "languages": null
+        },
+        {
+            "name": "Guyana",
+            "population": null,
+            "gdp": 20000000000,
+            "languages": null
+        },
+        {
+            "name": "Haiti",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Honduras",
+            "population": null,
+            "gdp": 35000000000,
+            "languages": null
+        },
+        {
+            "name": "Hungary",
+            "population": null,
+            "gdp": 213000000000,
+            "languages": null
+        },
+        {
+            "name": "Iceland",
+            "population": null,
+            "gdp": 31000000000,
+            "languages": null
+        },
+        {
+            "name": "India",
+            "population": null,
+            "gdp": 3730000000000,
+            "languages": null
+        },
+        {
+            "name": "Indonesia",
+            "population": null,
+            "gdp": 1417000000000,
+            "languages": null
+        },
+        {
+            "name": "Iran",
+            "population": null,
+            "gdp": 404000000000,
+            "languages": null
+        },
+        {
+            "name": "Iraq",
+            "population": null,
+            "gdp": 264000000000,
+            "languages": null
+        },
+        {
+            "name": "Ireland",
+            "population": null,
+            "gdp": 545000000000,
+            "languages": null
+        },
+        {
+            "name": "Israel",
+            "population": null,
+            "gdp": 525000000000,
+            "languages": null
+        },
+        {
+            "name": "Italy",
+            "population": null,
+            "gdp": 2255000000000,
+            "languages": null
+        },
+        {
+            "name": "Ivory Coast",
+            "population": null,
+            "gdp": 78000000000,
+            "languages": null
+        },
+        {
+            "name": "Jamaica",
+            "population": null,
+            "gdp": 19400000000,
+            "languages": null
+        },
+        {
+            "name": "Japan",
+            "population": null,
+            "gdp": 4213000000000,
+            "languages": null
+        },
+        {
+            "name": "Jordan",
+            "population": null,
+            "gdp": 50000000000,
+            "languages": null
+        },
+        {
+            "name": "Kazakhstan",
+            "population": null,
+            "gdp": 262000000000,
+            "languages": null
+        },
+        {
+            "name": "Kenya",
+            "population": null,
+            "gdp": 118000000000,
+            "languages": null
+        },
+        {
+            "name": "Kiribati",
+            "population": null,
+            "gdp": 280000000,
+            "languages": null
+        },
+        {
+            "name": "Kuwait",
+            "population": null,
+            "gdp": 163000000000,
+            "languages": null
+        },
+        {
+            "name": "Kyrgyzstan",
+            "population": null,
+            "gdp": 13000000000,
+            "languages": null
+        },
+        {
+            "name": "Laos",
+            "population": null,
+            "gdp": 15000000000,
+            "languages": null
+        },
+        {
+            "name": "Latvia",
+            "population": null,
+            "gdp": 44000000000,
+            "languages": null
+        },
+        {
+            "name": "Lebanon",
+            "population": 5770000,
+            "gdp": 20080000000,
+            "languages": [
+                "Arabic"
+            ]
+        },
+        {
+            "name": "Lesotho",
+            "population": null,
+            "gdp": 2200000000,
+            "languages": null
+        },
+        {
+            "name": "Liberia",
+            "population": null,
+            "gdp": 4300000000,
+            "languages": null
+        },
+        {
+            "name": "Libya",
+            "population": null,
+            "gdp": 46000000000,
+            "languages": null
+        },
+        {
+            "name": "Liechtenstein",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Lithuania",
+            "population": null,
+            "gdp": 72000000000,
+            "languages": null
+        },
+        {
+            "name": "Luxembourg",
+            "population": null,
+            "gdp": 86000000000,
+            "languages": null
+        },
+        {
+            "name": "Madagascar",
+            "population": null,
+            "gdp": 16300000000,
+            "languages": null
+        },
+        {
+            "name": "Malawi",
+            "population": null,
+            "gdp": 13000000000,
+            "languages": null
+        },
+        {
+            "name": "Malaysia",
+            "population": null,
+            "gdp": 430000000000,
+            "languages": null
+        },
+        {
+            "name": "Maldives",
+            "population": null,
+            "gdp": 7300000000,
+            "languages": null
+        },
+        {
+            "name": "Mali",
+            "population": null,
+            "gdp": 19400000000,
+            "languages": null
+        },
+        {
+            "name": "Malta",
+            "population": null,
+            "gdp": 20600000000,
+            "languages": null
+        },
+        {
+            "name": "Marshall Islands",
+            "population": null,
+            "gdp": 280000000,
+            "languages": null
+        },
+        {
+            "name": "Mauritania",
+            "population": null,
+            "gdp": 10400000000,
+            "languages": null
+        },
+        {
+            "name": "Mauritius",
+            "population": null,
+            "gdp": 14500000000,
+            "languages": null
+        },
+        {
+            "name": "Mexico",
+            "population": null,
+            "gdp": 1789000000000,
+            "languages": null
+        },
+        {
+            "name": "Micronesia",
+            "population": null,
+            "gdp": 440000000,
+            "languages": null
+        },
+        {
+            "name": "Moldova",
+            "population": null,
+            "gdp": 16700000000,
+            "languages": null
+        },
+        {
+            "name": "Monaco",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Mongolia",
+            "population": null,
+            "gdp": 19000000000,
+            "languages": null
+        },
+        {
+            "name": "Montenegro",
+            "population": null,
+            "gdp": 6900000000,
+            "languages": null
+        },
+        {
+            "name": "Morocco",
+            "population": null,
+            "gdp": 141000000000,
+            "languages": null
+        },
+        {
+            "name": "Mozambique",
+            "population": null,
+            "gdp": 21000000000,
+            "languages": null
+        },
+        {
+            "name": "Myanmar",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Namibia",
+            "population": null,
+            "gdp": 12800000000,
+            "languages": null
+        },
+        {
+            "name": "Nauru",
+            "population": null,
+            "gdp": 150000000,
+            "languages": null
+        },
+        {
+            "name": "Nepal",
+            "population": null,
+            "gdp": 41000000000,
+            "languages": null
+        },
+        {
+            "name": "Netherlands",
+            "population": null,
+            "gdp": 1092000000000,
+            "languages": null
+        },
+        {
+            "name": "New Zealand",
+            "population": null,
+            "gdp": 253000000000,
+            "languages": null
+        },
+        {
+            "name": "Nicaragua",
+            "population": null,
+            "gdp": 17000000000,
+            "languages": null
+        },
+        {
+            "name": "Niger",
+            "population": null,
+            "gdp": 17000000000,
+            "languages": null
+        },
+        {
+            "name": "Nigeria",
+            "population": null,
+            "gdp": 363000000000,
+            "languages": null
+        },
+        {
+            "name": "North Korea",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "North Macedonia",
+            "population": null,
+            "gdp": 15700000000,
+            "languages": null
+        },
+        {
+            "name": "Norway",
+            "population": null,
+            "gdp": 485000000000,
+            "languages": null
+        },
+        {
+            "name": "Oman",
+            "population": null,
+            "gdp": 104000000000,
+            "languages": null
+        },
+        {
+            "name": "Pakistan",
+            "population": null,
+            "gdp": 341000000000,
+            "languages": null
+        },
+        {
+            "name": "Palau",
+            "population": null,
+            "gdp": 260000000,
+            "languages": null
+        },
+        {
+            "name": "Panama",
+            "population": null,
+            "gdp": 86000000000,
+            "languages": null
+        },
+        {
+            "name": "Papua New Guinea",
+            "population": null,
+            "gdp": 31000000000,
+            "languages": null
+        },
+        {
+            "name": "Paraguay",
+            "population": 6861524,
+            "gdp": 43094000000,
+            "languages": [
+                "Spanish",
+                "Guaraní"
+            ]
+        },
+        {
+            "name": "Peru",
+            "population": null,
+            "gdp": 267000000000,
+            "languages": null
+        },
+        {
+            "name": "Philippines",
+            "population": null,
+            "gdp": 437000000000,
+            "languages": null
+        },
+        {
+            "name": "Poland",
+            "population": null,
+            "gdp": 811000000000,
+            "languages": null
+        },
+        {
+            "name": "Portugal",
+            "population": null,
+            "gdp": 289000000000,
+            "languages": null
+        },
+        {
+            "name": "Qatar",
+            "population": null,
+            "gdp": 236000000000,
+            "languages": null
+        },
+        {
+            "name": "Romania",
+            "population": null,
+            "gdp": 349000000000,
+            "languages": null
+        },
+        {
+            "name": "Russia",
+            "population": null,
+            "gdp": 2021000000000,
+            "languages": null
+        },
+        {
+            "name": "Rwanda",
+            "population": null,
+            "gdp": 14100000000,
+            "languages": null
+        },
+        {
+            "name": "Saint Kitts and Nevis",
+            "population": null,
+            "gdp": 1100000000,
+            "languages": null
+        },
+        {
+            "name": "Saint Lucia",
+            "population": null,
+            "gdp": 2500000000,
+            "languages": null
+        },
+        {
+            "name": "Saint Vincent and the Grenadines",
+            "population": null,
+            "gdp": 1100000000,
+            "languages": null
+        },
+        {
+            "name": "Samoa",
+            "population": null,
+            "gdp": 850000000,
+            "languages": null
+        },
+        {
+            "name": "San Marino",
+            "population": null,
+            "gdp": 1900000000,
+            "languages": null
+        },
+        {
+            "name": "Sao Tome and Principe",
+            "population": null,
+            "gdp": 600000000,
+            "languages": null
+        },
+        {
+            "name": "Saudi Arabia",
+            "population": null,
+            "gdp": 1067000000000,
+            "languages": null
+        },
+        {
+            "name": "Senegal",
+            "population": null,
+            "gdp": 31000000000,
+            "languages": null
+        },
+        {
+            "name": "Serbia",
+            "population": null,
+            "gdp": 74000000000,
+            "languages": null
+        },
+        {
+            "name": "Seychelles",
+            "population": null,
+            "gdp": 1900000000,
+            "languages": null
+        },
+        {
+            "name": "Sierra Leone",
+            "population": null,
+            "gdp": 4200000000,
+            "languages": null
+        },
+        {
+            "name": "Singapore",
+            "population": null,
+            "gdp": 501000000000,
+            "languages": null
+        },
+        {
+            "name": "Slovakia",
+            "population": null,
+            "gdp": 132000000000,
+            "languages": null
+        },
+        {
+            "name": "Slovenia",
+            "population": null,
+            "gdp": 68000000000,
+            "languages": null
+        },
+        {
+            "name": "Solomon Islands",
+            "population": null,
+            "gdp": 1600000000,
+            "languages": null
+        },
+        {
+            "name": "Somalia",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "South Africa",
+            "population": null,
+            "gdp": 380000000000,
+            "languages": null
+        },
+        {
+            "name": "South Korea",
+            "population": null,
+            "gdp": 1713000000000,
+            "languages": null
+        },
+        {
+            "name": "South Sudan",
+            "population": null,
+            "gdp": 7100000000,
+            "languages": null
+        },
+        {
+            "name": "Spain",
+            "population": null,
+            "gdp": 1580000000000,
+            "languages": null
+        },
+        {
+            "name": "Sri Lanka",
+            "population": null,
+            "gdp": 74000000000,
+            "languages": null
+        },
+        {
+            "name": "Sudan",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Suriname",
+            "population": null,
+            "gdp": 3700000000,
+            "languages": null
+        },
+        {
+            "name": "Sweden",
+            "population": null,
+            "gdp": 593000000000,
+            "languages": null
+        },
+        {
+            "name": "Switzerland",
+            "population": null,
+            "gdp": 885000000000,
+            "languages": null
+        },
+        {
+            "name": "Syria",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Tajikistan",
+            "population": null,
+            "gdp": 11900000000,
+            "languages": null
+        },
+        {
+            "name": "Tanzania",
+            "population": null,
+            "gdp": 79000000000,
+            "languages": null
+        },
+        {
+            "name": "Thailand",
+            "population": null,
+            "gdp": 514000000000,
+            "languages": null
+        },
+        {
+            "name": "Timor-Leste",
+            "population": null,
+            "gdp": 2000000000,
+            "languages": null
+        },
+        {
+            "name": "Togo",
+            "population": null,
+            "gdp": 9200000000,
+            "languages": null
+        },
+        {
+            "name": "Tonga",
+            "population": null,
+            "gdp": 500000000,
+            "languages": null
+        },
+        {
+            "name": "Trinidad and Tobago",
+            "population": null,
+            "gdp": 28000000000,
+            "languages": null
+        },
+        {
+            "name": "Tunisia",
+            "population": null,
+            "gdp": 48000000000,
+            "languages": null
+        },
+        {
+            "name": "Turkey",
+            "population": null,
+            "gdp": 1110000000000,
+            "languages": null
+        },
+        {
+            "name": "Turkmenistan",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Tuvalu",
+            "population": null,
+            "gdp": 60000000,
+            "languages": null
+        },
+        {
+            "name": "Uganda",
+            "population": null,
+            "gdp": 49000000000,
+            "languages": null
+        },
+        {
+            "name": "Ukraine",
+            "population": null,
+            "gdp": 178000000000,
+            "languages": null
+        },
+        {
+            "name": "United Arab Emirates",
+            "population": null,
+            "gdp": 509000000000,
+            "languages": null
+        },
+        {
+            "name": "United Kingdom",
+            "population": null,
+            "gdp": 3340000000000,
+            "languages": null
+        },
+        {
+            "name": "United States",
+            "population": null,
+            "gdp": 27360000000000,
+            "languages": null
+        },
+        {
+            "name": "Uruguay",
+            "population": null,
+            "gdp": 77000000000,
+            "languages": null
+        },
+        {
+            "name": "Uzbekistan",
+            "population": null,
+            "gdp": 90000000000,
+            "languages": null
+        },
+        {
+            "name": "Vanuatu",
+            "population": null,
+            "gdp": 1100000000,
+            "languages": null
+        },
+        {
+            "name": "Venezuela",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Vietnam",
+            "population": null,
+            "gdp": 433000000000,
+            "languages": null
+        },
+        {
+            "name": "Yemen",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        },
+        {
+            "name": "Zambia",
+            "population": null,
+            "gdp": 29000000000,
+            "languages": null
+        },
+        {
+            "name": "Zimbabwe",
+            "population": null,
+            "gdp": null,
+            "languages": null
+        }
     ]
-  }
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Unit tests for ContentView history summary helpers.
+ * Unit tests for ContentView versions summary helpers.
  * Loads content-view.js in a minimal browser-like global and exercises
  * summarizeDocumentHistory / formatHistoryInstant.
  */
@@ -55,35 +55,35 @@ function assert(name, condition) {
   }
 }
 
-// --- first / last history entries ---
+// --- newest-first versions object (first key = updated, last = created) ---
 const summary = summarizeDocumentHistory({
   metadata: {
     description: "d",
-    history: [
-      { version: 1, at: "2026-07-26T08:30:00Z", comment: "a" },
-      { version: 2, at: "2026-07-26T09:15:00Z", comment: "b" },
-      { version: 3, at: "2026-07-26T10:00:00Z", comment: "c" },
-    ],
+    versions: {
+      v3: { at: "2026-07-26T10:00:00Z", comment: "c" },
+      v2: { at: "2026-07-26T09:15:00Z", comment: "b" },
+      v1: { at: "2026-07-26T08:30:00Z", comment: "a" },
+    },
   },
   schema: {},
   items: [],
 });
-assert("summary exists for valid history", summary !== null);
-assert("version from last entry", summary && summary.version === 3);
+assert("summary exists for valid versions", summary !== null);
+assert("version from newest key", summary && summary.version === 3);
 assert(
-  "created from first at",
+  "created from oldest at",
   summary &&
     summary.created === formatHistoryInstant("2026-07-26T08:30:00Z")
 );
 assert(
-  "updated from last at",
+  "updated from newest at",
   summary &&
     summary.updated === formatHistoryInstant("2026-07-26T10:00:00Z")
 );
 
-// --- missing history ---
+// --- missing / malformed versions ---
 assert(
-  "null when history missing",
+  "null when versions missing",
   summarizeDocumentHistory({ metadata: { description: "d" } }) === null
 );
 assert(
@@ -92,18 +92,24 @@ assert(
 );
 assert("null for non-object root", summarizeDocumentHistory(null) === null);
 assert(
-  "null when history empty",
-  summarizeDocumentHistory({ metadata: { history: [] } }) === null
+  "null when versions empty",
+  summarizeDocumentHistory({ metadata: { versions: {} } }) === null
 );
 assert(
-  "null when history not array",
-  summarizeDocumentHistory({ metadata: { history: { version: 1 } } }) === null
-);
-assert(
-  "null when last version not int",
+  "null when versions is array",
   summarizeDocumentHistory({
     metadata: {
-      history: [{ version: "1", at: "2026-07-26T08:30:00Z", comment: "x" }],
+      versions: [{ at: "2026-07-26T08:30:00Z", comment: "x" }],
+    },
+  }) === null
+);
+assert(
+  "null when newest key not vN",
+  summarizeDocumentHistory({
+    metadata: {
+      versions: {
+        "3": { at: "2026-07-26T08:30:00Z", comment: "x" },
+      },
     },
   }) === null
 );
@@ -111,7 +117,9 @@ assert(
   "null when at invalid",
   summarizeDocumentHistory({
     metadata: {
-      history: [{ version: 1, at: "not-a-date", comment: "x" }],
+      versions: {
+        v1: { at: "not-a-date", comment: "x" },
+      },
     },
   }) === null
 );
@@ -130,10 +138,10 @@ const md = toMarkdownTable(
   JSON.stringify({
     metadata: {
       description: "Sample countries",
-      history: [
-        { version: 1, at: "2026-07-26T08:30:00Z", comment: "a" },
-        { version: 2, at: "2026-07-26T09:15:00Z", comment: "b" },
-      ],
+      versions: {
+        v2: { at: "2026-07-26T09:15:00Z", comment: "b" },
+        v1: { at: "2026-07-26T08:30:00Z", comment: "a" },
+      },
     },
     schema: {},
     items: [
@@ -146,21 +154,21 @@ const md = toMarkdownTable(
 assert("markdown starts with title", md.startsWith("# example\n"));
 assert("markdown has Meta heading", md.includes("\n## Meta\n"));
 assert(
-  "markdown has Created from history",
+  "markdown has Created from versions",
   md.includes("- Created: " + formatHistoryInstant("2026-07-26T08:30:00Z"))
 );
 assert(
-  "markdown has Updated from history",
+  "markdown has Updated from versions",
   md.includes("- Updated: " + formatHistoryInstant("2026-07-26T09:15:00Z"))
 );
-assert("markdown has Version from history", md.includes("- Version: 2"));
+assert("markdown has Version from newest key", md.includes("- Version: 2"));
 assert("markdown has Description label", md.includes("\nDescription:\nSample countries\n"));
 assert("markdown has Table heading", md.includes("\n## Table\n"));
 assert("markdown table header row", md.includes("| name | population |"));
 assert("markdown table separator", md.includes("| --- | --- |"));
 assert("markdown escapes pipe in cell", md.includes("| A\\|B | null |"));
 assert(
-  "markdown empty meta when no history",
+  "markdown empty meta when no versions",
   toMarkdownTable(JSON.stringify({ schema: {}, items: [] }), "x").includes(
     "- Created: \n- Updated: \n- Version: \n"
   )
