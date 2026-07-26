@@ -168,6 +168,12 @@ assert("markdown table header row", md.includes("| name | population |"));
 assert("markdown table separator", md.includes("| --- | --- |"));
 assert("markdown escapes pipe in cell", md.includes("| A\\|B | null |"));
 assert(
+  "markdown ends with GitHub attribution",
+  md.endsWith(
+    "\n---\n\nCreated by [md2it/magic-data on GitHub](https://github.com/md2it/magic-data)"
+  )
+);
+assert(
   "markdown empty meta when no versions",
   toMarkdownTable(JSON.stringify({ schema: {}, items: [] }), "x").includes(
     "- Created: \n- Updated: \n- Version: \n"

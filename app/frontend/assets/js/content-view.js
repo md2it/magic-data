@@ -1045,13 +1045,24 @@
 
     // ------------------------------------------------------------------
     // Markdown table export - document chrome (title / meta / description)
-    // plus a GFM table using the same row/column extraction as Table view.
+    // plus a GFM table using the same row/column extraction as Table view,
+    // ending with a horizontal rule and GitHub attribution.
     // ------------------------------------------------------------------
 
     function markdownEscapeCell(value) {
         return String(value)
             .replace(/\r\n|\r|\n/g, " ")
             .replace(/\|/g, "\\|");
+    }
+
+    function finishMarkdownTable(lines) {
+        lines.push(
+            "",
+            "---",
+            "",
+            "Created by [md2it/magic-data on GitHub](https://github.com/md2it/magic-data)"
+        );
+        return lines.join("\n");
     }
 
     function toMarkdownTable(rawText, titleFallback) {
@@ -1091,7 +1102,7 @@
 
         if (parsedJson === undefined) {
             lines.push(rawText);
-            return lines.join("\n");
+            return finishMarkdownTable(lines);
         }
 
         const topLevelNodes = selectRowSource(parsedJson);
@@ -1099,10 +1110,10 @@
             lines.push("| value |");
             lines.push("| --- |");
             lines.push("| " + markdownEscapeCell(formatExportCellValue(parsedJson)) + " |");
-            return lines.join("\n");
+            return finishMarkdownTable(lines);
         }
         if (topLevelNodes.length === 0) {
-            return lines.join("\n");
+            return finishMarkdownTable(lines);
         }
 
         const rowObjects = topLevelNodes.map(toRowObject);
@@ -1114,7 +1125,7 @@
                 return markdownEscapeCell(formatExportCellValue(rowObj[col]));
             }).join(" | ") + " |");
         });
-        return lines.join("\n");
+        return finishMarkdownTable(lines);
     }
 
     // ------------------------------------------------------------------
