@@ -12,7 +12,10 @@
 - You only work with the specified data/*.json files
 - Structure:
    - Each JSON file has a root object with the keys `schema` and `items`, optionally preceded by `metadata`
-   - `metadata` is an optional (but recommended) object placed before `schema` and `items`; its `description` is a free-form string describing the file's purpose
+   - `metadata` is an optional (but recommended) object placed before `schema` and `items`; it holds a free-form `description` of the file's purpose and an append-only `history` of changes
+   - `metadata.history` is a flat array of `{ version, at, comment }` objects in chronological order; `version` is a sequential integer from 1, `at` is UTC ISO 8601, `comment` is a non-empty single line of at most 80 Unicode characters
+   - History is append-only: never edit or delete existing entries; creation date is the first entry, last update and current version are the last entry — do not add separate `version`, `createdAt`, or `updatedAt` fields
+   - After changing a document, append a history entry with `scripts/add-history.sh <file.json> "<comment>"`
    - `schema` is a valid JSON Schema describing a single object from `items`
    - `items` is an array of data objects
    - Before adding an attribute to an object, first add its description to `schema`

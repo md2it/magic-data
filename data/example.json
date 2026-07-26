@@ -1,6 +1,18 @@
 {
     "metadata": {
-      "description": "Example dataset of countries with population, GDP, and official languages, illustrating the schema/items file format."
+      "description": "Example dataset of countries with population, GDP, and official languages, illustrating the schema/items file format.",
+      "history": [
+          {
+              "version": 1,
+              "at": "2026-07-26T11:15:10Z",
+              "comment": "Добавлена история изменений"
+          },
+          {
+              "version": 2,
+              "at": "2026-07-26T11:16:13Z",
+              "comment": "Filled Australia population and languages"
+          }
+      ]
     },
     "schema": {
       "type": "object",
@@ -107,9 +119,11 @@
       },
       {
         "name": "Australia",
-        "population": null,
+        "population": 26638544,
         "gdp": 1687000000000,
-        "languages": null
+        "languages": [
+          "English"
+        ]
       },
       {
         "name": "Austria",

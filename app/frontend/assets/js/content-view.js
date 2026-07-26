@@ -203,6 +203,61 @@
     }
 
     /**
+     * True when a node is `metadata.history` — the append-only change log.
+     * Collapsed by default in the JSON view so the raw dump stays focused on
+     * schema/items while history remains one click away.
+     */
+    function isHistoryPath(path) {
+        return path.length === 2 && path[0] === "metadata" && path[1] === "history";
+    }
+
+    /**
+     * Formats a history `at` timestamp for the secondary meta line.
+     * Uses the local timezone (same idea as magic-log's toLocaleString) but
+     * a compact YYYY-MM-DD HH:MM shape so the line stays short.
+     * Returns null when the value is missing or not a valid date.
+     */
+    function formatHistoryInstant(iso) {
+        if (typeof iso !== "string" || iso.trim() === "") return null;
+        const date = new Date(iso);
+        if (Number.isNaN(date.getTime())) return null;
+        const pad = function (n) { return String(n).padStart(2, "0"); };
+        return (
+            date.getFullYear() + "-" +
+            pad(date.getMonth() + 1) + "-" +
+            pad(date.getDate()) + " " +
+            pad(date.getHours()) + ":" +
+            pad(date.getMinutes())
+        );
+    }
+
+    /**
+     * Derives Created / Updated / Version from metadata.history.
+     * Trusts array order (first = created, last = updated/version) per contract;
+     * does not trust object key order. Returns null when history is absent or
+     * malformed so callers can hide the meta line without throwing.
+     */
+    function summarizeDocumentHistory(parsedJson) {
+        try {
+            if (!isPlainObject(parsedJson)) return null;
+            const metadata = parsedJson.metadata;
+            if (!isPlainObject(metadata)) return null;
+            const history = metadata.history;
+            if (!Array.isArray(history) || history.length === 0) return null;
+            const first = history[0];
+            const last = history[history.length - 1];
+            if (!isPlainObject(first) || !isPlainObject(last)) return null;
+            if (typeof last.version !== "number" || !Number.isInteger(last.version)) return null;
+            const created = formatHistoryInstant(first.at);
+            const updated = formatHistoryInstant(last.at);
+            if (created === null || updated === null) return null;
+            return { created: created, updated: updated, version: last.version };
+        } catch (err) {
+            return null;
+        }
+    }
+
+    /**
      * Returns the human-readable description carried by the optional top-level
      * `metadata` object (`{ metadata: { description }, schema, items }`), or
      * null when it is missing, malformed, or blank. Guards every layer so a
@@ -312,7 +367,7 @@
                 setNodeExpanded(row, !row.classList.contains("json-node--collapsed") ? false : true);
             });
 
-            if (isSchemaPath(path)) setNodeExpanded(row, false);
+            if (isSchemaPath(path) || isHistoryPath(path)) setNodeExpanded(row, false);
 
             return row;
         }
@@ -1093,5 +1148,7 @@
         expandAll: expandAll,
         renderStructure: renderStructure,
         toDelimited: toDelimited,
+        summarizeDocumentHistory: summarizeDocumentHistory,
+        formatHistoryInstant: formatHistoryInstant,
     };
 })();

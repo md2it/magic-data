@@ -371,7 +371,42 @@ function findDirNode(nodes, path) {
 
 function renderCurrentFile() {
     const content = document.getElementById("file-content");
-    window.ContentView.render(currentView(), currentFileText, content);
+    const view = currentView();
+    window.ContentView.render(view, currentFileText, content);
+    updateFileHistoryMeta(view, currentFileText);
+}
+
+function hideFileHistoryMeta() {
+    const el = document.getElementById("file-history-meta");
+    if (!el) return;
+    el.hidden = true;
+    el.textContent = "";
+}
+
+function updateFileHistoryMeta(viewName, rawText) {
+    const el = document.getElementById("file-history-meta");
+    if (!el) return;
+    if (viewName === "json" || currentMode !== "doc") {
+        hideFileHistoryMeta();
+        return;
+    }
+    let parsed;
+    try {
+        parsed = JSON.parse(rawText);
+    } catch (err) {
+        hideFileHistoryMeta();
+        return;
+    }
+    const summary = window.ContentView.summarizeDocumentHistory(parsed);
+    if (!summary) {
+        hideFileHistoryMeta();
+        return;
+    }
+    el.textContent =
+        "Created: " + summary.created +
+        " · Updated: " + summary.updated +
+        " · Version: " + summary.version;
+    el.hidden = false;
 }
 
 function showDocChrome() {
@@ -418,6 +453,7 @@ function renderDirectoryListing(path) {
     });
     document.getElementById("view-switch").hidden = true;
     document.getElementById("content-toolbar-actions").hidden = true;
+    hideFileHistoryMeta();
 
     const node = findDirNode(currentTree, path);
     const children = node ? node.children : [];
@@ -563,12 +599,14 @@ function printAsView(viewName) {
     const originalTitle = document.title;
 
     window.ContentView.render(viewName, currentFileText, content);
+    updateFileHistoryMeta(viewName, currentFileText);
     document.title = baseFileName(currentFilePath);
 
     function restore() {
         window.removeEventListener("afterprint", restore);
         document.title = originalTitle;
         window.ContentView.render(originalView, currentFileText, content);
+        updateFileHistoryMeta(originalView, currentFileText);
     }
     window.addEventListener("afterprint", restore);
     window.print();
