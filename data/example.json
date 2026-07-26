@@ -5,12 +5,17 @@
           {
               "version": 1,
               "at": "2026-07-26T11:15:10Z",
-              "comment": "Добавлена история изменений"
+              "comment": "Added change history"
           },
           {
               "version": 2,
               "at": "2026-07-26T11:16:13Z",
               "comment": "Filled Australia population and languages"
+          },
+          {
+              "version": 3,
+              "at": "2026-07-26T11:22:46Z",
+              "comment": "Translated history comment to English"
           }
       ]
     },
