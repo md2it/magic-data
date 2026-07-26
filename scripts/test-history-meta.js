@@ -170,7 +170,7 @@ assert("markdown escapes pipe in cell", md.includes("| A\\|B | null |"));
 assert(
   "markdown ends with GitHub attribution",
   md.endsWith(
-    "\n---\n\nCreated by [md2it/magic-data on GitHub](https://github.com/md2it/magic-data)"
+    "\n---\n\nGenerated with [Magic Data](https://github.com/md2it/magic-data)"
   )
 );
 assert(

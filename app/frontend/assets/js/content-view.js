@@ -1060,7 +1060,7 @@
             "",
             "---",
             "",
-            "Created by [md2it/magic-data on GitHub](https://github.com/md2it/magic-data)"
+            "Generated with [Magic Data](https://github.com/md2it/magic-data)"
         );
         return lines.join("\n");
     }
