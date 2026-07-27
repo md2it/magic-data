@@ -229,6 +229,7 @@ body:has(.app-body) {
 .app-body__sidebar {
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 34px;
+    position: relative;
     width: var(--sidebar-width);
     flex-shrink: 0;
     display: flex;
@@ -258,7 +259,8 @@ body:has(.app-body) {
 .app-body__sidebar--collapsed.app-body__sidebar--hover-expand:focus-within {
     width: var(--sidebar-width);
     margin-right: calc(var(--sidebar-collapsed-width) - var(--sidebar-width));
-    z-index: 5;
+    /* Above raised content (table view is z-index: 6). */
+    z-index: 20;
     box-shadow: 4px 0 16px rgba(31, 35, 40, 0.12);
 }
 
