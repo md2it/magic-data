@@ -6,6 +6,7 @@
     gap: 8px;
     width: 100%;
     padding-inline: 16px;
+    margin-top: auto;
     margin-bottom: 8px;
 }
 
@@ -35,7 +36,7 @@
 }
 
 .sidebar-collapse {
-    margin-top: auto;
+    flex: 0 0 auto;
     width: var(--sidebar-width);
     min-height: 40px;
     margin-bottom: 0;
@@ -102,7 +103,7 @@
     flex: 1;
     min-height: 0;
     overflow: auto;
-    padding: 0 0 88px;
+    padding: 0 0 8px;
     border-radius: 6px;
 }
 

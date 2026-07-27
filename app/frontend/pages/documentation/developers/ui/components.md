@@ -21,8 +21,9 @@ Follow [visual-style](visual-style) and [technical-standards](technical-standard
   printing.
 - **Sidebar** — the collapsible catalogue of files and directories: the file
   **tree** (`.tree-list` / `.tree-node`, and `.directory-listing` for a plain
-  listing), a **sidebar toolbar** (`.sidebar-toolbar`) of catalogue actions,
-  and a transient **toast** (`.sidebar-toast`) for background outcomes.
+  listing), a **sidebar toolbar** (`.sidebar-toolbar`) of catalogue actions
+  pinned under the tree above the collapse control, and a transient **toast**
+  (`.sidebar-toast`) for background outcomes.
 
 ### Data views
 

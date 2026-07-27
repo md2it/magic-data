@@ -210,12 +210,20 @@ a:visited {
     }
 }
 
+/* Data page: keep the shell in the viewport so the sidebar (and its collapse
+ * control) stay reachable without scrolling the page. Main content scrolls. */
+body:has(.app-body) {
+    height: 100vh;
+    overflow: hidden;
+}
+
 .app-body {
     flex: 1;
     display: flex;
     min-width: 0;
     min-height: 0;
     position: relative;
+    overflow: hidden;
 }
 
 .app-body__sidebar {
@@ -239,6 +247,11 @@ a:visited {
 
 .app-body__sidebar--collapsed > .sidebar-toolbar {
     visibility: hidden;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    pointer-events: none;
 }
 
 .app-body__sidebar--collapsed.app-body__sidebar--hover-expand:hover,
@@ -252,6 +265,12 @@ a:visited {
 .app-body__sidebar--collapsed.app-body__sidebar--hover-expand:hover > .sidebar-toolbar,
 .app-body__sidebar--collapsed.app-body__sidebar--hover-expand:focus-within > .sidebar-toolbar {
     visibility: visible;
+    height: auto;
+    margin-top: auto;
+    margin-bottom: 8px;
+    padding-inline: 16px;
+    overflow: visible;
+    pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -265,6 +284,7 @@ a:visited {
     min-width: 0;
     max-width: 100%;
     padding: 24px;
+    overflow: auto;
 }
 
 .app-footer {
@@ -308,6 +328,11 @@ a:visited {
 }
 
 @media print {
+    body:has(.app-body) {
+        height: auto;
+        overflow: visible;
+    }
+
     .app-header,
     .app-body__sidebar,
     .app-footer,
@@ -317,10 +342,12 @@ a:visited {
 
     .app-body {
         display: block;
+        overflow: visible;
     }
 
     .app-body__content {
         padding: 0;
+        overflow: visible;
     }
 
     /* Restore real table semantics for print so the <tfoot> repeats per page. */
