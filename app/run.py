@@ -7,11 +7,7 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from server import main
-
-
-HOST = "localhost"
-PORT = 57214
+from server import HOST, PORT, main
 
 
 def is_port_in_use() -> bool:

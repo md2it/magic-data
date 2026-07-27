@@ -110,7 +110,6 @@ function createFileNode(node) {
     button.className = "tree-node__label";
     window.AppIcons.setLabel(button, "file", displayName(node.name));
     button.dataset.path = node.path;
-    button.dataset.id = node.id || "";
     button.draggable = true;
     button.addEventListener("click", function () {
         selectFile(node.path, button, { push: true });
@@ -285,7 +284,6 @@ let fileTreeRoot;
 let currentTree = [];
 let currentMode = "doc";
 let currentFilePath = "";
-let currentFileId = "";
 let currentFileText = "";
 let currentDirPath = "";
 
@@ -438,7 +436,6 @@ async function selectFile(path, button, options) {
     });
 
     currentFilePath = path;
-    currentFileId = button && button.dataset ? (button.dataset.id || "") : "";
     currentFileText = await loadFileContent(path);
     renderCurrentFile();
     if (!opts.silent) updateUrl(Boolean(opts.push));
@@ -759,8 +756,7 @@ window.MagicData = {
         return {
             document: {
                 path: currentFilePath,
-                name: currentFilePath.split("/").pop(),
-                id: currentFileId || null
+                name: currentFilePath.split("/").pop()
             },
             view: currentView()
         };
@@ -812,7 +808,7 @@ function initMagicButtons() {
         structureButton.setAttribute("aria-haspopup", "dialog");
         structureButton.setAttribute("aria-expanded", "false");
         structureButton.setAttribute("aria-label", "Data structure");
-        structureButton.dataset.tooltip = "data-sctructure";
+        structureButton.dataset.tooltip = "data-structure";
         structureButton.innerHTML = window.AppIcons.markup("columns-3-cog");
 
         const popup = document.createElement("div");

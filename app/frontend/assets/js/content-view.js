@@ -7,7 +7,7 @@
  *
  * Also owns the global "Collapse all" / "Expand all" toolbar buttons as they
  * apply to the currently rendered content (NOT the left-hand file tree,
- * which is owned by index.js).
+ * which is owned by data.js).
  *
  * Public API (window.ContentView):
  *   - render(viewName, rawText, container)

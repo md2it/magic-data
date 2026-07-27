@@ -205,106 +205,6 @@
 }
 .magic-inline-btn:hover { background: #f6f8fa; color: #1f2328; }
 .magic-inline-btn:disabled { opacity: .6; cursor: wait; }
-.magic-runs {
-    position: fixed;
-    left: 16px;
-    bottom: 16px;
-    z-index: 900;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    font: inherit;
-}
-.magic-runs__pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 12px;
-    border: 1px solid #d0d7de;
-    border-radius: 999px;
-    background: #fff;
-    color: #1f2328;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, .16);
-    cursor: pointer;
-    font-size: 0.85rem;
-}
-.magic-runs__count { display: inline-flex; align-items: center; gap: 5px; }
-.magic-runs__count::before {
-    content: "";
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: currentColor;
-}
-.magic-runs__count--running { color: #1f6feb; }
-.magic-runs__count--done { color: #1a7f37; }
-.magic-runs__count--failed { color: #cf222e; }
-.magic-runs__count--muted { opacity: .45; }
-.magic-runs__panel {
-    width: min(360px, calc(100vw - 32px));
-    max-height: min(60vh, 460px);
-    overflow-y: auto;
-    border: 1px solid #d0d7de;
-    border-radius: 10px;
-    background: #fff;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, .2);
-    padding: 6px;
-    display: none;
-}
-.magic-runs.is-open .magic-runs__panel { display: block; }
-.magic-runs__row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px;
-    border-radius: 7px;
-}
-.magic-runs__row + .magic-runs__row { border-top: 1px solid #eaeef2; }
-.magic-runs__section {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 9px 8px 4px;
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: #8c959f;
-}
-.magic-runs__section--running { color: #1f6feb; }
-.magic-runs__section--done { color: #1a7f37; }
-.magic-runs__section--failed { color: #cf222e; }
-.magic-runs__section--cancelled { color: #8c959f; }
-.magic-runs__section-count { font-variant-numeric: tabular-nums; opacity: .75; }
-.magic-runs__empty {
-    padding: 16px 10px;
-    text-align: center;
-    font-size: 0.8rem;
-    color: #8c959f;
-}
-.magic-runs__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: #8c959f; }
-.magic-runs__dot--running { background: #1f6feb; }
-.magic-runs__dot--done { background: #1a7f37; }
-.magic-runs__dot--failed { background: #cf222e; }
-.magic-runs__body { flex: 1; min-width: 0; }
-.magic-runs__label { font-size: 0.85rem; color: #1f2328; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.magic-runs__meta { font-size: 0.75rem; color: #57606a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.magic-runs__row-btn {
-    border: 1px solid #d0d7de;
-    background: #f6f8fa;
-    color: #1f2328;
-    border-radius: 6px;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.78rem;
-    padding: 3px 8px;
-    flex-shrink: 0;
-}
-.magic-runs__row-btn:hover { background: #eaeef2; }
-.magic-runs__row-btn--stop { border-color: #f0b3b3; color: #cf222e; }
-.magic-runs__row-btn--dismiss { padding: 3px 7px; color: #57606a; }
 @keyframes magic-llm-spin { to { transform: rotate(360deg); } }
 .magic-llm-spinner {
     display: inline-block;
@@ -630,25 +530,14 @@
     const RunStore = (function () {
         const runs = new Map();       // id -> run object (server shape)
         const waiters = new Map();    // id -> [resolve fns]
-        const dismissed = new Set();  // ids hidden locally
         let polling = false;
         let pollTimer = null;
-        let container = null;
-        let pill = null;
-        let panel = null;
-        let open = false;
 
         function isTerminal(run) { return run && run.status && run.status !== "running"; }
 
         function anyRunning() {
             for (const run of runs.values()) if (run.status === "running") return true;
             return false;
-        }
-
-        function visibleRuns() {
-            return Array.from(runs.values())
-                .filter(function (run) { return !dismissed.has(run.id); })
-                .sort(function (a, b) { return (b.startedAt || 0) - (a.startedAt || 0); });
         }
 
         async function poll() {
@@ -672,7 +561,6 @@
                 // transient — try again on the next tick
             }
             window.dispatchEvent(new Event("magic-log-updated"));
-            render();
             clearTimeout(pollTimer);
             if (anyRunning() || waiters.size > 0) {
                 pollTimer = setTimeout(poll, 1200);
@@ -690,7 +578,6 @@
         function add(run) {
             runs.set(run.id, run);
             window.dispatchEvent(new Event("magic-log-updated"));
-            render();
             ensurePolling();
         }
 
@@ -702,150 +589,6 @@
                 waiters.get(id).push(resolve);
                 ensurePolling();
             });
-        }
-
-        async function cancel(id) {
-            try {
-                await fetch(`/api/llm/runs/${encodeURIComponent(id)}/cancel`, {
-                    method: "POST",
-                    cache: "no-store",
-                });
-            } catch (error) {
-                // ignore; the next poll reflects the real state
-            }
-            ensurePolling();
-        }
-
-        function elapsed(run) {
-            const end = run.status === "running" ? Date.now() : (run.finishedAt || Date.now());
-            const seconds = Math.max(0, Math.round((end - (run.startedAt || end)) / 1000));
-            if (seconds < 60) return `${seconds}s`;
-            return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
-        }
-
-        function ensureWidget() {
-            // Aggregate status moved to the Magic log link in the header.
-        }
-
-        // Status groups shown, in this order, as titled sections when the panel
-        // is open. Only groups with at least one visible run get a header. Titles
-        // are uppercased by CSS ("Magic in progress" -> "MAGIC IN PROGRESS").
-        const GROUPS = [
-            { key: "running", title: "Magic in progress" },
-            { key: "done", title: "Magic done" },
-            { key: "failed", title: "Magic failed" },
-            { key: "cancelled", title: "Magic stopped" }
-        ];
-
-        function render() {
-            ensureWidget();
-            if (!container) return;
-            const list = visibleRuns();
-
-            // The counter is a permanent fixture — always visible, even with no
-            // runs (it just reads 0). Dismissing individual runs, or clearing a
-            // whole status group, never removes the counter itself; only the
-            // expandable panel's contents come and go.
-            let running = 0, done = 0, failed = 0;
-            list.forEach(function (run) {
-                if (run.status === "running") running++;
-                else if (run.status === "done") done++;
-                else if (run.status === "failed") failed++;
-            });
-            pill.innerHTML = "";
-            pill.append(
-                counter("running", running),
-                counter("done", done),
-                counter("failed", failed)
-            );
-
-            if (!open) { panel.innerHTML = ""; return; }
-            panel.innerHTML = "";
-            let shown = 0;
-            GROUPS.forEach(function (group) {
-                const items = list.filter(function (run) { return run.status === group.key; });
-                if (items.length === 0) return;
-                shown += items.length;
-                panel.appendChild(sectionHeader(group, items.length));
-                items.forEach(function (run) { panel.appendChild(buildRow(run)); });
-            });
-            if (shown === 0) {
-                const empty = document.createElement("div");
-                empty.className = "magic-runs__empty";
-                empty.textContent = "No magic runs yet.";
-                panel.appendChild(empty);
-            }
-        }
-
-        function sectionHeader(group, count) {
-            const header = document.createElement("div");
-            header.className = "magic-runs__section magic-runs__section--" + group.key;
-            const title = document.createElement("span");
-            title.textContent = group.title;
-            const badge = document.createElement("span");
-            badge.className = "magic-runs__section-count";
-            badge.textContent = String(count);
-            header.append(title, badge);
-            return header;
-        }
-
-        function counter(kind, value) {
-            const span = document.createElement("span");
-            span.className = `magic-runs__count magic-runs__count--${kind}` + (value ? "" : " magic-runs__count--muted");
-            span.textContent = `${value}`;
-            span.title = `${value} ${kind}`;
-            return span;
-        }
-
-        function buildRow(run) {
-            const row = document.createElement("div");
-            row.className = "magic-runs__row";
-
-            const dot = document.createElement("span");
-            dot.className = "magic-runs__dot magic-runs__dot--" + run.status;
-            row.appendChild(dot);
-
-            const body = document.createElement("div");
-            body.className = "magic-runs__body";
-            const label = document.createElement("div");
-            label.className = "magic-runs__label";
-            label.textContent = run.label || run.scenarioId;
-            const meta = document.createElement("div");
-            meta.className = "magic-runs__meta";
-            const via = run.profile || run.provider || run.selector || "";
-            const where = run.contextLabel ? ` · ${run.contextLabel}` : "";
-            meta.textContent = `${run.status} · ${elapsed(run)}${via ? ` · ${via}` : ""}${where}`;
-            body.append(label, meta);
-            row.appendChild(body);
-
-            if (run.status === "running") {
-                row.appendChild(rowButton("Stop", "stop", function () { cancel(run.id); }));
-            } else {
-                row.appendChild(rowButton("View", "", function () {
-                    const isError = run.status === "failed";
-                    const text = run.status === "cancelled"
-                        ? (run.error || "Stopped by user")
-                        : (isError ? (run.error || "The run failed.") : (run.text || "Empty response."));
-                    showModal(run.label || run.scenarioId, text, isError);
-                }));
-                const dismiss = rowButton("", "dismiss", function () {
-                    dismissed.add(run.id);
-                    render();
-                });
-                dismiss.setAttribute("aria-label", "Dismiss");
-                dismiss.innerHTML = window.AppIcons.markup("x", "icon--sm");
-                row.appendChild(dismiss);
-            }
-            return row;
-        }
-
-        function rowButton(text, variant, onClick) {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "magic-runs__row-btn" + (variant ? ` magic-runs__row-btn--${variant}` : "");
-            button.textContent = text;
-            button.addEventListener("click", onClick);
-            return button;
         }
 
         function init() {
@@ -913,8 +656,8 @@
         if (!run || !run.id) { showModal(title, "The run could not be created.", true); return null; }
         RunStore.add(run);
 
-        // Mirror this run's progress on the source button, and surface its
-        // result here when it finishes (the widget keeps it too).
+        // Mirror this run's progress on the source button and surface its
+        // result here when it finishes.
         const restore = setButtonLoading(button, loadingLabel);
         const finalRun = await RunStore.waitFor(run.id);
         restore();
@@ -924,7 +667,7 @@
             return finalRun;
         }
         if (finalRun.status === "cancelled") {
-            return null; // the widget already reflects the cancellation
+            return null; // cancelled
         }
         showModal(title, finalRun.error || "The run failed.", true);
         return null;
