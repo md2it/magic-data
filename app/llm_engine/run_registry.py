@@ -144,7 +144,7 @@ class LlmRunRegistry:
                 document_path=created_document,
             )
         except RunCancelled:
-            self._finish(record, "cancelled", error="Stopped by user")
+            self._finish(record, "cancelled", error="Canceled by user")
         except ProviderError as exc:
             self._finish(record, "failed", error=str(exc))
         except Exception as exc:  # noqa: BLE001 - never let a run thread die silently

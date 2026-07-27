@@ -357,13 +357,20 @@ class ApplicationHandler(BaseHTTPRequestHandler):
 
         runs = MAGIC_LOG.list_runs()
         counts = {
-            "current": {"running": 0, "success": 0, "failed": 0},
-            "archived": {"running": 0, "success": 0, "failed": 0},
+            "current": {"running": 0, "success": 0, "failed": 0, "cancelled": 0},
+            "archived": {"running": 0, "success": 0, "failed": 0, "cancelled": 0},
         }
         for run in runs:
             scope = "current" if run.get("sessionId") == MAGIC_LOG.session_id else "archived"
             status = run.get("status")
-            bucket = "running" if status == "running" else "success" if status == "done" else "failed"
+            if status == "running":
+                bucket = "running"
+            elif status == "done":
+                bucket = "success"
+            elif status == "cancelled":
+                bucket = "cancelled"
+            else:
+                bucket = "failed"
             counts[scope][bucket] += 1
 
         page = [] if limit == 0 else runs[offset:offset + limit]

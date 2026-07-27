@@ -5,17 +5,77 @@
     let loading = false;
 
     function counter(scope, kind, value) {
-        const label = { running: "in progress", success: "successful", failed: "unsuccessful" }[kind];
+        const label = { running: "in progress", success: "successful", failed: "unsuccessful", cancelled: "canceled" }[kind];
         const archived = scope === "Archived" ? " magic-log-count--archived" : "";
         return `<span class="magic-log-count magic-log-count--${kind}${archived}">${label}: ${value}</span>`;
     }
 
     function formatDate(value) { return value ? new Date(value).toLocaleString() : "—"; }
-    function statusLabel(status) { return { running: "In progress", done: "Successful", failed: "Unsuccessful", cancelled: "Stopped" }[status] || status; }
+    function statusLabel(status) { return { running: "In progress", done: "Successful", failed: "Unsuccessful", cancelled: "Canceled" }[status] || status; }
     function documentUrl(path) {
         const parts = path.split("/");
         parts[parts.length - 1] = parts[parts.length - 1].replace(/\.json$/i, "");
         return `/data/${parts.map(encodeURIComponent).join("/")}`;
+    }
+
+    function collapseCancel(button) {
+        button.classList.remove("is-confirming");
+        button.setAttribute("aria-label", "Cancel run");
+        button.setAttribute("aria-expanded", "false");
+    }
+
+    async function waitUntilSettled(runId) {
+        for (let attempt = 0; attempt < 40; attempt += 1) {
+            await new Promise(function (resolve) { setTimeout(resolve, 250); });
+            try {
+                const response = await fetch(`/api/llm/runs/${encodeURIComponent(runId)}`, { cache: "no-store" });
+                if (!response.ok) return;
+                const data = await response.json();
+                if (!data.run || data.run.status !== "running") return;
+            } catch (error) {
+                return;
+            }
+        }
+    }
+
+    async function cancelRun(runId, button) {
+        button.disabled = true;
+        try {
+            const response = await fetch(`/api/llm/runs/${encodeURIComponent(runId)}/cancel`, {
+                method: "POST",
+                cache: "no-store",
+            });
+            if (response.ok) await waitUntilSettled(runId);
+        } finally {
+            window.dispatchEvent(new Event("magic-log-updated"));
+            await load(true);
+        }
+    }
+
+    function buildCancelControl(run) {
+        const slot = document.createElement("span");
+        slot.className = "magic-log-cancel-slot";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "magic-log-cancel";
+        button.setAttribute("aria-label", "Cancel run");
+        button.setAttribute("aria-expanded", "false");
+        button.innerHTML = window.AppIcons.markup("ban", "icon--sm") + '<span class="magic-log-cancel__label">Cancel it?</span>';
+        button.addEventListener("mouseleave", function () {
+            if (!button.disabled) collapseCancel(button);
+        });
+        button.addEventListener("click", function () {
+            if (button.disabled) return;
+            if (!button.classList.contains("is-confirming")) {
+                button.classList.add("is-confirming");
+                button.setAttribute("aria-label", "Cancel it?");
+                button.setAttribute("aria-expanded", "true");
+                return;
+            }
+            cancelRun(run.id, button);
+        });
+        slot.appendChild(button);
+        return slot;
     }
 
     function detailItem(label, value) {
@@ -76,6 +136,12 @@
             const scope = document.createElement("td");
             scope.textContent = run.scope === "archived" ? "Archived" : "Current";
             const action = document.createElement("td");
+            action.className = "magic-log-actions";
+            const actions = document.createElement("div");
+            actions.className = "magic-log-actions__row";
+            if (run.status === "running" && run.scope === "current" && run.id) {
+                actions.appendChild(buildCancelControl(run));
+            }
             const button = document.createElement("button");
             button.type = "button";
             button.className = "magic-log-details-control";
@@ -96,7 +162,8 @@
                 button.setAttribute("aria-label", expanded ? "Show run details" : "Hide run details");
                 detailsRow.hidden = expanded;
             });
-            action.appendChild(button);
+            actions.appendChild(button);
+            action.appendChild(actions);
             row.append(status, title, started, provider, documentCell, scope, action);
             list.appendChild(row);
             list.appendChild(detailsRow);
@@ -111,7 +178,7 @@
             const label = scope === "current" ? "Current" : "Archived";
             const scopeClass = scope === "archived" ? " magic-log-counts__scope--archived" : "";
             fragments.push(`<span class="magic-log-counts__scope${scopeClass}">${label}</span>`);
-            ["running", "success", "failed"].forEach(function (kind) {
+            ["running", "success", "failed", "cancelled"].forEach(function (kind) {
                 fragments.push(counter(label, kind, values[kind] || 0));
             });
         });
