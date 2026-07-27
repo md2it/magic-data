@@ -231,6 +231,7 @@ body:has(.app-body) {
     --sidebar-collapsed-width: 34px;
     position: relative;
     width: var(--sidebar-width);
+    margin-right: 0;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -239,7 +240,10 @@ body:has(.app-body) {
     background: #fff;
     border-right: 1px solid #d0d7de;
     overflow: hidden;
-    transition: width 0.15s ease;
+    /* Keep width + margin-right in lockstep so hover-expand overlays
+     * without shifting the content column (occupied flex space stays
+     * at --sidebar-collapsed-width throughout the animation). */
+    transition: width 0.15s ease, margin-right 0.15s ease;
 }
 
 .app-body__sidebar--collapsed {
