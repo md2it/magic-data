@@ -617,6 +617,12 @@
         return formatReadableValue(value);
     }
 
+    // Entire cell text is a number (optional sign + digits + optional fraction).
+    // Any other character means text — same shape as formatting.js NUM_RE.
+    function isNumericCellText(text) {
+        return /^-?\d+(\.\d+)?$/.test(text);
+    }
+
     function formatExportCellValue(value) {
         if (value === undefined) return "";
         if (value === null) return "null";
@@ -863,7 +869,11 @@
                     if (value === null) {
                         td.classList.add("content-table__cell--null");
                     }
-                    td.textContent = formatCellValue(value);
+                    const text = formatCellValue(value);
+                    if (isNumericCellText(text)) {
+                        td.classList.add("content-table__cell--number");
+                    }
+                    td.textContent = text;
                     tr.appendChild(td);
                 });
                 tbody.appendChild(tr);

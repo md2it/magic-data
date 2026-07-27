@@ -1008,6 +1008,10 @@
     opacity: 0.55;
 }
 
+.content-table__cell--number {
+    text-align: right;
+}
+
 .content-table__empty {
     color: #8c959f;
     font-style: italic;
