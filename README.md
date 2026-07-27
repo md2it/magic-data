@@ -39,7 +39,7 @@ Through the web interface, the user can:
 
 Pages are stored in `app/frontend/pages`. HTML pages are inserted into the shared layout as-is; Markdown pages are converted to HTML first and receive the standard Markdown stylesheet. The shared layout is stored in `app/frontend/layout/page.html` and adds the standard header and footer to every page.
 
-The file layout determines page URLs: `pages/data/index.html` is available at `/data`, `pages/documentation/index.md` at `/documentation`, `pages/documentation/users/magic-buttons.md` at `/documentation/users/magic-buttons`, and `pages/documentation/developers/ui/index.md` at `/documentation/developers/ui`. The root URL `/` redirects to `/data`. Pages can define a title and additional CSS or JavaScript files in their front matter.
+The file layout determines page URLs: `pages/data.html` is available at `/data`, `pages/documentation/index.md` at `/documentation`, `pages/documentation/users/magic-buttons.md` at `/documentation/users/magic-buttons`, and `pages/documentation/developers/ui/index.md` at `/documentation/developers/ui`. The root URL `/` redirects to `/data`. Pages can define a title and additional CSS or JavaScript files in their front matter.
 
 ```text
 ---

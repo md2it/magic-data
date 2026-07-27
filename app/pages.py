@@ -127,7 +127,7 @@ def render_content(page_path: Path, source: str) -> str:
 
 def default_title(page_path: Path) -> str:
     relative_path = page_path.relative_to(PAGES_DIR)
-    if relative_path == Path("data/index.html"):
+    if relative_path == Path("data.html"):
         return "Magic-data"
 
     name = relative_path.parent.name if page_path.stem == "index" else page_path.stem

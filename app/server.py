@@ -140,7 +140,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
 
         # Data documents/directories live under a dedicated `/data` namespace
         # so they can never collide with application pages or assets.
-        # The data app page itself is `pages/data/index.html` (path `/data`).
+        # The data app page itself is `pages/data.html` (path `/data`).
         if path == "/data" or path.startswith("/data/"):
             route = resolve_data_route(path[len("/data"):])
             if route is not None:
