@@ -128,7 +128,7 @@
     function createFillButton(index) {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "magic-inline-btn";
+        btn.className = "magic-inline-btn magic-contextual-btn";
         btn.setAttribute("aria-label", "Fill missing values");
         btn.dataset.tooltip = "Fill missing values";
         btn.innerHTML = window.AppIcons.markup("sparkles");
@@ -141,7 +141,7 @@
     function createFillAllButton() {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "magic-inline-btn magic-fill-all-btn";
+        btn.className = "magic-inline-btn magic-contextual-btn magic-fill-all-btn";
         btn.setAttribute("aria-label", "Fill all");
         btn.dataset.tooltip = "Fill all";
         btn.innerHTML = window.AppIcons.markup("sparkles");
@@ -172,7 +172,7 @@
     function createColumnFillButton(key) {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "magic-inline-btn content-table__col-fill";
+        btn.className = "magic-inline-btn magic-contextual-btn content-table__col-fill";
         btn.setAttribute("aria-label", "Fill this column");
         btn.dataset.tooltip = "Fill this column";
         btn.innerHTML = window.AppIcons.markup("sparkles");

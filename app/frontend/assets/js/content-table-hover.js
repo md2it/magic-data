@@ -1,9 +1,13 @@
 /*
  * content-table-hover.js
  *
- * Crosshair hover for the Table view: highlights the hovered cell's row and
- * column. Self-contained — injects its own styles and uses document-level
- * event delegation, so it survives table re-renders (sort, view switch).
+ * Crosshair hover for the Table view: highlights the hovered/focused cell's
+ * row and column. Also drives contextual Magic Fill visibility via
+ * `.magic-contextual-active` on the table, active body row, and active
+ * column header — without removing buttons from the DOM or changing layout.
+ *
+ * Self-contained — injects its own styles and uses document-level event
+ * delegation, so it survives table re-renders (sort, view switch).
  *
  * Theme-agnostic colours (#012292): row/column fill at 2%, cell at 5%,
  * frame at 20%. Frame edges are painted with inset box-shadow so they never
@@ -17,6 +21,7 @@
     var CLASS_ROW = "content-table__hover-row";
     var CLASS_COL = "content-table__hover-col";
     var CLASS_BODY = "content-table__hover-body";
+    var CLASS_MAGIC = "magic-contextual-active";
     var OVERLAY = "rgba(1, 34, 146, 0.02)";
     var OVERLAY_CELL = "rgba(1, 34, 146, 0.05)";
     var BORDER = "rgba(1, 34, 146, 0.2)";
@@ -29,7 +34,16 @@
     var activeTable = null;
     var activeRow = null;
     var activeCol = -1;
+    var activeMagicRow = null;
+    var activeMagicColHeader = null;
     var painted = [];
+
+    // Pointer and keyboard focus are tracked separately so leaving one while
+    // the other remains does not clear the logical active state (avoids
+    // flicker when moving between a cell and its Magic button, and keeps
+    // crosshair/buttons while the pointer stays in the table after blur).
+    var pointerCell = null;
+    var focusCell = null;
 
     function ensureStyles() {
         if (document.getElementById(STYLE_ID)) return;
@@ -86,17 +100,85 @@
         painted.push(cell);
     }
 
-    function clearHover() {
-        if (!activeTable) return;
+    function clearPaint() {
         if (activeRow) activeRow.classList.remove(CLASS_ROW);
         painted.forEach(function (el) {
             el.style.boxShadow = "";
             el.classList.remove(CLASS_BODY, CLASS_COL);
         });
         painted = [];
-        activeTable = null;
         activeRow = null;
         activeCol = -1;
+    }
+
+    function clearMagic() {
+        if (activeTable) activeTable.classList.remove(CLASS_MAGIC);
+        if (activeMagicRow) {
+            activeMagicRow.classList.remove(CLASS_MAGIC);
+            activeMagicRow = null;
+        }
+        if (activeMagicColHeader) {
+            activeMagicColHeader.classList.remove(CLASS_MAGIC);
+            activeMagicColHeader = null;
+        }
+    }
+
+    function clearHover() {
+        if (!activeTable) return;
+        clearMagic();
+        clearPaint();
+        activeTable = null;
+    }
+
+    function isBodyRow(row) {
+        return row && row.parentElement && row.parentElement.tagName === "TBODY";
+    }
+
+    function headerCellAt(table, col) {
+        var headRow = table.tHead && table.tHead.rows[0];
+        return headRow ? headRow.cells[col] || null : null;
+    }
+
+    /**
+     * Update Magic contextual classes without an empty intermediate frame, so
+     * moving between cells does not restart hide/show transitions on Fill All
+     * or on the still-active row/column control.
+     */
+    function syncMagic(table, row, col) {
+        if (activeTable && activeTable !== table) {
+            activeTable.classList.remove(CLASS_MAGIC);
+            if (activeMagicRow) {
+                activeMagicRow.classList.remove(CLASS_MAGIC);
+                activeMagicRow = null;
+            }
+            if (activeMagicColHeader) {
+                activeMagicColHeader.classList.remove(CLASS_MAGIC);
+                activeMagicColHeader = null;
+            }
+        }
+        table.classList.add(CLASS_MAGIC);
+
+        var nextMagicRow = isBodyRow(row) ? row : null;
+        if (activeMagicRow && activeMagicRow !== nextMagicRow) {
+            activeMagicRow.classList.remove(CLASS_MAGIC);
+        }
+        if (nextMagicRow) nextMagicRow.classList.add(CLASS_MAGIC);
+        activeMagicRow = nextMagicRow;
+
+        // Column fill lives on data headers only (cellIndex > 0 when a leading
+        // Fill All column is present; still safe if that column is absent).
+        var nextHeader = null;
+        if (col > 0) {
+            var candidate = headerCellAt(table, col);
+            if (candidate && candidate.querySelector(".content-table__col-fill")) {
+                nextHeader = candidate;
+            }
+        }
+        if (activeMagicColHeader && activeMagicColHeader !== nextHeader) {
+            activeMagicColHeader.classList.remove(CLASS_MAGIC);
+        }
+        if (nextHeader) nextHeader.classList.add(CLASS_MAGIC);
+        activeMagicColHeader = nextHeader;
     }
 
     function setHover(cell) {
@@ -104,13 +186,22 @@
         if (!table) return;
         var row = cell.parentElement;
         var col = cell.cellIndex;
-        if (table === activeTable && row === activeRow && col === activeCol) return;
+        if (table === activeTable && row === activeRow && col === activeCol) {
+            syncMagic(table, row, col);
+            return;
+        }
 
-        clearHover();
-        activeTable = table;
+        if (table !== activeTable) {
+            clearHover();
+            activeTable = table;
+        } else {
+            clearPaint();
+        }
+
         activeRow = row;
         activeCol = col;
         row.classList.add(CLASS_ROW);
+        syncMagic(table, row, col);
 
         var seen = new Set();
         Array.prototype.forEach.call(row.children, function (el) {
@@ -123,22 +214,54 @@
         });
     }
 
+    function refresh() {
+        // Pointer wins while it remains inside the table so moving between a
+        // cell and its Magic button stays stable; keyboard focus is used when
+        // the pointer is outside (or absent).
+        var cell = pointerCell || focusCell;
+        if (cell && cell.isConnected) setHover(cell);
+        else clearHover();
+    }
+
     function cellFrom(node) {
         return node instanceof Element ? node.closest(".content-table td, .content-table th") : null;
+    }
+
+    function sameTable(a, b) {
+        return a && b && a.closest(".content-table") === b.closest(".content-table");
     }
 
     ensureStyles();
 
     document.addEventListener("mouseover", function (event) {
         var cell = cellFrom(event.target);
-        if (cell) setHover(cell);
+        if (!cell) return;
+        pointerCell = cell;
+        refresh();
     });
 
     document.addEventListener("mouseout", function (event) {
         var cell = cellFrom(event.target);
         if (!cell) return;
         var next = cellFrom(event.relatedTarget);
-        if (next && next.closest(".content-table") === cell.closest(".content-table")) return;
-        clearHover();
+        if (sameTable(cell, next)) return;
+        pointerCell = null;
+        refresh();
+    });
+
+    document.addEventListener("focusin", function (event) {
+        var cell = cellFrom(event.target);
+        if (!cell) return;
+        focusCell = cell;
+        refresh();
+    });
+
+    document.addEventListener("focusout", function (event) {
+        var cell = cellFrom(event.target);
+        if (!cell) return;
+        var next = cellFrom(event.relatedTarget);
+        if (sameTable(cell, next)) return;
+        focusCell = null;
+        refresh();
     });
 })();

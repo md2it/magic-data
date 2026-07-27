@@ -924,6 +924,64 @@
     vertical-align: baseline;
 }
 
+/* ------------------------------------------------------------------ */
+/* Contextual Magic buttons                                            */
+/* Always in the layout (reserve space); reveal via opacity only.      */
+/* Show: 200ms delay + 100ms linear. Hide: no delay + 100ms linear.    */
+/* ------------------------------------------------------------------ */
+
+.magic-inline-btn.magic-contextual-btn {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 100ms linear;
+    transition-delay: 0ms;
+}
+
+/* Beat magic-llm's :disabled opacity so a hidden control stays invisible. */
+.magic-inline-btn.magic-contextual-btn:disabled {
+    opacity: 0;
+    cursor: wait;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .magic-inline-btn.magic-contextual-btn {
+        transition: none;
+    }
+}
+
+:is(
+    .magic-inline-btn.magic-contextual-btn:focus-visible,
+    .json-view:is(:hover, :focus-within) .magic-fill-all-btn,
+    .tree-view:is(:hover, :focus-within) .magic-fill-all-btn,
+    .content-text-view:is(:hover, :focus-within) .magic-fill-all-btn,
+    .json-node__header:is(:hover, :focus-within) > .magic-contextual-btn:not(.magic-fill-all-btn),
+    .content-tree-node__line:is(:hover, :focus-within) > .magic-contextual-btn:not(.magic-fill-all-btn),
+    .content-text__heading--with-fill:is(:hover, :focus-within) > .magic-contextual-btn,
+    .content-table.magic-contextual-active .magic-fill-all-btn,
+    .content-table__row.magic-contextual-active .magic-contextual-btn,
+    .content-table__header-cell.magic-contextual-active .content-table__col-fill
+) {
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 200ms;
+}
+
+:is(
+    .magic-inline-btn.magic-contextual-btn:focus-visible,
+    .json-view:is(:hover, :focus-within) .magic-fill-all-btn,
+    .tree-view:is(:hover, :focus-within) .magic-fill-all-btn,
+    .content-text-view:is(:hover, :focus-within) .magic-fill-all-btn,
+    .json-node__header:is(:hover, :focus-within) > .magic-contextual-btn:not(.magic-fill-all-btn),
+    .content-tree-node__line:is(:hover, :focus-within) > .magic-contextual-btn:not(.magic-fill-all-btn),
+    .content-text__heading--with-fill:is(:hover, :focus-within) > .magic-contextual-btn,
+    .content-table.magic-contextual-active .magic-fill-all-btn,
+    .content-table__row.magic-contextual-active .magic-contextual-btn,
+    .content-table__header-cell.magic-contextual-active .content-table__col-fill
+):disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
 .content-table__row:nth-child(even) {
     background: #f6f8fa;
 }
