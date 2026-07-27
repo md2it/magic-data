@@ -1025,6 +1025,12 @@
     padding-bottom: 0.2em;
 }
 
+.content-text__heading--with-fill {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
 .content-text__heading--level-1 {
     font-size: 1.5rem;
     border-bottom: 1px solid #d0d7de;

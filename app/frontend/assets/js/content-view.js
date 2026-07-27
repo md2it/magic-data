@@ -989,11 +989,15 @@
         return `content-text__heading--level-${Math.min(level, 99)}`;
     }
 
-    function appendHeading(container, text, level) {
+    function appendHeading(container, text, level, fillIndex) {
         const tag = "h" + Math.min(level, MAX_HEADING_LEVEL);
         const heading = document.createElement(tag);
         heading.className = `content-text__heading ${headingLevelClass(level)}`;
         heading.textContent = text;
+        if (typeof fillIndex === "number") {
+            heading.classList.add("content-text__heading--with-fill");
+            heading.appendChild(createFillButton(fillIndex));
+        }
         container.appendChild(heading);
     }
 
@@ -1011,6 +1015,8 @@
      *    this value, or null at the root / for array elements (arrays have
      *    no keys of their own).
      *  - `level`: heading level to use if `key` turns out to head a block.
+     *  - `path`: keys/indices from the document root to `value` (same shape
+     *    as Tree/JSON), used to attach per-item fill buttons.
      *
      * Decision for arrays of objects: each object element does not have a
      * name of its own, so instead of inventing a heading for it we render
@@ -1019,7 +1025,7 @@
      * deeper still. Arrays of primitives are rendered as a simple list
      * (one paragraph per item, no heading per item).
      */
-    function renderTextNode(key, value, container, level) {
+    function renderTextNode(key, value, container, level, path) {
         if (isCollapsible(value)) {
             if (key !== null) {
                 appendHeading(container, String(key), level);
@@ -1041,16 +1047,20 @@
                 } else {
                     const itemLevel = key !== null ? level + 1 : level;
                     value.forEach(function (item, index) {
+                        const childPath = path.concat([index]);
                         if (isCollapsible(item)) {
-                            appendHeading(container, `Item ${index + 1}`, itemLevel);
-                            renderObjectChildren(item, container, itemLevel + 1);
+                            const fillIndex = isFillableItemPath(childPath, item)
+                                ? index
+                                : undefined;
+                            appendHeading(container, `Item ${index + 1}`, itemLevel, fillIndex);
+                            renderObjectChildren(item, container, itemLevel + 1, childPath);
                         } else {
                             appendParagraph(container, item);
                         }
                     });
                 }
             } else {
-                renderObjectChildren(value, container, key !== null ? level + 1 : level);
+                renderObjectChildren(value, container, key !== null ? level + 1 : level, path);
             }
             return;
         }
@@ -1074,9 +1084,9 @@
         }
     }
 
-    function renderObjectChildren(obj, container, level) {
+    function renderObjectChildren(obj, container, level, path) {
         Object.entries(obj).forEach(function ([childKey, childValue]) {
-            renderTextNode(childKey, childValue, container, level);
+            renderTextNode(childKey, childValue, container, level, path.concat([childKey]));
         });
     }
 
@@ -1094,7 +1104,7 @@
 
         if (isCollapsible(parsedJson)) {
             if (Array.isArray(parsedJson)) {
-                renderTextNode(null, parsedJson, container, 1);
+                renderTextNode(null, parsedJson, container, 1, []);
             } else {
                 const description = getMetadataDescription(parsedJson);
                 Object.entries(parsedJson).forEach(function ([childKey, childValue]) {
@@ -1107,9 +1117,9 @@
                         if (description !== null) appendParagraph(container, description);
                         // key === null suppresses a second heading; level 2 keeps
                         // "Item N" nested one step under the document heading.
-                        renderTextNode(null, childValue, container, 2);
+                        renderTextNode(null, childValue, container, 2, ["items"]);
                     } else {
-                        renderTextNode(childKey, childValue, container, 1);
+                        renderTextNode(childKey, childValue, container, 1, [childKey]);
                     }
                 });
             }
