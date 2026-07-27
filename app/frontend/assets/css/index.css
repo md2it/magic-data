@@ -659,7 +659,72 @@
 /* ------------------------------------------------------------------ */
 
 .file-content.content-table-view {
+    position: relative;
+    z-index: 6;
     white-space: normal;
+}
+
+.content-table__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.content-bool-sum {
+    flex: 0 0 auto;
+    padding-top: 1px;
+    position: relative;
+    z-index: 1;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    text-align: right;
+}
+
+.content-bool-sum__header {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    min-height: 35px;
+    padding: 8px 4px;
+    border: 0;
+    background: transparent;
+    color: #57606a;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+}
+
+.content-bool-sum__header:hover,
+.content-bool-sum__header--sorted {
+    color: #0969da;
+}
+
+.content-bool-sum__sort-indicator {
+    display: inline-flex;
+    margin-left: 4px;
+    color: #afb8c1;
+}
+
+.content-bool-sum__header--sorted .content-bool-sum__sort-indicator {
+    color: #0969da;
+}
+
+.content-bool-sum__values {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.content-bool-sum__value {
+    box-sizing: border-box;
+    position: absolute;
+    right: 0;
+    padding: 6px 4px;
+    color: #57606a;
+    line-height: normal;
 }
 
 .content-table__wrapper {

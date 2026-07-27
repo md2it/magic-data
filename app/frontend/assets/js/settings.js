@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const STORAGE_KEY = "magicdata.defaultView";
     const FALLBACK = "table";
     const BOOLEAN_ICONS_STORAGE_KEY = "magicdata.booleanIcons";
+    const BOOL_SUM_STORAGE_KEY = "magicdata.showBoolSum";
 
     function getDefaultView() {
         try {
@@ -62,6 +63,26 @@ document.addEventListener("DOMContentLoaded", function () {
         toggle.addEventListener("change", function () {
             try {
                 localStorage.setItem(BOOLEAN_ICONS_STORAGE_KEY, String(toggle.checked));
+            } catch (e) {
+                /* storage unavailable — keep session-only choice */
+            }
+        });
+    });
+
+    function getBoolSumEnabled() {
+        try {
+            const stored = localStorage.getItem(BOOL_SUM_STORAGE_KEY);
+            return stored === null ? true : stored === "true";
+        } catch (e) {
+            return true;
+        }
+    }
+
+    document.querySelectorAll("input[data-bool-sum]").forEach(function (toggle) {
+        toggle.checked = getBoolSumEnabled();
+        toggle.addEventListener("change", function () {
+            try {
+                localStorage.setItem(BOOL_SUM_STORAGE_KEY, String(toggle.checked));
             } catch (e) {
                 /* storage unavailable — keep session-only choice */
             }

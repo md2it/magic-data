@@ -62,6 +62,16 @@
     }
 
     const BOOLEAN_ICONS_STORAGE_KEY = "magicdata.booleanIcons";
+    const BOOL_SUM_STORAGE_KEY = "magicdata.showBoolSum";
+
+    function isBoolSumEnabled() {
+        try {
+            const stored = localStorage.getItem(BOOL_SUM_STORAGE_KEY);
+            return stored === null ? true : stored === "true";
+        } catch (err) {
+            return true;
+        }
+    }
 
     /**
      * Returns the display form of a primitive value in the human-readable
@@ -633,6 +643,14 @@
         return columns;
     }
 
+    // A table row represents exactly one top-level object. Count only its
+    // direct boolean fields so the visual sum follows the table's columns.
+    function boolSum(rowObject) {
+        return Object.values(rowObject).reduce(function (sum, value) {
+            return sum + (value === true ? 1 : 0);
+        }, 0);
+    }
+
     /**
      * Orders two *present* (non-empty) cell values for a single column:
      *  - two numbers compare numerically;
@@ -721,6 +739,7 @@
 
         const rowObjects = topLevelNodes.map(toRowObject);
         const columns = collectColumns(rowObjects);
+        const showBoolSum = isBoolSumEnabled();
 
         // Fill buttons only make sense for the real data contract
         // (`{ schema, items }`). Capture each row object's ORIGINAL index
@@ -736,6 +755,9 @@
         // switch), matching "no sort when the table first opens".
         const sortState = { column: null, dir: "asc" };
 
+        const layout = document.createElement("div");
+        layout.className = "content-table__layout";
+
         const wrapper = document.createElement("div");
         wrapper.className = "content-table__wrapper";
 
@@ -745,6 +767,9 @@
         const thead = document.createElement("thead");
         const headerRow = document.createElement("tr");
         const headerCells = {};
+        let boolSumHeader = null;
+        let boolSumValues = null;
+        let boolSumRail = null;
         if (hasItems) {
             const fillHeader = document.createElement("th");
             fillHeader.className = "content-table__header-cell";
@@ -805,6 +830,9 @@
             // slice() keeps the original array intact; Array.sort is stable, so
             // equal/empty rows retain their original relative order.
             return rowObjects.slice().sort(function (rowA, rowB) {
+                if (column === "__boolSum") {
+                    return factor * (boolSum(rowA) - boolSum(rowB));
+                }
                 const a = rowA[column];
                 const b = rowB[column];
                 const aEmpty = a === undefined || a === null;
@@ -859,13 +887,95 @@
                     "icon--sm"
                 );
             });
+            if (boolSumHeader) {
+                const active = sortState.column === "__boolSum";
+                boolSumHeader.classList.toggle("content-bool-sum__header--sorted", active);
+                boolSumHeader.setAttribute(
+                    "aria-sort",
+                    active ? (sortState.dir === "asc" ? "ascending" : "descending") : "none"
+                );
+                boolSumHeader.querySelector(".content-bool-sum__sort-indicator").innerHTML = window.AppIcons.markup(
+                    active ? (sortState.dir === "asc" ? "chevron-up" : "chevron-down") : "chevrons-up-down",
+                    "icon--sm"
+                );
+            }
+        }
+
+        function syncBoolSumHeights() {
+            if (!boolSumHeader || !boolSumValues || !table.isConnected) return;
+            boolSumHeader.style.height = table.querySelector("thead tr").getBoundingClientRect().height + "px";
+            const rows = table.querySelectorAll("tbody tr");
+            Array.from(boolSumValues.children).forEach(function (value, index) {
+                // offsetTop is relative to the table's layout box and keeps
+                // the first value below the header rather than on top of it.
+                value.style.top = rows[index].offsetTop + "px";
+                value.style.transform = "translateY(" + boolSumHeader.offsetHeight + "px)";
+            });
+        }
+
+        if (showBoolSum) {
+            boolSumRail = document.createElement("div");
+            boolSumRail.className = "content-bool-sum";
+
+            boolSumHeader = document.createElement("button");
+            boolSumHeader.type = "button";
+            boolSumHeader.className = "content-bool-sum__header";
+            boolSumHeader.setAttribute("aria-sort", "none");
+            boolSumHeader.setAttribute("aria-label", "Bool sum");
+            boolSumHeader.append("Σ");
+            const indicator = document.createElement("span");
+            indicator.className = "content-bool-sum__sort-indicator";
+            indicator.setAttribute("aria-hidden", "true");
+            boolSumHeader.appendChild(indicator);
+            boolSumHeader.addEventListener("click", function () {
+                if (sortState.column === "__boolSum") {
+                    sortState.dir = sortState.dir === "asc" ? "desc" : "asc";
+                } else {
+                    sortState.column = "__boolSum";
+                    sortState.dir = "asc";
+                }
+                renderBody();
+                updateHeaders();
+            });
+            boolSumRail.appendChild(boolSumHeader);
+
+            boolSumValues = document.createElement("div");
+            boolSumValues.className = "content-bool-sum__values";
+            boolSumRail.appendChild(boolSumValues);
+            layout.appendChild(boolSumRail);
+
+            const originalRenderBody = renderBody;
+            renderBody = function () {
+                originalRenderBody();
+                boolSumValues.innerHTML = "";
+                orderedRows().forEach(function (rowObj) {
+                    const value = document.createElement("div");
+                    value.className = "content-bool-sum__value";
+                    value.textContent = String(boolSum(rowObj));
+                    boolSumValues.appendChild(value);
+                });
+                syncBoolSumHeights();
+            };
         }
 
         renderBody();
         updateHeaders();
 
         wrapper.appendChild(table);
-        container.appendChild(wrapper);
+        layout.appendChild(wrapper);
+        container.appendChild(layout);
+        syncBoolSumHeights();
+        requestAnimationFrame(syncBoolSumHeights);
+        // Browser table layout can settle one frame after controls inside the
+        // cells are painted. Re-sync once it has its final row heights.
+        setTimeout(syncBoolSumHeights, 0);
+        setTimeout(syncBoolSumHeights, 100);
+        if (showBoolSum && typeof ResizeObserver === "function") {
+            const observer = new ResizeObserver(syncBoolSumHeights);
+            table.querySelectorAll("thead tr, tbody tr").forEach(function (row) {
+                observer.observe(row);
+            });
+        }
     }
 
     // ------------------------------------------------------------------
@@ -1249,6 +1359,7 @@
         renderStructure: renderStructure,
         toDelimited: toDelimited,
         toMarkdownTable: toMarkdownTable,
+        boolSum: boolSum,
         summarizeDocumentHistory: summarizeDocumentHistory,
         formatHistoryInstant: formatHistoryInstant,
     };

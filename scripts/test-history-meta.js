@@ -40,6 +40,7 @@ const {
   summarizeDocumentHistory,
   formatHistoryInstant,
   toMarkdownTable,
+  boolSum,
 } = sandbox.window.ContentView;
 
 let pass = 0;
@@ -85,6 +86,12 @@ assert(
 assert(
   "null when versions missing",
   summarizeDocumentHistory({ metadata: { description: "d" } }) === null
+);
+
+assert("bool sum counts direct true values", boolSum({ a: true, b: false, c: true }) === 2);
+assert(
+  "bool sum ignores nested true values",
+  boolSum({ a: true, nested: { b: true }, list: [true] }) === 1
 );
 assert(
   "null when metadata missing",
