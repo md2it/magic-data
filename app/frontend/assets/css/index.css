@@ -294,23 +294,35 @@
     padding: 6px 10px;
 }
 
-/* Icon control that opens a menu: icon plus a small caret. */
+/* Icon control that opens a menu. */
 .content-toolbar__button--menu {
-    gap: 3px;
+    justify-content: center;
     padding: 6px 10px;
-}
-
-.content-toolbar__caret {
-    color: #57606a;
 }
 
 .content-toolbar__button:hover {
     background: #f0f2f4;
 }
 
+/* Paired controls (collapse/expand): joined, outer corners only. */
 .content-toolbar__group {
     display: flex;
-    gap: 8px;
+}
+
+.content-toolbar__group .content-toolbar__button {
+    border-radius: 0;
+    margin-left: -1px;
+}
+
+.content-toolbar__group .content-toolbar__button:first-child {
+    margin-left: 0;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.content-toolbar__group .content-toolbar__button:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
 .content-toolbar__menu {
