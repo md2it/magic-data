@@ -129,18 +129,50 @@ function renderHeader() {
             <a href="/settings">Settings</a>
         </nav>
         <div class="app-header__actions">
-            <button id="restart-btn" type="button">Restart app</button>
-            <button id="stop-btn" type="button">Stop app</button>
+            <div class="app-header__menu">
+                <button type="button" class="app-header__power-btn" id="power-menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="App power" data-tooltip="App power">${iconMarkup("circle-power")}</button>
+                <div class="app-header__dropdown" id="power-dropdown" role="menu" hidden>
+                    <button id="restart-btn" type="button" class="app-header__dropdown-item app-header__dropdown-item--restart" role="menuitem">Restart app</button>
+                    <button id="stop-btn" type="button" class="app-header__dropdown-item app-header__dropdown-item--stop" role="menuitem">Stop app</button>
+                </div>
+            </div>
         </div>
     `;
 
+    const powerBtn = header.querySelector("#power-menu-btn");
+    const powerDropdown = header.querySelector("#power-dropdown");
+
+    function closePowerMenu() {
+        powerDropdown.hidden = true;
+        powerBtn.setAttribute("aria-expanded", "false");
+    }
+
+    powerBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        const willOpen = powerDropdown.hidden;
+        powerDropdown.hidden = !willOpen;
+        powerBtn.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!powerDropdown.hidden && !powerDropdown.contains(event.target) && event.target !== powerBtn && !powerBtn.contains(event.target)) {
+            closePowerMenu();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !powerDropdown.hidden) closePowerMenu();
+    });
+
     header.querySelector("#stop-btn").addEventListener("click", async function () {
+        closePowerMenu();
         if (!(await confirmIfMagicRunning("Stop app"))) return;
         stopApp();
     });
 
     header.querySelector("#restart-btn").addEventListener("click", async function (event) {
         const button = event.currentTarget;
+        closePowerMenu();
         if (!(await confirmIfMagicRunning("Restart app"))) return;
         restartApp(button);
     });

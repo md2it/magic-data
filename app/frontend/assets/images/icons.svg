@@ -23,6 +23,11 @@
       <path d="M22 4h-4" />
       <circle cx="4" cy="20" r="2" />
     </symbol>
+    <symbol id="circle-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 7v4" />
+      <path d="M7.998 9.003a5 5 0 1 0 8-.005" />
+    </symbol>
     <symbol id="circle-question-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10" />
       <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
