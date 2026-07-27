@@ -126,7 +126,6 @@ function renderHeader() {
             <a href="/data">Data</a>
             <a class="app-header__magic-log" href="/magic-log">Magic log <span class="app-header__magic-counts" aria-label="Current Magic runs"></span></a>
             <a href="/documentation">Documentation</a>
-            <a href="/settings">Settings</a>
         </nav>
         <div class="app-header__actions">
             <div class="app-header__menu">

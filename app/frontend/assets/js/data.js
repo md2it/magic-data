@@ -670,6 +670,40 @@ function initDownloadMenu() {
     });
 }
 
+function initSettingsMenu() {
+    const button = document.getElementById("data-settings-button");
+    const popup = document.getElementById("data-settings-popup");
+    if (!button || !popup) return;
+
+    function closePopup() {
+        popup.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+    }
+    toolbarMenuClosers.push(closePopup);
+
+    popup.addEventListener("click", function (event) {
+        event.stopPropagation();
+    });
+
+    button.addEventListener("click", function (event) {
+        event.stopPropagation();
+        const willOpen = popup.hidden;
+        if (willOpen) closeOtherMenus(closePopup);
+        popup.hidden = !willOpen;
+        button.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!popup.hidden && !popup.contains(event.target) && !button.contains(event.target)) {
+            closePopup();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !popup.hidden) closePopup();
+    });
+}
+
 async function copyToClipboard(content) {
     if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(content);
@@ -760,6 +794,12 @@ window.MagicData = {
             },
             view: currentView()
         };
+    },
+    /** Re-render the open document with current view + display preferences. */
+    rerenderView: function () {
+        if (currentMode === "doc" && currentFilePath) {
+            renderCurrentFile();
+        }
     },
     reloadDocument: async function () {
         if (currentMode === "doc" && currentFilePath) {
@@ -1044,5 +1084,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     initCopyMenu();
     initDownloadMenu();
+    initSettingsMenu();
     initMagicButtons();
 });

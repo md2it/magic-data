@@ -13,7 +13,7 @@ Follow [visual-style](visual-style) and [technical-standards](technical-standard
 ### Application shell
 
 - **Header** (`.app-header`) — the fixed top bar: product title, main
-  navigation (Data, Documentation, Settings), and the process actions Restart
+  navigation (Data, Documentation), and the process actions Restart
   app and Stop app. If Magic AI processes are still running, these actions ask
   for confirmation first. Rendered once by `layout.js`.
 - **Footer** (`.app-footer`) — product name, repository link, and GitHub Issues
@@ -29,7 +29,8 @@ Follow [visual-style](visual-style) and [technical-standards](technical-standard
 
 The **view switch** (`.view-switch`) selects one view for the main content area.
 The chosen view is always reflected in the document URL as `?view=…`. When the
-URL has no view, the default from Settings is used (product default: table).
+URL has no view, the default-view preference from the Data settings pop-up is
+used (product default: table).
 
 - **JSON view** (`.json-node`) — the raw structure, rendered close to literal
   JSON, with collapsible nodes.
@@ -47,16 +48,16 @@ Schema-defining portions are de-emphasized rather than hidden (see the
 - **Content toolbar** (`.content-toolbar`) — actions for the current view:
   download (`.content-toolbar__download`), overflow **dropdown**
   (`.content-toolbar__dropdown`), and Magic buttons.
+- **Settings** — a cog control on the Data content toolbar (tooltip Settings)
+  opens the preferences pop-up (`.data-settings-popup`). The pop-up holds a
+  **settings list** (`.settings-list` / `.settings-item`) of labelled rows:
+  **select** controls (`.settings-select`, e.g. default view and number format)
+  and **switch** toggles (`.settings-toggle`, e.g. boolean icons and bool sum).
+  Preferences are stored in the browser; there is no separate Settings page.
 - **Magic buttons** — contextual AI actions marked with `sparkles`, available on
   a table, row, column, cell, or the whole document. A running Magic button
   shows its in-progress state and blocks duplicate execution. See
   [llm-engine](/documentation/developers/llm-engine).
-
-### Settings
-
-- **Settings list** (`.settings-list` / `.settings-item`) — labelled rows of
-  controls, including the **select** control (`.settings-select`, e.g. default
-  view and number format) and a **switch** (`.switch`) toggle.
 
 ### Static pages
 

@@ -1,14 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".settings-magic .magic-btn").forEach(function (button) {
-        button.addEventListener("click", function () {
-            if (!window.magicLlm) return;
-            window.magicLlm.runScenario("connection-test", {
-                provider: button.getAttribute("data-provider"),
-                button: button,
-            });
-        });
-    });
-
     const VALID_VIEWS = [
         { id: "table", label: "Table" },
         { id: "json", label: "JSON" },
@@ -58,6 +48,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    function rerenderOpenView() {
+        if (window.MagicData && typeof window.MagicData.rerenderView === "function") {
+            window.MagicData.rerenderView();
+        }
+    }
+
     document.querySelectorAll("input[data-boolean-icons]").forEach(function (toggle) {
         toggle.checked = getBooleanIconsEnabled();
         toggle.addEventListener("change", function () {
@@ -66,6 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
             } catch (e) {
                 /* storage unavailable — keep session-only choice */
             }
+            rerenderOpenView();
         });
     });
 
@@ -86,6 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
             } catch (e) {
                 /* storage unavailable — keep session-only choice */
             }
+            rerenderOpenView();
         });
     });
 });

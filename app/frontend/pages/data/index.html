@@ -5,6 +5,7 @@ styles:
 scripts:
   - /assets/js/content-view.js
   - /assets/js/content-table-hover.js
+  - /assets/js/settings.js
   - /assets/js/data.js
 ---
     <div class="app-body">
@@ -24,30 +25,55 @@ scripts:
                     <button type="button" class="view-switch__option active" data-view="table" role="radio" aria-checked="true">Table</button>
                     <button type="button" class="view-switch__option" data-view="text" role="radio" aria-checked="false">Text</button>
                 </div>
-                <div class="content-toolbar__actions" id="content-toolbar-actions">
-                    <div class="content-toolbar__group" id="collapse-expand-group">
-                        <button type="button" class="content-toolbar__button content-toolbar__button--icon" id="collapse-all" aria-label="Collapse all" data-tooltip="Collapse all"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#chevrons-down-up"></use></svg></button>
-                        <button type="button" class="content-toolbar__button content-toolbar__button--icon" id="expand-all" aria-label="Expand all" data-tooltip="Expand all"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#chevrons-up-down"></use></svg></button>
-                    </div>
-                    <button type="button" class="content-toolbar__button content-toolbar__button--icon" id="open-raw-json" aria-label="Open raw JSON" data-tooltip="Open raw JSON"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#braces"></use></svg><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#square-arrow-out-up-right"></use></svg></button>
-                    <div class="content-toolbar__menu">
-                        <button type="button" class="content-toolbar__button content-toolbar__button--menu" id="copy-button" aria-haspopup="true" aria-expanded="false" aria-label="Copy" data-tooltip="Copy"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#copy"></use></svg></button>
-                        <div class="content-toolbar__dropdown" id="copy-dropdown" role="menu" hidden>
-                            <p class="content-toolbar__dropdown-header">Copy</p>
-                            <button type="button" class="content-toolbar__dropdown-item" data-copy-format="table" role="menuitem">Table</button>
-                            <button type="button" class="content-toolbar__dropdown-item" data-copy-format="text" role="menuitem">Text</button>
+                <div class="content-toolbar__trailing">
+                    <div class="content-toolbar__actions" id="content-toolbar-actions">
+                        <div class="content-toolbar__group" id="collapse-expand-group">
+                            <button type="button" class="content-toolbar__button content-toolbar__button--icon" id="collapse-all" aria-label="Collapse all" data-tooltip="Collapse all"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#chevrons-down-up"></use></svg></button>
+                            <button type="button" class="content-toolbar__button content-toolbar__button--icon" id="expand-all" aria-label="Expand all" data-tooltip="Expand all"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#chevrons-up-down"></use></svg></button>
+                        </div>
+                        <button type="button" class="content-toolbar__button content-toolbar__button--icon" id="open-raw-json" aria-label="Open raw JSON" data-tooltip="Open raw JSON"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#braces"></use></svg><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#square-arrow-out-up-right"></use></svg></button>
+                        <div class="content-toolbar__menu">
+                            <button type="button" class="content-toolbar__button content-toolbar__button--menu" id="copy-button" aria-haspopup="true" aria-expanded="false" aria-label="Copy" data-tooltip="Copy"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#copy"></use></svg></button>
+                            <div class="content-toolbar__dropdown" id="copy-dropdown" role="menu" hidden>
+                                <p class="content-toolbar__dropdown-header">Copy</p>
+                                <button type="button" class="content-toolbar__dropdown-item" data-copy-format="table" role="menuitem">Table</button>
+                                <button type="button" class="content-toolbar__dropdown-item" data-copy-format="text" role="menuitem">Text</button>
+                            </div>
+                        </div>
+                        <div class="content-toolbar__menu">
+                            <button type="button" class="content-toolbar__button content-toolbar__button--menu" id="download-button" aria-haspopup="true" aria-expanded="false" aria-label="Download" data-tooltip="Download"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#file-down"></use></svg></button>
+                            <div class="content-toolbar__dropdown" id="download-dropdown" role="menu" hidden>
+                                <p class="content-toolbar__dropdown-header">Download</p>
+                                <button type="button" class="content-toolbar__dropdown-item" data-format="json" role="menuitem">JSON</button>
+                                <button type="button" class="content-toolbar__dropdown-item" data-format="csv" role="menuitem">CSV</button>
+                                <button type="button" class="content-toolbar__dropdown-item" data-format="tsv" role="menuitem">TSV</button>
+                                <button type="button" class="content-toolbar__dropdown-item" data-format="markdown-table" role="menuitem">Markdown Table</button>
+                                <button type="button" class="content-toolbar__dropdown-item" data-format="pdf-table" role="menuitem">PDF Table</button>
+                                <button type="button" class="content-toolbar__dropdown-item" data-format="pdf-text" role="menuitem">PDF Text</button>
+                            </div>
                         </div>
                     </div>
                     <div class="content-toolbar__menu">
-                        <button type="button" class="content-toolbar__button content-toolbar__button--menu" id="download-button" aria-haspopup="true" aria-expanded="false" aria-label="Download" data-tooltip="Download"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#file-down"></use></svg></button>
-                        <div class="content-toolbar__dropdown" id="download-dropdown" role="menu" hidden>
-                            <p class="content-toolbar__dropdown-header">Download</p>
-                            <button type="button" class="content-toolbar__dropdown-item" data-format="json" role="menuitem">JSON</button>
-                            <button type="button" class="content-toolbar__dropdown-item" data-format="csv" role="menuitem">CSV</button>
-                            <button type="button" class="content-toolbar__dropdown-item" data-format="tsv" role="menuitem">TSV</button>
-                            <button type="button" class="content-toolbar__dropdown-item" data-format="markdown-table" role="menuitem">Markdown Table</button>
-                            <button type="button" class="content-toolbar__dropdown-item" data-format="pdf-table" role="menuitem">PDF Table</button>
-                            <button type="button" class="content-toolbar__dropdown-item" data-format="pdf-text" role="menuitem">PDF Text</button>
+                        <button type="button" class="content-toolbar__button content-toolbar__button--icon" id="data-settings-button" aria-haspopup="dialog" aria-expanded="false" aria-controls="data-settings-popup" aria-label="Settings" data-tooltip="Settings"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#settings"></use></svg></button>
+                        <div class="data-settings-popup" id="data-settings-popup" role="dialog" aria-label="Settings" hidden>
+                            <div class="settings-list">
+                                <label class="settings-item">
+                                    <span>Default view</span>
+                                    <select class="settings-select" data-default-view></select>
+                                </label>
+                                <label class="settings-item">
+                                    <span>Number format</span>
+                                    <select class="settings-select" data-number-format></select>
+                                </label>
+                                <label class="settings-item settings-item--toggle">
+                                    <span>Show true/false as ✅/❌</span>
+                                    <input class="settings-toggle" type="checkbox" role="switch" data-boolean-icons>
+                                </label>
+                                <label class="settings-item settings-item--toggle">
+                                    <span>Bool sum (Σ) column</span>
+                                    <input class="settings-toggle" type="checkbox" role="switch" data-bool-sum>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
