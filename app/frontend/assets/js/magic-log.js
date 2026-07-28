@@ -1,3 +1,5 @@
+import "./magic-llm/index.js";
+
 (function () {
     const PAGE_SIZE = 50;
     let offset = 0;

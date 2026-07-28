@@ -1,15 +1,4 @@
-/*
- * Magic-data LLM adapter.
- *
- * Exposes window.magicLlm.runScenario(scenarioId, options). A scenario is
- * configured on the backend (app/llm-scenarios/*.yaml). Options let a single
- * call customize the run: { provider, context, extra, button, loadingLabel }.
- *
- * The user just clicks a button — the adapter fetches the scenario, runs it
- * through a local CLI and shows the result in a small modal. It never reveals
- * that a terminal or CLI was involved.
- */
-(function () {
+/* Magic LLM UI: dialogs, param forms, button state, styles. */
     const READY = { styles: false };
 
     function ensureStyles() {
@@ -219,7 +208,7 @@
         document.head.appendChild(style);
     }
 
-    function showModal(title, message, isError) {
+    export function showModal(title, message, isError) {
         ensureStyles();
         const backdrop = document.createElement("div");
         backdrop.className = "magic-llm-modal-backdrop";
@@ -263,22 +252,10 @@
         ok.focus();
     }
 
-    async function fetchScenario(scenarioId) {
-        const response = await fetch(`/api/llm-scenarios/${encodeURIComponent(scenarioId)}`, {
-            method: "GET",
-            cache: "no-store",
-        });
-        if (!response.ok) return null;
-        return response.json().catch(() => null);
-    }
-
-    // A scenario may declare optional parameters as a { name: spec } map. A
-    // spec is either a plain label string (a text field) or an object
-    // { type, label, placeholder, default } where type is text | textarea |
-    // toggle. Returns a normalized field list, or [] when none are declared.
+    // Normalize scenario.params map → field list (string label or {type,…}).
     const FIELD_TYPES = ["text", "textarea", "toggle"];
 
-    function declaredParams(scenario) {
+    export function declaredParams(scenario) {
         const params = scenario && scenario.params;
         if (!params || typeof params !== "object") return [];
         return Object.keys(params).map(function (name) {
@@ -315,10 +292,7 @@
             return wrap;
         }
 
-        // The field NAME is shown inside the field as a custom placeholder
-        // overlay: a bold label on the first line, followed by lighter hint and
-        // example lines. It hides on focus or when the field holds a value.
-        // Native placeholder can't be bold or multi-line, hence the overlay.
+        // Custom overlay placeholder (native can't do bold/multi-line).
         const control = document.createElement("div");
         control.className = "magic-llm-field__control";
 
@@ -365,10 +339,7 @@
         return wrap;
     }
 
-    // Collapsible, read-only view of the scenario's base prompt. Collapsed by
-    // default so the modal stays focused on the fields the user fills in, but
-    // available for anyone who wants to see exactly what will be run. The raw
-    // template (with its {{placeholders}}) is shown — that IS the base prompt.
+    // Collapsed <details> of raw base prompt template.
     function buildPromptDisclosure(promptText) {
         const details = document.createElement("details");
         details.className = "magic-llm-prompt";
@@ -382,10 +353,8 @@
         return details;
     }
 
-    // Show a small form for the declared optional parameters. Resolves with a
-    // { name: value } object, or null if the user cancelled. When a base prompt
-    // is given, a collapsed disclosure of it is shown above the fields.
-    function collectParams(title, fields, promptText, selectedDirectory, requireOneOf) {
+    // Modal for optional params; resolves {name:value} or null on cancel.
+    export function collectParams(title, fields, promptText, selectedDirectory, requireOneOf) {
         ensureStyles();
         return new Promise(function (resolve) {
             const backdrop = document.createElement("div");
@@ -417,14 +386,13 @@
                 form.appendChild(buildField(field, controls));
             });
 
-            // Inline validation message, hidden until submission fails.
             const errorBox = document.createElement("p");
             errorBox.className = "magic-llm-form__error";
             errorBox.setAttribute("role", "alert");
             errorBox.style.display = "none";
             form.appendChild(errorBox);
 
-            // "One of" rule only applies when every named field actually exists.
+            // Ignore requireOneOf names with no matching control.
             const oneOf = (Array.isArray(requireOneOf) ? requireOneOf : [])
                 .filter(function (name) { return controls[name]; });
 
@@ -508,7 +476,7 @@
         });
     }
 
-    function setButtonLoading(button, label) {
+    export function setButtonLoading(button, label) {
         if (!button) return function () {};
         const original = button.innerHTML;
         const wasDisabled = button.disabled;
@@ -519,160 +487,3 @@
             button.innerHTML = original;
         };
     }
-
-    // ------------------------------------------------------------------
-    // Run store + header status refresh
-    //
-    // Runs are async and tracked server-side (the registry). This store polls
-    // /api/llm/runs while anything is active and lets any waiter resolve when
-    // its run reaches a terminal state. Aggregate counters live in Magic log.
-    // ------------------------------------------------------------------
-    const RunStore = (function () {
-        const runs = new Map();       // id -> run object (server shape)
-        const waiters = new Map();    // id -> [resolve fns]
-        let polling = false;
-        let pollTimer = null;
-
-        function isTerminal(run) { return run && run.status && run.status !== "running"; }
-
-        function anyRunning() {
-            for (const run of runs.values()) if (run.status === "running") return true;
-            return false;
-        }
-
-        async function poll() {
-            try {
-                const response = await fetch("/api/llm/runs", { cache: "no-store" });
-                const data = await response.json();
-                const list = (data && data.runs) || [];
-                const seen = new Set();
-                list.forEach(function (run) {
-                    seen.add(run.id);
-                    runs.set(run.id, run);
-                    if (isTerminal(run) && waiters.has(run.id)) {
-                        waiters.get(run.id).forEach(function (resolve) { resolve(run); });
-                        waiters.delete(run.id);
-                    }
-                });
-                Array.from(runs.keys()).forEach(function (id) {
-                    if (!seen.has(id) && !waiters.has(id)) runs.delete(id);
-                });
-            } catch (error) {
-                // transient — try again on the next tick
-            }
-            window.dispatchEvent(new Event("magic-log-updated"));
-            clearTimeout(pollTimer);
-            if (anyRunning() || waiters.size > 0) {
-                pollTimer = setTimeout(poll, 1200);
-            } else {
-                polling = false;
-            }
-        }
-
-        function ensurePolling() {
-            if (polling) return;
-            polling = true;
-            poll();
-        }
-
-        function add(run) {
-            runs.set(run.id, run);
-            window.dispatchEvent(new Event("magic-log-updated"));
-            ensurePolling();
-        }
-
-        function waitFor(id) {
-            return new Promise(function (resolve) {
-                const run = runs.get(id);
-                if (isTerminal(run)) { resolve(run); return; }
-                if (!waiters.has(id)) waiters.set(id, []);
-                waiters.get(id).push(resolve);
-                ensurePolling();
-            });
-        }
-
-        function init() {
-            if (document.body) ensurePolling();
-            else document.addEventListener("DOMContentLoaded", ensurePolling);
-        }
-
-        return { add: add, waitFor: waitFor, init: init };
-    })();
-
-    async function runScenario(scenarioId, options) {
-        options = options || {};
-        const button = options.button || null;
-        const scenario = await fetchScenario(scenarioId).catch(() => null);
-        const title = (scenario && scenario.ui && scenario.ui.label) || scenarioId;
-        const loadingLabel =
-            options.loadingLabel ||
-            (scenario && scenario.ui && scenario.ui.loadingLabel) ||
-            "Running...";
-
-        // Optional parameters (Level 2): ask the user only when the scenario
-        // declares them and the caller did not already supply them.
-        let params = options.params || null;
-        if (!params && scenario) {
-            const fields = declaredParams(scenario);
-            if (fields.length > 0) {
-                const requireOneOf = scenario.ui && scenario.ui.requireOneOf;
-                params = await collectParams(title, fields, scenario.prompt, options.selectedDirectory, requireOneOf);
-                if (params === null) return null; // cancelled
-            }
-        }
-
-        // The context carries call-site info (e.g. the current document) plus
-        // any collected optional parameters.
-        const context = Object.assign({}, options.context || {});
-        if (params) context.params = Object.assign({}, context.params, params);
-
-        // Start the run asynchronously — this returns immediately with a run id,
-        // so other buttons can start their own runs in parallel.
-        let startData;
-        try {
-            const response = await fetch("/api/llm/run", {
-                method: "POST",
-                cache: "no-store",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    scenarioId: scenarioId,
-                    provider: options.provider,
-                    context: context,
-                    extra: options.extra || "",
-                }),
-            });
-            startData = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(startData.error || `Request failed: ${response.status}`);
-        } catch (error) {
-            const message =
-                error instanceof TypeError
-                    ? "The local LLM engine is not reachable. Is the app still running?"
-                    : error instanceof Error ? error.message : String(error);
-            showModal(title, message, true);
-            return null;
-        }
-
-        const run = startData.run;
-        if (!run || !run.id) { showModal(title, "The run could not be created.", true); return null; }
-        RunStore.add(run);
-
-        // Mirror this run's progress on the source button and surface its
-        // result here when it finishes.
-        const restore = setButtonLoading(button, loadingLabel);
-        const finalRun = await RunStore.waitFor(run.id);
-        restore();
-
-        if (finalRun.status === "done") {
-            showModal(title, finalRun.text || "Empty response.", false);
-            return finalRun;
-        }
-        if (finalRun.status === "cancelled") {
-            return null; // cancelled
-        }
-        showModal(title, finalRun.error || "The run failed.", true);
-        return null;
-    }
-
-    RunStore.init();
-    window.magicLlm = { runScenario: runScenario, fetchScenario: fetchScenario };
-})();

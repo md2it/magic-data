@@ -12,13 +12,32 @@
 </head>
 <body>
 {{ initial_state }}
-    <header id="app-header"></header>
+    <header class="app-header" id="app-header">
+        <a class="app-header__title" href="/">Magic-data</a>
+        <nav class="app-header__nav" aria-label="Main navigation">
+            <a href="/data">Data</a>
+            <a class="app-header__magic-log" href="/magic-log">Magic log <span class="app-header__magic-counts" aria-label="Current Magic runs"></span></a>
+            <a href="/documentation">Documentation</a>
+        </nav>
+        <div class="app-header__actions">
+            <div class="app-header__menu">
+                <button type="button" class="app-header__power-btn" id="power-menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="App power" data-tooltip="App power"><svg class="icon" aria-hidden="true"><use href="/assets/images/icons.svg#circle-power"></use></svg></button>
+                <div class="app-header__dropdown" id="power-dropdown" role="menu" hidden>
+                    <button id="restart-btn" type="button" class="app-header__dropdown-item app-header__dropdown-item--restart" role="menuitem">Restart app</button>
+                    <button id="stop-btn" type="button" class="app-header__dropdown-item app-header__dropdown-item--stop" role="menuitem">Stop app</button>
+                </div>
+            </div>
+        </div>
+    </header>
 {{ content }}
-    <footer id="app-footer"></footer>
-    <script src="/assets/js/formatting.js" data-exclude=".json-node"></script>
-    <script src="/assets/js/magic-llm.js"></script>
+    <footer class="app-footer" id="app-footer">
+        <span>Magic-data</span>
+        <a href="https://github.com/md2it/magic-data" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/md2it/magic-data/issues" target="_blank" rel="noopener noreferrer">Report issue</a>
+    </footer>
+    <script src="/assets/js/shared/icons.js"></script>
     <script src="/assets/js/layout.js"></script>
-    <script src="/assets/js/tooltip.js"></script>
+    <script src="/assets/js/shared/tooltip.js"></script>
 {{ page_scripts }}
 </body>
 </html>

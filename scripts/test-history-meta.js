@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
  * Unit tests for ContentView versions summary helpers.
- * Loads content-view.js in a minimal browser-like global and exercises
- * summarizeDocumentHistory / formatHistoryInstant.
+ * Loads extracted content-view modules into a minimal browser-like global.
  */
 "use strict";
 
@@ -11,10 +10,6 @@ const path = require("path");
 const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
-const source = fs.readFileSync(
-  path.join(root, "app/frontend/assets/js/content-view.js"),
-  "utf8"
-);
 
 const sandbox = {
   console,
@@ -25,6 +20,7 @@ const sandbox = {
       appendChild() {},
       querySelector() { return null; },
       setAttribute() {},
+      addEventListener() {},
     }),
   },
   localStorage: {
@@ -34,14 +30,31 @@ const sandbox = {
 sandbox.globalThis = sandbox;
 sandbox.window = sandbox;
 
-vm.runInNewContext(source, sandbox, { filename: "content-view.js" });
+function loadModule(relPath) {
+  let source = fs.readFileSync(path.join(root, relPath), "utf8");
+  source = source.replace(/^import\s+[\s\S]*?from\s+["'][^"']+["'];?\s*$/gm, "");
+  source = source.replace(/^export\s+function\s+/gm, "function ");
+  source = source.replace(/^export\s+const\s+/gm, "var ");
+  source = source.replace(/^export\s+\{[^}]+\};?\s*$/gm, "");
+  vm.runInNewContext(source, sandbox, { filename: relPath });
+}
+
+[
+  "app/frontend/assets/js/shared/preferences.js",
+  "app/frontend/assets/js/data/content-view/helpers.js",
+  "app/frontend/assets/js/data/content-view/document-history.js",
+  "app/frontend/assets/js/data/content-view/magic-fill.js",
+  "app/frontend/assets/js/data/content-view/text-view.js",
+  "app/frontend/assets/js/data/content-view/table-view.js",
+  "app/frontend/assets/js/data/content-view/export.js",
+].forEach(loadModule);
 
 const {
   summarizeDocumentHistory,
   formatHistoryInstant,
   toMarkdownTable,
   boolSum,
-} = sandbox.window.ContentView;
+} = sandbox;
 
 let pass = 0;
 let fail = 0;

@@ -139,4 +139,7 @@ def stylesheet_tag(path: str) -> str:
 
 
 def script_tag(path: str) -> str:
+    if path.startswith("module:"):
+        module_path = path.removeprefix("module:")
+        return f'    <script type="module" src="{escape(module_path, quote=True)}"></script>'
     return f'    <script src="{escape(path, quote=True)}"></script>'

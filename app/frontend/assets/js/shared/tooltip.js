@@ -1,17 +1,4 @@
-/*
- * tooltip.js
- *
- * The product's single tooltip. A self-contained, autonomous drop-in: on load
- * it wires document-level listeners and manages one reusable #app-tooltip
- * element. Any element with a `data-tooltip="..."` attribute shows that text on
- * hover and on keyboard focus — no per-call setup.
- *
- * The tooltip is appended to <body> and positioned with fixed coordinates, so
- * it escapes any clipping ancestor (toolbars, scrolling tables) and always sits
- * on the top layer. Appearance is owned by /assets/css/tooltip.css.
- *
- * See /documentation/developers/ui/components (Tooltips).
- */
+/* Single app tooltip for [data-tooltip]; body-fixed. See docs/ui/components. */
 (function () {
     "use strict";
 
@@ -107,8 +94,7 @@
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") hide();
     });
-    // A moved or resized viewport invalidates the fixed position; hide rather
-    // than chase it.
+    // Hide on scroll/resize rather than re-position.
     window.addEventListener("scroll", hide, true);
     window.addEventListener("resize", hide);
 })();

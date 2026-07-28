@@ -1,19 +1,4 @@
-/*
- * content-table-hover.js
- *
- * Crosshair hover for the Table view: highlights the hovered/focused cell's
- * row and column. Also drives contextual Magic Fill visibility via
- * `.magic-contextual-active` on the table, active body row, and active
- * column header — without removing buttons from the DOM or changing layout.
- *
- * Self-contained — injects its own styles and uses document-level event
- * delegation, so it survives table re-renders (sort, view switch).
- *
- * Theme-agnostic colours (#012292): row/column fill at 2%, cell at 5%,
- * frame at 20%. Frame edges are painted with inset box-shadow so they never
- * affect layout; each shared edge between two highlighted cells is drawn
- * once (trailing right/bottom ownership) to avoid double borders.
- */
+/* Table crosshair + Magic Fill contextual classes; document-level so re-renders survive. */
 (function () {
     "use strict";
 
@@ -38,10 +23,7 @@
     var activeMagicColHeader = null;
     var painted = [];
 
-    // Pointer and keyboard focus are tracked separately so leaving one while
-    // the other remains does not clear the logical active state (avoids
-    // flicker when moving between a cell and its Magic button, and keeps
-    // crosshair/buttons while the pointer stays in the table after blur).
+    // Separate pointer vs focus so leaving one doesn't clear the other.
     var pointerCell = null;
     var focusCell = null;
 
@@ -50,8 +32,7 @@
         var style = document.createElement("style");
         style.id = STYLE_ID;
         style.textContent =
-            /* Body cells need a stacking context so the frame sits above zebra
-               fills; keep thead on position:sticky from the base stylesheet. */
+            /* stacking context above zebra; thead sticky stays in base CSS */
             ".content-table tbody ." + CLASS_BODY + "{" +
             "position:relative;" +
             "z-index:1;" +
@@ -87,9 +68,7 @@
             ? OVERLAY_CELL
             : OVERLAY;
         var parts = ["inset 0 0 0 9999px " + fill];
-        // Trailing edges: always. Leading edges: only on the outer side of a
-        // highlighted run, so a shared edge between two highlighted cells is
-        // drawn once.
+        // Leading edges only on outer side of a highlighted run.
         parts.push(EDGE_R);
         parts.push(EDGE_B);
         if (!prev || !isHighlighted(prev)) parts.push(EDGE_L);
@@ -139,11 +118,7 @@
         return headRow ? headRow.cells[col] || null : null;
     }
 
-    /**
-     * Update Magic contextual classes without an empty intermediate frame, so
-     * moving between cells does not restart hide/show transitions on Fill All
-     * or on the still-active row/column control.
-     */
+    /** Sync Magic classes without clearing mid-move (avoids transition flicker). */
     function syncMagic(table, row, col) {
         if (activeTable && activeTable !== table) {
             activeTable.classList.remove(CLASS_MAGIC);
@@ -165,8 +140,7 @@
         if (nextMagicRow) nextMagicRow.classList.add(CLASS_MAGIC);
         activeMagicRow = nextMagicRow;
 
-        // Column fill lives on data headers only (cellIndex > 0 when a leading
-        // Fill All column is present; still safe if that column is absent).
+        // Column fill only on data headers (index > 0 when Fill All column exists).
         var nextHeader = null;
         if (col > 0) {
             var candidate = headerCellAt(table, col);
@@ -215,9 +189,7 @@
     }
 
     function refresh() {
-        // Pointer wins while it remains inside the table so moving between a
-        // cell and its Magic button stays stable; keyboard focus is used when
-        // the pointer is outside (or absent).
+        // Prefer pointerCell while inside table; else focusCell.
         var cell = pointerCell || focusCell;
         if (cell && cell.isConnected) setHover(cell);
         else clearHover();
