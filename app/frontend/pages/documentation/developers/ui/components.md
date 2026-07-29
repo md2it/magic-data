@@ -39,6 +39,8 @@ used (product default: table).
 - **Table view** (`.content-table`) — records as rows, with sortable header
   cells (`.content-table__header-cell--sortable`) and a sort indicator that
   uses `chevrons-up-down` to mark a column that can be sorted but is not yet.
+  Compact column widths and the truncated-cell overlay are specified in
+  [table-view-compact-cells](table-view-compact-cells).
 
 Schema-defining portions are de-emphasized rather than hidden (see the
 [visual-style](visual-style)).

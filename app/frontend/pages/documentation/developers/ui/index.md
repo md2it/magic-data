@@ -10,3 +10,4 @@ title: UI · Magic-data
 - [technical-standards](/documentation/developers/ui/technical-standards)
 - [components](/documentation/developers/ui/components)
 - [imagery](/documentation/developers/ui/imagery)
+- [table-view-compact-cells](/documentation/developers/ui/table-view-compact-cells)

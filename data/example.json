@@ -2,6 +2,10 @@
     "metadata": {
         "description": "Example dataset of countries with population, GDP, and official languages, illustrating the schema/items file format.",
         "versions": {
+            "v4": {
+                "at": "2026-07-27T21:35:36Z",
+                "comment": "Fill Azerbaijan population and languages (item 10)"
+            },
             "v3": {
                 "at": "2026-07-26T11:22:46Z",
                 "comment": "Translated history comment to English"
@@ -137,9 +141,9 @@
         },
         {
             "name": "Azerbaijan",
-            "population": null,
+            "population": 10151958,
             "gdp": 78000000000,
-            "languages": null
+            "languages": ["Azerbaijani"]
         },
         {
             "name": "Bahamas",

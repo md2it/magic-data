@@ -9,6 +9,7 @@ import {
     createFillAllButton,
     createFillButton,
 } from "./magic-fill.js";
+import { closeCellOverlay, openCellOverlay } from "./table-cell-overlay.js";
 import { renderPlainText } from "./text-view.js";
 
 /** Cell display: undefined→""; objects→JSON; else readable. */
@@ -125,6 +126,23 @@ export function renderTable(parsedJson, container) {
     const table = document.createElement("table");
     table.className = "content-table";
 
+    const colgroup = document.createElement("colgroup");
+    let fillCol = null;
+    let fillHeader = null;
+    if (hasItems) {
+        fillCol = document.createElement("col");
+        fillCol.className = "content-table__col--fill";
+        colgroup.appendChild(fillCol);
+    }
+    const dataCols = {};
+    columns.forEach(function (col) {
+        const colEl = document.createElement("col");
+        colEl.className = "content-table__col--data";
+        dataCols[col] = colEl;
+        colgroup.appendChild(colEl);
+    });
+    table.appendChild(colgroup);
+
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
     const headerCells = {};
@@ -132,7 +150,7 @@ export function renderTable(parsedJson, container) {
     let boolSumValues = null;
     let boolSumRail = null;
     if (hasItems) {
-        const fillHeader = document.createElement("th");
+        fillHeader = document.createElement("th");
         fillHeader.className = "content-table__header-cell";
         fillHeader.appendChild(createFillAllButton());
         headerRow.appendChild(fillHeader);
@@ -184,6 +202,51 @@ export function renderTable(parsedJson, container) {
     const tbody = document.createElement("tbody");
     table.appendChild(tbody);
 
+    let minDataColumnWidthPx = 0;
+
+    function measureMinDataColumnWidth() {
+        const probe = document.createElement("div");
+        probe.className = "content-table__width-probe";
+        probe.style.width = "3cm";
+        document.body.appendChild(probe);
+        const width = probe.offsetWidth;
+        document.body.removeChild(probe);
+        return width;
+    }
+
+    function applyDataColumnWidths() {
+        if (!minDataColumnWidthPx) {
+            minDataColumnWidthPx = measureMinDataColumnWidth();
+        }
+        let totalWidth = 0;
+        if (hasItems && fillCol && fillHeader) {
+            const fillWidth = Math.ceil(fillHeader.getBoundingClientRect().width);
+            fillCol.style.width = fillWidth + "px";
+            totalWidth += fillWidth;
+        }
+        columns.forEach(function (col) {
+            const headerWidth = Math.ceil(headerCells[col].th.getBoundingClientRect().width);
+            const width = Math.max(headerWidth, minDataColumnWidthPx);
+            dataCols[col].style.width = width + "px";
+            totalWidth += width;
+        });
+        table.style.width = totalWidth + "px";
+    }
+
+    function markTruncatedCells() {
+        requestAnimationFrame(function () {
+            tbody.querySelectorAll(".content-table__cell--data").forEach(function (td) {
+                const truncated = td.scrollWidth > td.clientWidth;
+                td.classList.toggle("content-table__cell--truncated", truncated);
+                if (truncated) {
+                    td.setAttribute("tabindex", "0");
+                } else {
+                    td.removeAttribute("tabindex");
+                }
+            });
+        });
+    }
+
     function orderedRows() {
         if (sortState.column === null) return rowObjects;
         const column = sortState.column;
@@ -202,19 +265,20 @@ export function renderTable(parsedJson, container) {
     }
 
     function renderBody() {
+        closeCellOverlay();
         tbody.innerHTML = "";
         orderedRows().forEach(function (rowObj) {
             const tr = document.createElement("tr");
             tr.className = "content-table__row";
             if (hasItems) {
                 const fillCell = document.createElement("td");
-                fillCell.className = "content-table__cell";
+                fillCell.className = "content-table__cell content-table__cell--fill";
                 fillCell.appendChild(createFillButton(rowIndex.get(rowObj)));
                 tr.appendChild(fillCell);
             }
             columns.forEach(function (col) {
                 const td = document.createElement("td");
-                td.className = "content-table__cell";
+                td.className = "content-table__cell content-table__cell--data";
                 const value = rowObj[col];
                 if (value !== undefined && typeof value === "object") {
                     td.classList.add("content-table__cell--json");
@@ -231,7 +295,22 @@ export function renderTable(parsedJson, container) {
             });
             tbody.appendChild(tr);
         });
+        markTruncatedCells();
     }
+
+    tbody.addEventListener("click", function (event) {
+        const td = event.target.closest(".content-table__cell--truncated");
+        if (!td || !tbody.contains(td)) return;
+        openCellOverlay(td, td.textContent);
+    });
+
+    tbody.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const td = event.target.closest(".content-table__cell--truncated");
+        if (!td || !tbody.contains(td)) return;
+        event.preventDefault();
+        openCellOverlay(td, td.textContent);
+    });
 
     function updateHeaders() {
         columns.forEach(function (col) {
@@ -317,12 +396,13 @@ export function renderTable(parsedJson, container) {
         };
     }
 
-    renderBody();
     updateHeaders();
-
     wrapper.appendChild(table);
     layout.appendChild(wrapper);
     container.appendChild(layout);
+    applyDataColumnWidths();
+    table.classList.add("content-table--compact");
+    renderBody();
     syncBoolSumHeights();
     requestAnimationFrame(syncBoolSumHeights);
     setTimeout(syncBoolSumHeights, 0);
